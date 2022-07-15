@@ -1,27 +1,35 @@
-#ifndef RAY_H
-#define RAY_H
+#ifndef ray_h
+#define ray_h
 
 #include "vec3.h"
 
 class ray {
-    public:
-        point3 orig;
-        vec3 dir;
+public:
+    ray() {}
+    ray(
+        const vec3& origin, const vec3& direction, double time = 0.0
+    ) : _origin(origin), _direction(direction), _time(time) {}
 
-        ray() {}
-        ray(const point3& origin, const vec3& direction) : orig(origin), dir(direction) {}
+    vec3 origin() const {
+        return _origin;
+    }
 
-        point3 origin() const {
-            return orig;
-        }
+    vec3 direction() const {
+        return _direction;
+    }
 
-        vec3 direction() const {
-            return dir;
-        }
+    double time() const {
+        return _time;
+    }
 
-        point3 at(double t) const {
-            return orig + t * dir;
-        }
+    vec3 at(double t) const {
+        return _origin + t * _direction;
+    }
+
+private:
+    vec3 _origin;
+    vec3 _direction;
+    double _time;
 };
 
 #endif
