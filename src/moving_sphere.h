@@ -59,7 +59,7 @@ bool moving_sphere::bounding_box(double t0, double t1, aabb& output_box) const {
         center(t1) - vec3(radius, radius, radius),
         center(t1) + vec3(radius, radius, radius)
     );
-    output_box = surrounding_box(box0, box1);
+    output_box = aabb::surrounding_box(box0, box1);
     return true;
 }
 

@@ -8,9 +8,6 @@
 
 class aabb {
 public:
-    vec3 minimum;
-    vec3 maximum;
-
     aabb() {}
     aabb(const vec3& a, const vec3& b) : minimum(a), maximum(b) {}
 
@@ -38,20 +35,24 @@ public:
         }
         return true;
     }
-};
 
-aabb surrounding_box(aabb box0, aabb box1) {
-    auto small = vec3(
-        fmin(box0.min().x(), box1.min().x()),
-        fmin(box0.min().y(), box1.min().y()),
-        fmin(box0.min().z(), box1.min().z())
-    );
-    auto big = vec3(
-        fmax(box0.max().x(), box1.max().x()),
-        fmax(box0.max().y(), box1.max().y()),
-        fmax(box0.max().z(), box1.max().z())
-    );
-    return aabb(small, big);
-}
+    static aabb surrounding_box(aabb box0, aabb box1) {
+        auto small = vec3(
+            fmin(box0.min().x(), box1.min().x()),
+            fmin(box0.min().y(), box1.min().y()),
+            fmin(box0.min().z(), box1.min().z())
+        );
+        auto big = vec3(
+            fmax(box0.max().x(), box1.max().x()),
+            fmax(box0.max().y(), box1.max().y()),
+            fmax(box0.max().z(), box1.max().z())
+        );
+        return aabb(small, big);
+    }
+
+private:
+    vec3 minimum;
+    vec3 maximum;
+};
 
 #endif

@@ -60,7 +60,7 @@ public:
             std::cerr << "No bounding box in BVH.\n";
         }
 
-        box = surrounding_box(box_left, box_right);
+        box = aabb::surrounding_box(box_left, box_right);
     }
 
     virtual bool hit(const ray &r, double t_min, double t_max, hit_record& rec) const override;

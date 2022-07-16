@@ -1,3 +1,5 @@
+#define STB_IMAGE_IMPLEMENTATION
+
 #include <iostream>
 #include <memory>
 
@@ -63,14 +65,12 @@ hittable_list random_scene() {
         }
     }
 
-    auto material1 = std::make_shared<dielectric>(1.5);
-    world.add(std::make_shared<sphere>(vec3(0, 1, 0), 1.0, material1));
+    world.add(std::make_shared<sphere>(vec3(-4, 1, 0), 1.0, std::make_shared<metal>(vec3(0.7, 0.6, 0.5), 0.0)));
 
-    auto material2 = std::make_shared<lambertian>(vec3(0.4, 0.2, 0.1));
-    world.add(std::make_shared<sphere>(vec3(-4, 1, 0), 1.0, material2));
+    world.add(std::make_shared<sphere>(vec3(0, 1, 0), 1.0, std::make_shared<dielectric>(1.5)));
 
-    auto material3 = std::make_shared<metal>(vec3(0.7, 0.6, 0.5), 0.0);
-    world.add(std::make_shared<sphere>(vec3(4, 1, 0), 1.0, material3));
+    auto earth_tex = std::make_shared<image_texture>("data/earth.jpg");
+    world.add(std::make_shared<sphere>(vec3(4, 1, 0), 1.0, std::make_shared<lambertian>(earth_tex)));
 
     return world;
 }

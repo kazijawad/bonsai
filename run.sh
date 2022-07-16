@@ -1,2 +1,2 @@
-bin/path-tracer > dist/render.ppm
+build/path-tracer > dist/render.ppm
 open dist/render.ppm

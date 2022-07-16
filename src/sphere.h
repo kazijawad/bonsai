@@ -23,7 +23,7 @@ private:
     static void get_sphere_uv(const vec3& p, double& u, double& v) {
         auto theta = acos(-p.y());
         auto phi = atan2(-p.z(), p.x()) + pi;
-        u = phi / (2 * phi);
+        u = phi / (2 * pi);
         v = theta / pi;
     }
 };
