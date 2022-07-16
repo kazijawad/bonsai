@@ -30,8 +30,8 @@ vec3 ray_color(const ray& r, const hittable& world, int depth) {
 hittable_list random_scene() {
     hittable_list world;
 
-    auto ground_material = std::make_shared<lambertian>(vec3(0.5, 0.5, 0.5));
-    world.add(std::make_shared<sphere>(vec3(0, -1000, 0), 1000, ground_material));
+    auto checker = std::make_shared<checker_texture>(vec3(0.2, 0.3, 0.1), vec3(0.9, 0.9, 0.9));
+    world.add(std::make_shared<sphere>(vec3(0, -1000, 0), 1000, std::make_shared<lambertian>(checker)));
 
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {

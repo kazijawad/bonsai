@@ -1,8 +1,11 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
+#include <cmath>
+
 #include "hittable.h"
 #include "ray.h"
+#include "utils.h"
 
 class sphere : public hittable {
 public:
@@ -15,6 +18,14 @@ public:
 
     virtual bool hit(const ray& r, double t_min, double t_max, hit_record& rec) const override;
     virtual bool bounding_box(double t0, double t1, aabb& output_box) const override;
+
+private:
+    static void get_sphere_uv(const vec3& p, double& u, double& v) {
+        auto theta = acos(-p.y());
+        auto phi = atan2(-p.z(), p.x()) + pi;
+        u = phi / (2 * phi);
+        v = theta / pi;
+    }
 };
 
 bool sphere::hit(const ray& r, double t_min, double t_max, hit_record& rec) const {
@@ -37,6 +48,7 @@ bool sphere::hit(const ray& r, double t_min, double t_max, hit_record& rec) cons
     rec.p = r.at(rec.t);
     auto outward_normal = (rec.p - center) / radius;
     rec.set_face_normal(r, outward_normal);
+    get_sphere_uv(outward_normal, rec.u, rec.v);
     rec.mat = mat;
 
     return true;
