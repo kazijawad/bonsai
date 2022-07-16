@@ -20,13 +20,10 @@ public:
     ) : center0(c0), center1(c1), time0(t0), time1(t1), radius(r), mat(m) {}
 
     virtual bool hit(const ray& r, double t_min, double t_max, hit_record& rec) const override;
+    virtual bool bounding_box(double t0, double t1, aabb& output_box) const override;
 
     vec3 center(double time) const;
 };
-
-vec3 moving_sphere::center(double time) const {
-    return center0 + ((time - time0) / (time1 - time0)) * (center0 - center1);
-}
 
 bool moving_sphere::hit(const ray& r, double t_min, double t_max, hit_record& rec) const {
     auto oc = r.origin() - center(r.time());
@@ -51,6 +48,23 @@ bool moving_sphere::hit(const ray& r, double t_min, double t_max, hit_record& re
     rec.mat = mat;
 
     return true;
+}
+
+bool moving_sphere::bounding_box(double t0, double t1, aabb& output_box) const {
+    auto box0 = aabb(
+        center(t0) - vec3(radius, radius, radius),
+        center(t0) + vec3(radius, radius, radius)
+    );
+    auto box1 = aabb(
+        center(t1) - vec3(radius, radius, radius),
+        center(t1) + vec3(radius, radius, radius)
+    );
+    output_box = surrounding_box(box0, box1);
+    return true;
+}
+
+vec3 moving_sphere::center(double time) const {
+    return center0 + ((time - time0) / (time1 - time0)) * (center0 - center1);
 }
 
 #endif
