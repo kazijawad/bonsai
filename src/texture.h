@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "vec3.h"
+#include "perlin.h"
 
 class texture {
 public:
@@ -40,6 +41,19 @@ public:
         } else {
             return even->value(u, v, p);
         }
+    }
+};
+
+class noise_texture : public texture {
+public:
+    perlin noise;
+    double scale;
+
+    noise_texture() {}
+    noise_texture(double s) : scale(s) {}
+
+    virtual vec3 value(double u, double v, const vec3& p) const override {
+        return vec3(1, 1, 1) * 0.5 * (1.0 + sin(scale * p.z() + 10 * noise.turb(p)));
     }
 };
 
