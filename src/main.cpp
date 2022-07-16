@@ -1,7 +1,7 @@
 #include <iostream>
 #include <memory>
 
-#include "hittable_list.h"
+#include "bvh.h"
 #include "camera.h"
 #include "material.h"
 #include "sphere.h"
@@ -83,7 +83,7 @@ int main() {
     const int max_depth = 50;
 
     // World
-    auto world = random_scene();
+    auto world = bvh_node(random_scene(), 0, 1);
 
     // Camera
     auto look_from = vec3(13, 2, 3);
