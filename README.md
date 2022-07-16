@@ -4,4 +4,4 @@ A toy path tracer based on [Ray Tracing In One Weekened](https://raytracing.gith
 
 The program can be built using Clang on C++11 by running the `build.sh` script. This will output the program to `bin/path-tracer`.
 
-To run the built path tracer on the existing scene, the `run.sh` script can be used.
+The `run.sh` script can be used to run the path tracer on the existing scene.
