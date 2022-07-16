@@ -9,90 +9,65 @@
 #include "sphere.h"
 #include "moving_sphere.h"
 #include "color.h"
+#include "aarect.h"
 
-vec3 ray_color(const ray& r, const hittable& world, int depth) {
+vec3 ray_color(const ray& r, const vec3& background, const hittable& world, int depth) {
     if (depth <= 0) return vec3(0, 0, 0);
 
-    hit_record rec;
-    if (world.hit(r, 0.001, infinity, rec)) {
-        ray scattered;
-        vec3 attenuation;
-        if (rec.mat->scatter(r, rec, attenuation, scattered)) {
-            return attenuation * ray_color(scattered, world, depth - 1);
-        }
-        return vec3(0, 0, 0);
+    hit_record record;
+    if (!world.hit(r, 0.001, infinity, record)) {
+        return background;
     }
 
-    // Blue Sky Gradient
-    vec3 unit_direction = unit_vector(r.direction());
-    auto t = 0.5 * (unit_direction.y() + 1.0);
-    return (1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
+    ray scattered;
+    vec3 attenuation;
+
+    vec3 emitted = record.mat->emitted(record.u, record.v, record.p);
+    if (!record.mat->scatter(r, record, attenuation, scattered)) {
+        return emitted;
+    }
+
+    return emitted + attenuation * ray_color(scattered, background, world, depth - 1);
 }
 
-hittable_list random_scene() {
+hittable_list scene() {
     hittable_list world;
 
-    // auto tex = std::make_shared<checker_texture>(vec3(0.2, 0.3, 0.1), vec3(0.9, 0.9, 0.9));
-    auto tex = std::make_shared<noise_texture>(4);
-    world.add(std::make_shared<sphere>(vec3(0, -1000, 0), 1000, std::make_shared<lambertian>(tex)));
+    auto red = std::make_shared<lambertian>(vec3(0.65, 0.05, 0.05));
+    auto white = std::make_shared<lambertian>(vec3(0.73, 0.73, 0.73));
+    auto green = std::make_shared<lambertian>(vec3(0.12, 0.45, 0.15));
+    auto light = std::make_shared<diffuse_light>(vec3(15, 15, 15));
 
-    for (int a = -11; a < 11; a++) {
-        for (int b = -11; b < 11; b++) {
-            auto choose_mat = random_double();
-            vec3 center(a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
-
-            if ((center - vec3(4, 0.2, 0)).length() > 0.9) {
-                std::shared_ptr<material> sphere_material;
-
-                if (choose_mat < 0.8) {
-                    // Diffuse
-                    auto albedo = vec3::random() * vec3::random();
-                    sphere_material = std::make_shared<lambertian>(albedo);
-                    auto center2 = center + vec3(0, random_double(0, 0.5), 0);
-                    world.add(std::make_shared<moving_sphere>(center, center2, 0.0, 1.0, 0.2, sphere_material));
-                } else if (choose_mat < 0.95) {
-                    // Metal
-                    auto albedo = vec3::random(0.5, 1);
-                    auto fuzz = random_double(0, 0.5);
-                    sphere_material = std::make_shared<metal>(albedo, fuzz);
-                    world.add(std::make_shared<sphere>(center, 0.2, sphere_material));
-                } else {
-                    // Glass
-                    sphere_material = std::make_shared<dielectric>(1.5);
-                    world.add(std::make_shared<sphere>(center, 0.2, sphere_material));
-                }
-            }
-        }
-    }
-
-    world.add(std::make_shared<sphere>(vec3(-4, 1, 0), 1.0, std::make_shared<metal>(vec3(0.7, 0.6, 0.5), 0.0)));
-
-    world.add(std::make_shared<sphere>(vec3(0, 1, 0), 1.0, std::make_shared<dielectric>(1.5)));
-
-    auto earth_tex = std::make_shared<image_texture>("data/earth.jpg");
-    world.add(std::make_shared<sphere>(vec3(4, 1, 0), 1.0, std::make_shared<lambertian>(earth_tex)));
+    world.add(std::make_shared<yzrect>(0, 555, 0, 555, 555, green));
+    world.add(std::make_shared<yzrect>(0, 555, 0, 555, 0, red));
+    world.add(std::make_shared<xzrect>(213, 343, 227, 332, 554, light));
+    world.add(std::make_shared<xzrect>(0, 555, 0, 555, 0, white));
+    world.add(std::make_shared<xzrect>(0, 555, 0, 555, 555, white));
+    world.add(std::make_shared<xyrect>(0, 555, 0, 555, 555, white));
 
     return world;
 }
 
 int main() {
     // Image
-    const auto aspect_ratio = 16.0 / 9.0;
-    const int image_width = 400;
+    const auto aspect_ratio = 1.0;
+    const int image_width = 600;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 100;
+    const int samples_per_pixel = 200;
     const int max_depth = 50;
 
     // World
-    auto world = bvh_node(random_scene(), 0, 1);
+    auto world = bvh_node(scene(), 0, 1);
+    auto background = vec3(0.0, 0.0, 0.0);
 
     // Camera
-    auto look_from = vec3(13, 2, 3);
-    auto look_at = vec3(0, 0, 0);
+    auto look_from = vec3(278, 278, -800);
+    auto look_at = vec3(278, 278, 0);
     auto up = vec3(0, 1, 0);
+    auto vfov = 40.0;
     auto aperature = 0.1;
     auto dist_to_focus = 10.0;
-    auto cam = camera(look_from, look_at, up, 20, aspect_ratio, aperature, dist_to_focus, 0.0, 1.0);
+    auto cam = camera(look_from, look_at, up, vfov, aspect_ratio, aperature, dist_to_focus, 0.0, 1.0);
 
     // Render
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
@@ -104,7 +79,7 @@ int main() {
                 auto u = (i + random_double()) / (image_width - 1);
                 auto v = (j + random_double()) / (image_height - 1);
                 auto r = cam.get_ray(u, v);
-                color += ray_color(r, world, max_depth);
+                color += ray_color(r, background, world, max_depth);
             }
             write_color(std::cout, color, samples_per_pixel);
         }
