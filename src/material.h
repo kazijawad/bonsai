@@ -12,7 +12,17 @@ struct hit_record;
 
 class material {
 public:
-    virtual bool scatter(const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered) const = 0;
+    virtual bool scatter(const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered) const {
+        return false;
+    }
+
+    virtual bool scatter(const ray& r, const hit_record& rec, vec3& color, ray& scattered, double& pdf) const {
+        return false;
+    }
+
+    virtual double scattering_pdf(const ray& r, const hit_record& rec, const ray& scattered) const {
+        return 0;
+    }
 
     virtual vec3 emitted(double u, double v, const vec3& p) const {
         return vec3();
@@ -21,21 +31,27 @@ public:
 
 class lambertian : public material {
 public:
-    std::shared_ptr<texture> albedo;
-
     lambertian(const vec3& a) : albedo(std::make_shared<solid_color>(a)) {}
     lambertian(std::shared_ptr<texture> a) : albedo(a) {}
 
-    virtual bool scatter(const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered) const override {
-        auto scatter_direction = rec.normal + random_unit_vector();
-        if (scatter_direction.near_zero()) {
-            scatter_direction = rec.normal;
+    virtual bool scatter(const ray& r, const hit_record& rec, vec3& color, ray& scattered, double& pdf) const override {
+        auto direction = rec.normal + random_unit_vector();
+        if (direction.near_zero()) {
+            direction = rec.normal;
         }
-
-        scattered = ray(rec.p, scatter_direction, r_in.time());
-        attenuation = albedo->value(rec.u, rec.v, rec.p);
+        scattered = ray(rec.p, unit_vector(direction), r.time());
+        color = albedo->value(rec.u, rec.v, rec.p);
+        pdf = dot(rec.normal, scattered.direction()) / pi;
         return true;
     }
+
+    virtual double scattering_pdf(const ray& r, const hit_record& rec, const ray& scattered) const override {
+        auto cosine = dot(rec.normal, unit_vector(scattered.direction()));
+        return cosine < 0 ? 0 : cosine / pi;
+    }
+
+private:
+    std::shared_ptr<texture> albedo;
 };
 
 class metal : public material {

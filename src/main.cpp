@@ -22,13 +22,15 @@ vec3 ray_color(const ray& r, const vec3& background, const hittable& world, int 
 
     ray scattered;
     vec3 attenuation;
-
     vec3 emitted = rec.mat->emitted(rec.u, rec.v, rec.p);
-    if (!rec.mat->scatter(r, rec, attenuation, scattered)) {
+    double pdf;
+    vec3 albedo;
+
+    if (!rec.mat->scatter(r, rec, albedo, scattered, pdf)) {
         return emitted;
     }
 
-    return emitted + attenuation * ray_color(scattered, background, world, depth - 1);
+    return emitted + albedo * rec.mat->scattering_pdf(r, rec, scattered) * ray_color(scattered, background, world, depth - 1);
 }
 
 hittable_list scene() {
@@ -48,12 +50,12 @@ hittable_list scene() {
 
     std::shared_ptr<hittable> box1 = std::make_shared<box>(vec3(0, 0, 0), vec3(165, 330, 165), white);
     box1 = std::make_shared<rotate_y>(box1, 15);
-    box1 = std::make_shared<translate>(box1, vec3(265,0,295));
+    box1 = std::make_shared<translate>(box1, vec3(265, 0, 295));
     world.add(box1);
 
-    std::shared_ptr<hittable> box2 = std::make_shared<box>(vec3(0,0,0), vec3(165,165,165), white);
+    std::shared_ptr<hittable> box2 = std::make_shared<box>(vec3(0, 0, 0), vec3(165, 165, 165), white);
     box2 = std::make_shared<rotate_y>(box2, -18);
-    box2 = std::make_shared<translate>(box2, vec3(130,0,65));
+    box2 = std::make_shared<translate>(box2, vec3(130, 0, 65));
     world.add(box2);
 
     return world;
@@ -64,7 +66,7 @@ int main() {
     const auto aspect_ratio = 1.0;
     const int image_width = 600;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 200;
+    const int samples_per_pixel = 100;
     const int max_depth = 50;
 
     // World
@@ -75,7 +77,7 @@ int main() {
     auto position = vec3(278, 278, -800);
     auto look_at = vec3(278, 278, 0);
     auto fov = 40.0;
-    auto aperature = 0.1;
+    auto aperature = 0.0;
     auto focus_distance = 10.0;
     auto cam = camera(position, look_at, fov, aspect_ratio, aperature, focus_distance, 0.0, 1.0);
 
