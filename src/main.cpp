@@ -9,21 +9,21 @@
 #include "sphere.h"
 #include "moving_sphere.h"
 #include "color.h"
-#include "aarect.h"
+#include "box.h"
 
 vec3 ray_color(const ray& r, const vec3& background, const hittable& world, int depth) {
     if (depth <= 0) return vec3(0, 0, 0);
 
-    hit_record record;
-    if (!world.hit(r, 0.001, infinity, record)) {
+    hit_record rec;
+    if (!world.hit(r, 0.001, infinity, rec)) {
         return background;
     }
 
     ray scattered;
     vec3 attenuation;
 
-    vec3 emitted = record.mat->emitted(record.u, record.v, record.p);
-    if (!record.mat->scatter(r, record, attenuation, scattered)) {
+    vec3 emitted = rec.mat->emitted(rec.u, rec.v, rec.p);
+    if (!rec.mat->scatter(r, rec, attenuation, scattered)) {
         return emitted;
     }
 
@@ -36,7 +36,7 @@ hittable_list scene() {
     auto red = std::make_shared<lambertian>(vec3(0.65, 0.05, 0.05));
     auto white = std::make_shared<lambertian>(vec3(0.73, 0.73, 0.73));
     auto green = std::make_shared<lambertian>(vec3(0.12, 0.45, 0.15));
-    auto light = std::make_shared<diffuse_light>(vec3(15, 15, 15));
+    auto light = std::make_shared<diffuse_light>(vec3(10, 10, 10));
 
     world.add(std::make_shared<yzrect>(0, 555, 0, 555, 555, green));
     world.add(std::make_shared<yzrect>(0, 555, 0, 555, 0, red));
@@ -44,6 +44,16 @@ hittable_list scene() {
     world.add(std::make_shared<xzrect>(0, 555, 0, 555, 0, white));
     world.add(std::make_shared<xzrect>(0, 555, 0, 555, 555, white));
     world.add(std::make_shared<xyrect>(0, 555, 0, 555, 555, white));
+
+    std::shared_ptr<hittable> box1 = std::make_shared<box>(vec3(0, 0, 0), vec3(165, 330, 165), white);
+    box1 = std::make_shared<rotate_y>(box1, 15);
+    box1 = std::make_shared<translate>(box1, vec3(265,0,295));
+    world.add(box1);
+
+    std::shared_ptr<hittable> box2 = std::make_shared<box>(vec3(0,0,0), vec3(165,165,165), white);
+    box2 = std::make_shared<rotate_y>(box2, -18);
+    box2 = std::make_shared<translate>(box2, vec3(130,0,65));
+    world.add(box2);
 
     return world;
 }
@@ -61,13 +71,12 @@ int main() {
     auto background = vec3(0.0, 0.0, 0.0);
 
     // Camera
-    auto look_from = vec3(278, 278, -800);
+    auto position = vec3(278, 278, -800);
     auto look_at = vec3(278, 278, 0);
-    auto up = vec3(0, 1, 0);
-    auto vfov = 40.0;
+    auto fov = 40.0;
     auto aperature = 0.1;
-    auto dist_to_focus = 10.0;
-    auto cam = camera(look_from, look_at, up, vfov, aspect_ratio, aperature, dist_to_focus, 0.0, 1.0);
+    auto focus_distance = 10.0;
+    auto cam = camera(position, look_at, fov, aspect_ratio, aperature, focus_distance, 0.0, 1.0);
 
     // Render
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";

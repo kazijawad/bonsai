@@ -12,7 +12,7 @@ public:
         double x0, double x1, double y0, double y1, double k, std::shared_ptr<material> mat
     ) : _x0(x0), _x1(x1), _y0(y0), _y1(y1), _k(k), _mat(mat) {}
 
-    virtual bool hit(const ray& r, double t_min, double t_max, hit_record& record) const override {
+    virtual bool hit(const ray& r, double t_min, double t_max, hit_record& rec) const override {
         auto t = (_k - r.origin().z()) / r.direction().z();
         if (t < t_min || t > t_max) return false;
 
@@ -20,13 +20,13 @@ public:
         auto y = r.origin().y() + t * r.direction().y();
         if (x < _x0 || x > _x1 || y < _y0 || y > _y1) return false;
 
-        record.u = (x - _x0) / (_x1 - _x0);
-        record.v = (y - _y0) / (_y1 - _y0);
-        record.t = t;
+        rec.u = (x - _x0) / (_x1 - _x0);
+        rec.v = (y - _y0) / (_y1 - _y0);
+        rec.t = t;
 
-        record.set_face_normal(r, vec3(0, 0, 1));
-        record.mat = _mat;
-        record.p = r.at(t);
+        rec.set_face_normal(r, vec3(0, 0, 1));
+        rec.mat = _mat;
+        rec.p = r.at(t);
 
         return true;
     }
@@ -48,7 +48,7 @@ public:
         double x0, double x1, double z0, double z1, double k, std::shared_ptr<material> mat
     ) : _x0(x0), _x1(x1), _z0(z0), _z1(z1), _k(k), _mat(mat) {}
 
-    virtual bool hit(const ray& r, double t_min, double t_max, hit_record& record) const override {
+    virtual bool hit(const ray& r, double t_min, double t_max, hit_record& rec) const override {
         auto t = (_k - r.origin().y()) / r.direction().y();
         if (t < t_min || t > t_max) return false;
 
@@ -56,13 +56,13 @@ public:
         auto z = r.origin().z() + t * r.direction().z();
         if (x < _x0 || x > _x1 || z < _z0 || z > _z1) return false;
 
-        record.u = (x - _x0) / (_x1 - _x0);
-        record.v = (z - _z0) / (_z1 - _z0);
-        record.t = t;
+        rec.u = (x - _x0) / (_x1 - _x0);
+        rec.v = (z - _z0) / (_z1 - _z0);
+        rec.t = t;
 
-        record.set_face_normal(r, vec3(0, 1, 0));
-        record.mat = _mat;
-        record.p = r.at(t);
+        rec.set_face_normal(r, vec3(0, 1, 0));
+        rec.mat = _mat;
+        rec.p = r.at(t);
 
         return true;
     }
@@ -84,7 +84,7 @@ public:
         double y0, double y1, double z0, double z1, double k, std::shared_ptr<material> mat
     ) : _y0(y0), _y1(y1), _z0(z0), _z1(z1), _k(k), _mat(mat) {}
 
-    virtual bool hit(const ray& r, double t_min, double t_max, hit_record& record) const override {
+    virtual bool hit(const ray& r, double t_min, double t_max, hit_record& rec) const override {
         auto t = (_k - r.origin().x()) / r.direction().x();
         if (t < t_min || t > t_max) return false;
 
@@ -92,13 +92,13 @@ public:
         auto z = r.origin().z() + t * r.direction().z();
         if (y < _y0 || y > _y1 || z < _z0 || z > _z1) return false;
 
-        record.u = (y - _y0) / (_y1 - _y0);
-        record.v = (z - _z0) / (_z1 - _z0);
-        record.t = t;
+        rec.u = (y - _y0) / (_y1 - _y0);
+        rec.v = (z - _z0) / (_z1 - _z0);
+        rec.t = t;
 
-        record.set_face_normal(r, vec3(0, 1, 0));
-        record.mat = _mat;
-        record.p = r.at(t);
+        rec.set_face_normal(r, vec3(0, 1, 0));
+        rec.mat = _mat;
+        rec.p = r.at(t);
 
         return true;
     }

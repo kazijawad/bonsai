@@ -17,15 +17,15 @@ public:
 class solid_color : public texture {
 public:
     solid_color() {}
-    solid_color(vec3 c) : _value(c) {}
+    solid_color(vec3 c) : color(c) {}
     solid_color(double r, double g, double b) : solid_color(vec3(r, g, b)) {}
 
     virtual vec3 value(double u, double v, const vec3& p) const override {
-        return _value;
+        return color;
     }
 
 private:
-    vec3 _value;
+    vec3 color;
 };
 
 class checker_texture : public texture {
