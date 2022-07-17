@@ -83,7 +83,7 @@ int main() {
     // Render
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
     for (int j = image_height - 1; 0 <= j; --j) {
-        std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
+        std::cerr << "\rScanlines Remaining: " << j << ' ' << std::flush;
         for (int i = 0; i < image_width; ++i) {
             auto color = vec3(0, 0, 0);
             for (int s = 0; s < samples_per_pixel; ++s) {
