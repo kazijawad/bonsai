@@ -10,6 +10,7 @@
 #include "moving_sphere.h"
 #include "color.h"
 #include "box.h"
+#include "constant_medium.h"
 
 vec3 ray_color(const ray& r, const vec3& background, const hittable& world, int depth) {
     if (depth <= 0) return vec3(0, 0, 0);
@@ -36,24 +37,25 @@ hittable_list scene() {
     auto red = std::make_shared<lambertian>(vec3(0.65, 0.05, 0.05));
     auto white = std::make_shared<lambertian>(vec3(0.73, 0.73, 0.73));
     auto green = std::make_shared<lambertian>(vec3(0.12, 0.45, 0.15));
-    auto light = std::make_shared<diffuse_light>(vec3(10, 10, 10));
+    auto light = std::make_shared<diffuse_light>(vec3(7, 7, 7));
 
     world.add(std::make_shared<yzrect>(0, 555, 0, 555, 555, green));
     world.add(std::make_shared<yzrect>(0, 555, 0, 555, 0, red));
-    world.add(std::make_shared<xzrect>(213, 343, 227, 332, 554, light));
-    world.add(std::make_shared<xzrect>(0, 555, 0, 555, 0, white));
+    world.add(std::make_shared<xzrect>(113, 443, 127, 432, 554, light));
     world.add(std::make_shared<xzrect>(0, 555, 0, 555, 555, white));
+    world.add(std::make_shared<xzrect>(0, 555, 0, 555, 0, white));
     world.add(std::make_shared<xyrect>(0, 555, 0, 555, 555, white));
 
     std::shared_ptr<hittable> box1 = std::make_shared<box>(vec3(0, 0, 0), vec3(165, 330, 165), white);
     box1 = std::make_shared<rotate_y>(box1, 15);
     box1 = std::make_shared<translate>(box1, vec3(265,0,295));
-    world.add(box1);
 
-    std::shared_ptr<hittable> box2 = std::make_shared<box>(vec3(0,0,0), vec3(165,165,165), white);
+    std::shared_ptr<hittable> box2 = std::make_shared<box>(vec3(0, 0, 0), vec3(165, 165, 165), white);
     box2 = std::make_shared<rotate_y>(box2, -18);
     box2 = std::make_shared<translate>(box2, vec3(130,0,65));
-    world.add(box2);
+
+    world.add(std::make_shared<constant_medium>(box1, 0.01, vec3(0,0,0)));
+    world.add(std::make_shared<constant_medium>(box2, 0.01, vec3(1,1,1)));
 
     return world;
 }

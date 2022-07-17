@@ -12,6 +12,7 @@ The `run.sh` script can be used to run the path tracer on the existing scene. It
 - Depth of Field
 - Motion Blur
 - Bounding Volume Hierarchies
+- Basic Volume Rendering
 
 # References
 
