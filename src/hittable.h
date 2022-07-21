@@ -131,4 +131,24 @@ private:
     aabb bbox;
 };
 
+class flip_face : public hittable {
+public:
+    flip_face(std::shared_ptr<hittable> p) : ref(p) {}
+
+    virtual bool hit(const ray &r, double t_min, double t_max, hit_record& rec) const override {
+        if (!ref->hit(r, t_min, t_max, rec)) {
+            return false;
+        }
+        rec.front_face = !rec.front_face;
+        return true;
+    }
+
+    virtual bool bounding_box(double t0, double t1, aabb& output_box) const override {
+        return ref->bounding_box(t0, t1, output_box);
+    }
+
+private:
+    std::shared_ptr<hittable> ref;
+};
+
 #endif

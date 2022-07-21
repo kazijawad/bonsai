@@ -25,7 +25,7 @@ public:
         return 0;
     }
 
-    virtual vec3 emitted(double u, double v, const vec3& p) const {
+    virtual vec3 emitted(const ray& r, const hit_record& rec, double u, double v, const vec3& p) const {
         return vec3();
     }
 };
@@ -116,8 +116,11 @@ public:
         return false;
     }
 
-    virtual vec3 emitted(double u, double v, const vec3& p) const override {
-        return emit->value(u, v, p);
+    virtual vec3 emitted(const ray& r, const hit_record& rec, double u, double v, const vec3& p) const override {
+        if (rec.front_face) {
+            return emit->value(u, v, p);
+        }
+        return vec3();
     }
 
 private:

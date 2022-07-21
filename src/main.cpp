@@ -22,7 +22,7 @@ vec3 ray_color(const ray& r, const vec3& background, const hittable& world, int 
 
     ray scattered;
     vec3 attenuation;
-    vec3 emitted = rec.mat->emitted(rec.u, rec.v, rec.p);
+    vec3 emitted = rec.mat->emitted(r, rec, rec.u, rec.v, rec.p);
     double pdf;
     vec3 albedo;
 
@@ -30,7 +30,25 @@ vec3 ray_color(const ray& r, const vec3& background, const hittable& world, int 
         return emitted;
     }
 
-    return emitted + albedo * rec.mat->scattering_pdf(r, rec, scattered) * ray_color(scattered, background, world, depth - 1);
+    auto on_light = vec3(random_double(213, 343), 554, random_double(227, 332));
+    auto to_light = on_light - rec.p;
+    auto distance_squared = to_light.length_squared();
+    to_light = unit_vector(to_light);
+
+    if (dot(to_light, rec.normal) < 0) {
+        return emitted;
+    }
+
+    double light_area = (343 - 213) * (332 - 227);
+    auto light_cosine = fabs(to_light.y());
+    if (light_cosine < 0.000001) {
+        return emitted;
+    }
+
+    pdf = distance_squared / (light_cosine * light_area);
+    scattered = ray(rec.p, to_light, r.time());
+
+    return emitted + albedo * rec.mat->scattering_pdf(r, rec, scattered) * ray_color(scattered, background, world, depth - 1) / pdf;
 }
 
 hittable_list scene() {
@@ -43,7 +61,7 @@ hittable_list scene() {
 
     world.add(std::make_shared<yzrect>(0, 555, 0, 555, 555, green));
     world.add(std::make_shared<yzrect>(0, 555, 0, 555, 0, red));
-    world.add(std::make_shared<xzrect>(113, 443, 127, 432, 554, light));
+    world.add(std::make_shared<flip_face>(std::make_shared<xzrect>(213, 343, 227, 332, 554, light)));
     world.add(std::make_shared<xzrect>(0, 555, 0, 555, 555, white));
     world.add(std::make_shared<xzrect>(0, 555, 0, 555, 0, white));
     world.add(std::make_shared<xyrect>(0, 555, 0, 555, 555, white));
@@ -66,7 +84,7 @@ int main() {
     const auto aspect_ratio = 1.0;
     const int image_width = 600;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 100;
+    const int samples_per_pixel = 10;
     const int max_depth = 50;
 
     // World
