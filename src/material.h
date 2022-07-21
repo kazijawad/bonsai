@@ -7,6 +7,7 @@
 #include "vec3.h"
 #include "utils.h"
 #include "texture.h"
+#include "onb.h"
 
 struct hit_record;
 
@@ -35,13 +36,15 @@ public:
     lambertian(std::shared_ptr<texture> a) : albedo(a) {}
 
     virtual bool scatter(const ray& r, const hit_record& rec, vec3& color, ray& scattered, double& pdf) const override {
-        auto direction = rec.normal + random_unit_vector();
+        onb uvw;
+        uvw.build_from_w(rec.normal);
+        auto direction = uvw.local(random_cosine_direction());
         if (direction.near_zero()) {
             direction = rec.normal;
         }
         scattered = ray(rec.p, unit_vector(direction), r.time());
         color = albedo->value(rec.u, rec.v, rec.p);
-        pdf = dot(rec.normal, scattered.direction()) / pi;
+        pdf = dot(uvw.w(), scattered.direction()) / pi;
         return true;
     }
 
