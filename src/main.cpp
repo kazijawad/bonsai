@@ -20,32 +20,34 @@ vec3 ray_color(
     std::shared_ptr<hittable>& lights,
     int depth
 ) {
-    if (depth <= 0) return vec3(0, 0, 0);
+    if (depth <= 0) return vec3();
 
-    hit_record rec;
-    if (!world.hit(r, 0.001, infinity, rec)) {
+    hit_record hit;
+    if (!world.hit(r, 0.001, infinity, hit)) {
         return background;
     }
 
-    ray scattered;
-    vec3 attenuation;
-    vec3 emitted = rec.mat->emitted(r, rec, rec.u, rec.v, rec.p);
-    vec3 albedo;
-    double pdf_value;
-
-    if (!rec.mat->scatter(r, rec, albedo, scattered, pdf_value)) {
+    scatter_record scattering;
+    vec3 emitted = hit.mat->emitted(r, hit, hit.u, hit.v, hit.p);
+    if (!hit.mat->scatter(r, hit, scattering)) {
         return emitted;
     }
 
+    if (scattering.is_specular) {
+        return scattering.attenuation * ray_color(scattering.specular, background, world, lights, depth - 1);
+    }
+
     auto mixed_pdf = mixture_pdf(
-        std::make_shared<hittable_pdf>(lights, rec.p),
-        std::make_shared<cosine_pdf>(rec.normal)
+        std::make_shared<hittable_pdf>(lights, hit.p),
+        scattering.distribution
     );
 
-    scattered = ray(rec.p, mixed_pdf.generate(), r.time());
-    pdf_value = mixed_pdf.value(scattered.direction());
+    auto scattered = ray(hit.p, mixed_pdf.generate(), r.time());
+    auto pdf_value = mixed_pdf.value(scattered.direction());
 
-    return emitted + albedo * rec.mat->scattering_pdf(r, rec, scattered) * ray_color(scattered, background, world, lights, depth - 1) / pdf_value;
+    return emitted + scattering.attenuation
+        * hit.mat->scattering_pdf(r, hit, scattered)
+        * ray_color(scattered, background, world, lights, depth - 1) / pdf_value;
 }
 
 hittable_list scene() {
@@ -63,7 +65,8 @@ hittable_list scene() {
     world.add(std::make_shared<xzrect>(0, 555, 0, 555, 0, white));
     world.add(std::make_shared<xyrect>(0, 555, 0, 555, 555, white));
 
-    std::shared_ptr<hittable> box1 = std::make_shared<box>(vec3(0, 0, 0), vec3(165, 330, 165), white);
+    std::shared_ptr<material> aluminum = std::make_shared<metal>(vec3(0.8, 0.85, 0.88), 0.0);
+    std::shared_ptr<hittable> box1 = std::make_shared<box>(vec3(0, 0, 0), vec3(165, 330, 165), aluminum);
     box1 = std::make_shared<rotate_y>(box1, 15);
     box1 = std::make_shared<translate>(box1, vec3(265, 0, 295));
     world.add(box1);
@@ -72,6 +75,9 @@ hittable_list scene() {
     box2 = std::make_shared<rotate_y>(box2, -18);
     box2 = std::make_shared<translate>(box2, vec3(130, 0, 65));
     world.add(box2);
+
+    // auto glass = std::make_shared<dielectric>(1.5);
+    // world.add(std::make_shared<sphere>(vec3(190, 90, 190), 90, glass));
 
     return world;
 }
@@ -88,6 +94,10 @@ int main() {
     auto world = bvh_node(scene(), 0, 1);
     auto background = vec3(0.0, 0.0, 0.0);
     std::shared_ptr<hittable> lights = std::make_shared<xzrect>(213, 343, 227, 332, 554, std::shared_ptr<material>());
+
+    // auto lights = std::make_shared<hittable_list>();
+    // lights->add(std::make_shared<xzrect>(213, 343, 227, 332, 554, std::shared_ptr<material>()));
+    // lights->add(std::make_shared<sphere>(vec3(190, 90, 190), 90, std::shared_ptr<material>()));
 
     // Camera
     auto position = vec3(278, 278, -800);
