@@ -11,8 +11,15 @@
 #include "color.h"
 #include "box.h"
 #include "constant_medium.h"
+#include "pdf.h"
 
-vec3 ray_color(const ray& r, const vec3& background, const hittable& world, int depth) {
+vec3 ray_color(
+    const ray& r,
+    const vec3& background,
+    const hittable& world,
+    std::shared_ptr<hittable>& lights,
+    int depth
+) {
     if (depth <= 0) return vec3(0, 0, 0);
 
     hit_record rec;
@@ -23,32 +30,22 @@ vec3 ray_color(const ray& r, const vec3& background, const hittable& world, int 
     ray scattered;
     vec3 attenuation;
     vec3 emitted = rec.mat->emitted(r, rec, rec.u, rec.v, rec.p);
-    double pdf;
     vec3 albedo;
+    double pdf_value;
 
-    if (!rec.mat->scatter(r, rec, albedo, scattered, pdf)) {
+    if (!rec.mat->scatter(r, rec, albedo, scattered, pdf_value)) {
         return emitted;
     }
 
-    auto on_light = vec3(random_double(213, 343), 554, random_double(227, 332));
-    auto to_light = on_light - rec.p;
-    auto distance_squared = to_light.length_squared();
-    to_light = unit_vector(to_light);
+    auto mixed_pdf = mixture_pdf(
+        std::make_shared<hittable_pdf>(lights, rec.p),
+        std::make_shared<cosine_pdf>(rec.normal)
+    );
 
-    if (dot(to_light, rec.normal) < 0) {
-        return emitted;
-    }
+    scattered = ray(rec.p, mixed_pdf.generate(), r.time());
+    pdf_value = mixed_pdf.value(scattered.direction());
 
-    double light_area = (343 - 213) * (332 - 227);
-    auto light_cosine = fabs(to_light.y());
-    if (light_cosine < 0.000001) {
-        return emitted;
-    }
-
-    pdf = distance_squared / (light_cosine * light_area);
-    scattered = ray(rec.p, to_light, r.time());
-
-    return emitted + albedo * rec.mat->scattering_pdf(r, rec, scattered) * ray_color(scattered, background, world, depth - 1) / pdf;
+    return emitted + albedo * rec.mat->scattering_pdf(r, rec, scattered) * ray_color(scattered, background, world, lights, depth - 1) / pdf_value;
 }
 
 hittable_list scene() {
@@ -84,12 +81,13 @@ int main() {
     const auto aspect_ratio = 1.0;
     const int image_width = 600;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 10;
+    const int samples_per_pixel = 1000;
     const int max_depth = 50;
 
     // World
     auto world = bvh_node(scene(), 0, 1);
     auto background = vec3(0.0, 0.0, 0.0);
+    std::shared_ptr<hittable> lights = std::make_shared<xzrect>(213, 343, 227, 332, 554, std::shared_ptr<material>());
 
     // Camera
     auto position = vec3(278, 278, -800);
@@ -109,7 +107,7 @@ int main() {
                 auto u = (i + random_double()) / (image_width - 1);
                 auto v = (j + random_double()) / (image_height - 1);
                 auto r = cam.get_ray(u, v);
-                color += ray_color(r, background, world, max_depth);
+                color += ray_color(r, background, world, lights, max_depth);
             }
             write_color(std::cout, color, samples_per_pixel);
         }

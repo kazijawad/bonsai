@@ -72,6 +72,24 @@ public:
         return true;
     }
 
+    virtual double pdf_value(const vec3& origin, const vec3& direction) const override {
+        hit_record rec;
+        if (!this->hit(ray(origin, direction), 0.001, infinity, rec)) {
+            return 0;
+        }
+
+        auto area = (x1 - x0) * (z1 - z0);
+        auto distance_squared = rec.t * rec.t * direction.length_squared();
+        auto cosine = fabs(dot(direction, rec.normal) / direction.length());
+
+        return distance_squared / (cosine * area);
+    }
+
+    virtual vec3 random(const vec3& origin) const override {
+        auto random_point = vec3(random_double(x0, x1), k, random_double(z0, z1));
+        return random_point - origin;
+    }
+
 private:
     std::shared_ptr<material> mat;
     double x0, x1, z0, z1, k;

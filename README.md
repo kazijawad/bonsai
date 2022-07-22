@@ -1,5 +1,7 @@
 # Path Tracer
 
+![Cornell Box Render](/assets/cornell.png)
+
 A toy path tracer written in C++.
 
 The program can be built using Clang on C++11 by running the `build.sh` script. This will output the program to `build/path-tracer`.
