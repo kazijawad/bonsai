@@ -17,7 +17,7 @@ vec3 ray_color(
     const ray& r,
     const vec3& background,
     const hittable& world,
-    std::shared_ptr<hittable>& lights,
+    std::shared_ptr<hittable> lights,
     int depth
 ) {
     if (depth <= 0) return vec3();
@@ -65,19 +65,13 @@ hittable_list scene() {
     world.add(std::make_shared<xzrect>(0, 555, 0, 555, 0, white));
     world.add(std::make_shared<xyrect>(0, 555, 0, 555, 555, white));
 
-    std::shared_ptr<material> aluminum = std::make_shared<metal>(vec3(0.8, 0.85, 0.88), 0.0);
-    std::shared_ptr<hittable> box1 = std::make_shared<box>(vec3(0, 0, 0), vec3(165, 330, 165), aluminum);
+    std::shared_ptr<hittable> box1 = std::make_shared<box>(vec3(0, 0, 0), vec3(165, 330, 165), white);
     box1 = std::make_shared<rotate_y>(box1, 15);
     box1 = std::make_shared<translate>(box1, vec3(265, 0, 295));
     world.add(box1);
 
-    std::shared_ptr<hittable> box2 = std::make_shared<box>(vec3(0, 0, 0), vec3(165, 165, 165), white);
-    box2 = std::make_shared<rotate_y>(box2, -18);
-    box2 = std::make_shared<translate>(box2, vec3(130, 0, 65));
-    world.add(box2);
-
-    // auto glass = std::make_shared<dielectric>(1.5);
-    // world.add(std::make_shared<sphere>(vec3(190, 90, 190), 90, glass));
+    auto glass = std::make_shared<dielectric>(1.5);
+    world.add(std::make_shared<sphere>(vec3(190, 90, 190), 90, glass));
 
     return world;
 }
@@ -87,17 +81,17 @@ int main() {
     const auto aspect_ratio = 1.0;
     const int image_width = 600;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 1000;
+    const int samples_per_pixel = 500;
     const int max_depth = 50;
 
     // World
     auto world = bvh_node(scene(), 0, 1);
     auto background = vec3(0.0, 0.0, 0.0);
-    std::shared_ptr<hittable> lights = std::make_shared<xzrect>(213, 343, 227, 332, 554, std::shared_ptr<material>());
 
-    // auto lights = std::make_shared<hittable_list>();
-    // lights->add(std::make_shared<xzrect>(213, 343, 227, 332, 554, std::shared_ptr<material>()));
-    // lights->add(std::make_shared<sphere>(vec3(190, 90, 190), 90, std::shared_ptr<material>()));
+    // Lighting
+    auto lights = std::make_shared<hittable_list>();
+    lights->add(std::make_shared<xzrect>(213, 343, 227, 332, 554, std::shared_ptr<material>()));
+    lights->add(std::make_shared<sphere>(vec3(190, 90, 190), 90, std::shared_ptr<material>()));
 
     // Camera
     auto position = vec3(278, 278, -800);
