@@ -1,12 +1,8 @@
-# Path Tracer
+# Pat
 
 ![Cornell Box Render](/assets/cornell.png)
 
-A toy path tracer written in C++.
-
-The program can be built using Clang on C++11 by running the `build.sh` script. This will output the program to `build/path-tracer`.
-
-The `run.sh` script can be used to run the path tracer on the existing scene. It will output the scene into a `PPM` file under the `dist` directory.
+A toy path tracer built on top of WebGPU.
 
 # Features
 
