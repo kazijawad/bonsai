@@ -8,6 +8,12 @@ struct VertexOutput {
     @location(0) uv: vec2<f32>
 }
 
+@group(0) @binding(0)
+var t_scene: texture_2d<f32>;
+
+@group(0) @binding(1)
+var s_scene: sampler;
+
 @vertex
 fn vs_main(vertex_input: VertexInput) -> VertexOutput {
     var out: VertexOutput;
@@ -18,5 +24,5 @@ fn vs_main(vertex_input: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(vertex_output: VertexOutput) -> @location(0) vec4<f32> {
-    return vec4<f32>(vertex_output.uv, 0.0, 1.0);
+    return textureSample(t_scene, s_scene, vertex_output.uv);
 }
