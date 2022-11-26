@@ -1,14 +1,11 @@
 [package]
 name = "pat"
 version = "0.1.0"
+authors = ["Kazi Jawad"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-winit = "0.27.5"
-wgpu = "0.14.0"
-pollster = "0.2.5"
-log = "0.4.17"
-env_logger = "0.9.1"
-bytemuck = { version = "1.12.2", features = ["derive"] }
+rand = "0.8.5"
+image = "0.24.5"

@@ -1,8 +1,6 @@
 # Pat
 
-![Cornell Box Render](/assets/cornell.png)
-
-A toy path tracer built on top of WebGPU.
+A physically-based path tracer.
 
 # Features
 
@@ -11,7 +9,6 @@ A toy path tracer built on top of WebGPU.
 - Motion Blur
 - Bounding Volume Hierarchies
 - Importance Sampling
-- Basic Volume Rendering
 
 # References
 
