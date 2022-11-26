@@ -1,3 +1,5 @@
+use std::fs;
+
 use image::{imageops, ImageBuffer, Rgb, RgbImage};
 
 use crate::Vec3;
@@ -45,11 +47,13 @@ impl Film {
         // TODO: Find better way to handle this.
         self.buffer = imageops::rotate180(&self.buffer);
 
+        fs::create_dir("./dist").expect("Failed to create output directory");
+
         self.buffer
-            .save("output.png")
+            .save("dist/output.png")
             .expect("Failed to save PNG file");
 
-        println!("Image Location: output.png");
+        println!("Image Location: dist/output.png");
     }
 
     pub fn get_srgb_color(&self, sample: &Vec3) -> [u8; 3] {
