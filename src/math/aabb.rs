@@ -29,7 +29,7 @@ impl AABB {
         Self { min, max }
     }
 
-    pub fn hit(&self, ray: &Ray, mut t_min: f32, mut t_max: f32) -> bool {
+    pub fn intersect(&self, ray: &Ray, mut t_min: f32, mut t_max: f32) -> bool {
         for a in 0..3 {
             let inverse_direction = 1.0 / ray.direction[a];
             let mut t0 = (self.min[a] - ray.origin[a]) * inverse_direction;

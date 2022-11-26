@@ -1,4 +1,7 @@
+use std::time::Instant;
+
 use rand::{rngs::StdRng, Rng, SeedableRng};
+use rayon::prelude::*;
 
 use crate::{camera::Camera, film::Film, math::vec3::Vec3, object::Object, ray::Ray, Scene};
 
@@ -27,8 +30,6 @@ impl<'a> Renderer<'a> {
         camera: &'a Camera,
         lights: &'a Scene,
     ) -> Self {
-        println!("Initializing Renderer...");
-        println!("Render Settings:");
         println!("Aspect Ratio: {}", camera.settings.aspect_ratio);
         println!("Width: {}", settings.width);
         println!("Height: {}", settings.height);
@@ -51,19 +52,26 @@ impl<'a> Renderer<'a> {
     }
 
     fn sample(&mut self) {
-        let mut rng = StdRng::from_entropy();
+        let render_time = Instant::now();
 
-        for y in (0..self.settings.height).rev() {
-            for x in 0..self.settings.width {
-                let mut color = Vec3::zeros();
-                for _ in 0..self.settings.max_sample_count {
-                    color += self.get_color(x, y, &mut rng);
-                }
-                self.film.add_sample(x, y, color);
-            }
-        }
+        let samples: Vec<_> = (0..self.settings.height)
+            .map(|y| {
+                (0..self.settings.width)
+                    .into_par_iter()
+                    .map(|x| {
+                        let mut rng = StdRng::from_entropy();
+                        let mut color = Vec3::zeros();
+                        for _ in 0..self.settings.max_sample_count {
+                            color += self.get_color(x, y, &mut rng);
+                        }
+                        color
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .collect();
 
-        println!("Finished rendering...");
+        println!("Render Time: {:.2?}", render_time.elapsed());
+        self.film.add_samples(samples);
     }
 
     fn get_color(&self, x: u32, y: u32, mut rng: &mut StdRng) -> Vec3 {
@@ -82,7 +90,7 @@ impl<'a> Renderer<'a> {
             return Vec3::zeros();
         }
 
-        match self.scene.hit(&ray, 0.0, f32::INFINITY) {
+        match self.scene.intersect(&ray, 0.0, f32::INFINITY) {
             Some(hit_record) => {
                 let emitted = hit_record.material.emitted(&ray, &hit_record);
 

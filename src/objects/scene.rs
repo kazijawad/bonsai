@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::any::Any;
 
 use rand::{rngs::StdRng, Rng, SeedableRng};
 
@@ -10,7 +10,7 @@ use crate::{
 };
 
 pub struct Scene {
-    objects: Vec<Rc<dyn Object>>,
+    objects: Vec<Box<dyn Object>>,
 }
 
 impl Scene {
@@ -18,39 +18,33 @@ impl Scene {
         Self { objects: vec![] }
     }
 
-    pub fn add(&mut self, object: Rc<dyn Object>) {
-        self.objects.push(Rc::clone(&object));
+    pub fn add<T: Object + 'static>(&mut self, object: T) {
+        self.objects.push(Box::new(object));
     }
 
-    pub fn remove(&mut self, object: Rc<dyn Object>) {
+    pub fn remove<T: Object + 'static>(&mut self, object: T) {
         let index = self
             .objects
             .iter()
-            .position(|element| Rc::ptr_eq(element, &object))
+            .position(|element| element.type_id() == object.type_id())
             .unwrap();
         self.objects.remove(index);
     }
 }
 
 impl Object for Scene {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
-        let mut hit_record = HitRecord::new();
-        let mut hit_anything = false;
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+        let mut hit_record: Option<HitRecord> = None;
         let mut closest_so_far = t_max;
 
         for object in self.objects.iter() {
-            if let Some(object_hit_record) = object.hit(ray, t_min, closest_so_far) {
-                hit_record.copy_from(&object_hit_record);
-                closest_so_far = hit_record.t;
-                hit_anything = true;
+            if let Some(object_hit_record) = object.intersect(ray, t_min, closest_so_far) {
+                hit_record = Some(object_hit_record.clone());
+                closest_so_far = object_hit_record.t;
             }
         }
 
-        if hit_anything {
-            Some(hit_record)
-        } else {
-            None
-        }
+        hit_record
     }
 
     fn bounding_box(&self, start_time: f32, end_time: f32) -> Option<AABB> {

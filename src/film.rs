@@ -33,15 +33,23 @@ impl Film {
         self.buffer.put_pixel(x, y, Rgb(color));
     }
 
-    pub fn write_image(&mut self) {
-        println!("Writing image...");
+    pub fn add_samples(&mut self, samples: Vec<Vec<Vec3>>) {
+        for (y, row) in samples.iter().enumerate() {
+            for (x, color) in row.iter().enumerate() {
+                self.add_sample(x as u32, y as u32, *color);
+            }
+        }
+    }
 
+    pub fn write_image(&mut self) {
         // TODO: Find better way to handle this.
         self.buffer = imageops::rotate180(&self.buffer);
 
         self.buffer
             .save("output.png")
             .expect("Failed to save PNG file");
+
+        println!("Image Location: output.png");
     }
 
     pub fn get_srgb_color(&self, sample: &Vec3) -> [u8; 3] {

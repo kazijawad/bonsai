@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crate::{
     material::Material,
     math::{aabb::AABB, onb::OrthonormalBasis, vec3::Vec3},
@@ -10,15 +8,15 @@ use crate::{
 pub struct Sphere {
     center: Vec3,
     radius: f32,
-    material: Rc<dyn Material>,
+    material: Box<dyn Material + Send + Sync>,
 }
 
 impl Sphere {
-    pub fn new(center: &Vec3, radius: f32, material: Rc<dyn Material>) -> Self {
+    pub fn new<T: Material + 'static>(center: &Vec3, radius: f32, material: T) -> Self {
         Self {
             center: center.clone(),
             radius,
-            material,
+            material: Box::new(material),
         }
     }
 
@@ -33,7 +31,7 @@ impl Sphere {
 }
 
 impl Object for Sphere {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
         let offset = ray.origin - self.center;
         let a = ray.direction.length_squared();
         let half_b = Vec3::dot(&offset, &ray.direction);
@@ -53,17 +51,20 @@ impl Object for Sphere {
             }
         }
 
-        let mut hit_record = HitRecord::new();
-        hit_record.t = root;
-        hit_record.position = ray.at(hit_record.t);
-
-        let outward_normal = (hit_record.position - self.center) / self.radius;
-        hit_record.set_face_normal(ray, &outward_normal);
-
+        let position = ray.at(root);
+        let outward_normal = (position - self.center) / self.radius;
         let uv = self.get_sphere_uv(&outward_normal);
-        hit_record.u = uv.0;
-        hit_record.v = uv.1;
-        hit_record.material = Rc::clone(&self.material);
+
+        let mut hit_record = HitRecord::new(
+            position,
+            Vec3::zeros(),
+            self.material.clone(),
+            root,
+            uv.0,
+            uv.1,
+            false,
+        );
+        hit_record.set_face_normal(ray, &outward_normal);
 
         Some(hit_record)
     }
@@ -76,7 +77,7 @@ impl Object for Sphere {
     }
 
     fn pdf_value(&self, origin: &Vec3, direction: &Vec3) -> f32 {
-        if let None = self.hit(&Ray::new(origin, direction, 0.0), 0.001, f32::INFINITY) {
+        if let None = self.intersect(&Ray::new(origin, direction, 0.0), 0.001, f32::INFINITY) {
             return 0.0;
         }
 

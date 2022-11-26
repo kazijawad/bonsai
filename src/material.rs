@@ -28,7 +28,7 @@ impl ScatterRecord {
     }
 }
 
-pub trait Material {
+pub trait Material: Send + Sync {
     fn emitted(&self, _ray: &Ray, _hit_record: &HitRecord) -> Vec3 {
         Vec3::zeros()
     }
@@ -40,10 +40,18 @@ pub trait Material {
     fn scattering_pdf(&self, _ray: &Ray, _scattered_ray: &Ray, _hit_record: &HitRecord) -> f32 {
         0.0
     }
+
+    fn clone_dyn(&self) -> Box<dyn Material + Send + Sync>;
 }
 
 pub struct LambertianMaterial {
     map: Box<dyn Texture>,
+}
+
+impl Clone for Box<dyn Material + Send + Sync> {
+    fn clone(&self) -> Self {
+        self.clone_dyn()
+    }
 }
 
 impl LambertianMaterial {
@@ -72,6 +80,18 @@ impl Material for LambertianMaterial {
             0.0
         } else {
             cosine / std::f32::consts::PI
+        }
+    }
+
+    fn clone_dyn(&self) -> Box<dyn Material + Send + Sync> {
+        Box::new(self.clone())
+    }
+}
+
+impl Clone for LambertianMaterial {
+    fn clone(&self) -> Self {
+        Self {
+            map: self.map.clone(),
         }
     }
 }

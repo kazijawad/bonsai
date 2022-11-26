@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use pat::*;
 
 fn main() {
@@ -14,10 +12,10 @@ fn main() {
     let sphere = Sphere::new(
         &Vec3::zeros(),
         5.0,
-        Rc::new(LambertianMaterial::new(&Vec3::new(0.8, 0.5, 0.5))),
+        LambertianMaterial::new(&Vec3::new(0.8, 0.5, 0.5)),
     );
 
-    scene.add(Rc::new(sphere));
+    scene.add(sphere);
 
     // Lights
     let lights = Scene::new();

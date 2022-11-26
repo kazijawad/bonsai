@@ -1,15 +1,26 @@
-use std::rc::Rc;
-
 use crate::{
-    material::{LambertianMaterial, Material},
+    material::Material,
     math::{aabb::AABB, vec3::Vec3},
     ray::Ray,
 };
 
+pub trait Object: Send + Sync {
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord>;
+    fn bounding_box(&self, start_time: f32, end_time: f32) -> Option<AABB>;
+
+    fn pdf_value(&self, _origin: &Vec3, _direction: &Vec3) -> f32 {
+        0.0
+    }
+
+    fn random(&self, _origin: &Vec3) -> Vec3 {
+        Vec3::new(1.0, 0.0, 0.0)
+    }
+}
+
 pub struct HitRecord {
     pub position: Vec3,
     pub normal: Vec3,
-    pub material: Rc<dyn Material>,
+    pub material: Box<dyn Material + Send + Sync>,
     pub t: f32,
     pub u: f32,
     pub v: f32,
@@ -17,15 +28,23 @@ pub struct HitRecord {
 }
 
 impl HitRecord {
-    pub fn new() -> Self {
+    pub fn new(
+        position: Vec3,
+        normal: Vec3,
+        material: Box<dyn Material + Send + Sync>,
+        t: f32,
+        u: f32,
+        v: f32,
+        is_front_face: bool,
+    ) -> Self {
         Self {
-            position: Vec3::zeros(),
-            normal: Vec3::zeros(),
-            material: Rc::new(LambertianMaterial::new(&Vec3::zeros())),
-            t: 0.0,
-            u: 0.0,
-            v: 0.0,
-            is_front_face: true,
+            position,
+            normal,
+            material,
+            t,
+            u,
+            v,
+            is_front_face,
         }
     }
 
@@ -37,27 +56,18 @@ impl HitRecord {
             -outward_normal.clone()
         };
     }
-
-    pub fn copy_from(&mut self, new_record: &Self) {
-        self.position = new_record.position;
-        self.normal = new_record.normal;
-        self.material = Rc::clone(&new_record.material);
-        self.t = new_record.t;
-        self.u = new_record.u;
-        self.v = new_record.v;
-        self.is_front_face = new_record.is_front_face;
-    }
 }
 
-pub trait Object {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord>;
-    fn bounding_box(&self, start_time: f32, end_time: f32) -> Option<AABB>;
-
-    fn pdf_value(&self, _origin: &Vec3, _direction: &Vec3) -> f32 {
-        0.0
-    }
-
-    fn random(&self, _origin: &Vec3) -> Vec3 {
-        Vec3::new(1.0, 0.0, 0.0)
+impl Clone for HitRecord {
+    fn clone(&self) -> Self {
+        Self {
+            position: self.position,
+            normal: self.normal,
+            material: self.material.clone(),
+            t: self.t,
+            u: self.u,
+            v: self.v,
+            is_front_face: self.is_front_face,
+        }
     }
 }

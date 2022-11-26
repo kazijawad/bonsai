@@ -4,6 +4,7 @@ A physically-based path tracer.
 
 # Features
 
+- Parallel Rendering
 - Antialiasing
 - Depth of Field
 - Motion Blur
