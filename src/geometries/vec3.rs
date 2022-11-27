@@ -1,22 +1,17 @@
 use std::ops;
 
-use num::traits::{cast, Signed};
-
-use crate::geometries::point3::Point3;
+use crate::geometries::{normal::Normal, point3::Point3};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Vec3<T> {
-    pub x: T,
-    pub y: T,
-    pub z: T,
+pub struct Vec3 {
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
 }
 
-pub type Vec3D = Vec3<f64>;
-pub type Vec3F = Vec3<f32>;
-pub type Vec3I = Vec3<i32>;
-
-impl<T: Copy + PartialOrd + Signed + cast::AsPrimitive<f32> + cast::AsPrimitive<f64>> Vec3<T> {
-    pub fn new(x: T, y: T, z: T) -> Self {
+impl Vec3 {
+    pub fn new(x: f32, y: f32, z: f32) -> Self {
+        debug_assert!(!x.is_nan() && !y.is_nan() && !z.is_nan());
         Self { x, y, z }
     }
 
@@ -28,7 +23,7 @@ impl<T: Copy + PartialOrd + Signed + cast::AsPrimitive<f32> + cast::AsPrimitive<
         }
     }
 
-    pub fn coordinate_system(v1: &Vec3D) -> (Vec3D, Vec3D) {
+    pub fn coordinate_system(v1: &Self) -> (Self, Self) {
         let v2 = if v1.x.abs() > v1.y.abs() {
             Vec3::new(-v1.z, 0.0, v1.x) / (v1.x * v1.x + v1.z * v1.z).sqrt()
         } else {
@@ -38,36 +33,34 @@ impl<T: Copy + PartialOrd + Signed + cast::AsPrimitive<f32> + cast::AsPrimitive<
         (v2, v3)
     }
 
-    pub fn dot(v: &Self, w: &Self) -> T {
+    pub fn dot(v: &Self, w: &Self) -> f32 {
+        debug_assert!(!v.is_nan() && !w.is_nan());
         v.x * w.x + v.y * w.y + v.z * w.z
     }
 
-    pub fn cross(v: &Self, w: &Self) -> Vec3D {
-        let vx: f64 = v.x.as_();
-        let vy: f64 = v.y.as_();
-        let vz: f64 = v.z.as_();
+    pub fn abs_dot(v: &Self, w: &Self) -> f32 {
+        debug_assert!(!v.is_nan() && !w.is_nan());
+        Self::dot(v, w).abs()
+    }
 
-        let wx: f64 = w.x.as_();
-        let wy: f64 = w.y.as_();
-        let wz: f64 = w.z.as_();
+    pub fn cross(v: &Self, w: &Self) -> Self {
+        let vx: f64 = v.x.into();
+        let vy: f64 = v.y.into();
+        let vz: f64 = v.z.into();
 
-        Vec3D {
-            x: vy * wz - vz * wy,
-            y: vz * wx - vx * wz,
-            z: vx * wy - vy * wx,
+        let wx: f64 = w.x.into();
+        let wy: f64 = w.y.into();
+        let wz: f64 = w.z.into();
+
+        Self {
+            x: (vy * wz - vz * wy) as f32,
+            y: (vz * wx - vx * wz) as f32,
+            z: (vx * wy - vy * wx) as f32,
         }
     }
 
-    pub fn normalize(v: &Self) -> Vec3F {
-        let vx: f32 = v.x.as_();
-        let vy: f32 = v.y.as_();
-        let vz: f32 = v.z.as_();
-        let v_length = v.length();
-        Vec3F {
-            x: vx / v_length,
-            y: vy / v_length,
-            z: vz / v_length,
-        }
+    pub fn normalize(v: &Self) -> Self {
+        v / v.length()
     }
 
     pub fn abs(v: &Self) -> Self {
@@ -78,50 +71,28 @@ impl<T: Copy + PartialOrd + Signed + cast::AsPrimitive<f32> + cast::AsPrimitive<
         }
     }
 
-    pub fn abs_dot(v: &Self, w: &Self) -> T {
-        Self::dot(v, w).abs()
-    }
-
     pub fn min(v: &Self, w: &Self) -> Self {
-        let x = if v.x < w.x { v.x } else { w.x };
-        let y = if v.y < w.y { v.y } else { w.y };
-        let z = if v.z < w.z { v.z } else { w.z };
-        Self { x, y, z }
+        Self {
+            x: v.x.min(w.x),
+            y: v.y.min(w.y),
+            z: v.z.min(w.z),
+        }
     }
 
     pub fn max(v: &Self, w: &Self) -> Self {
-        let x = if v.x > w.x { v.x } else { w.x };
-        let y = if v.y > w.y { v.y } else { w.y };
-        let z = if v.z > w.z { v.z } else { w.z };
-        Self { x, y, z }
-    }
-
-    pub fn min_component(v: &Self) -> T {
-        if v.x < v.y {
-            if v.x < v.z {
-                v.x
-            } else {
-                v.z
-            }
-        } else if v.y < v.z {
-            v.y
-        } else {
-            v.z
+        Self {
+            x: v.x.max(w.x),
+            y: v.y.max(w.y),
+            z: v.z.max(w.z),
         }
     }
 
-    pub fn max_component(v: &Self) -> T {
-        if v.x > v.y {
-            if v.x > v.z {
-                v.x
-            } else {
-                v.z
-            }
-        } else if v.y > v.z {
-            v.y
-        } else {
-            v.z
-        }
+    pub fn min_component(v: &Self) -> f32 {
+        v.x.min(v.y.min(v.z))
+    }
+
+    pub fn max_component(v: &Self) -> f32 {
+        v.x.max(v.y.max(v.z))
     }
 
     pub fn max_dimension(v: &Self) -> usize {
@@ -138,17 +109,20 @@ impl<T: Copy + PartialOrd + Signed + cast::AsPrimitive<f32> + cast::AsPrimitive<
         }
     }
 
-    pub fn length_squared(&self) -> T {
+    pub fn length_squared(&self) -> f32 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
 
     pub fn length(&self) -> f32 {
-        let squared_length: f32 = self.length_squared().as_();
-        squared_length.sqrt()
+        self.length_squared().sqrt()
+    }
+
+    pub fn is_nan(&self) -> bool {
+        self.x.is_nan() || self.y.is_nan() || self.z.is_nan()
     }
 }
 
-impl Default for Vec3D {
+impl Default for Vec3 {
     fn default() -> Self {
         Self {
             x: 0.0,
@@ -158,24 +132,8 @@ impl Default for Vec3D {
     }
 }
 
-impl Default for Vec3F {
-    fn default() -> Self {
-        Self {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-        }
-    }
-}
-
-impl Default for Vec3I {
-    fn default() -> Self {
-        Self { x: 0, y: 0, z: 0 }
-    }
-}
-
-impl<T> From<Point3<T>> for Vec3<T> {
-    fn from(point: Point3<T>) -> Self {
+impl From<Point3> for Vec3 {
+    fn from(point: Point3) -> Self {
         Self {
             x: point.x,
             y: point.y,
@@ -184,11 +142,21 @@ impl<T> From<Point3<T>> for Vec3<T> {
     }
 }
 
-impl<T: ops::Add<Output = T>> ops::Add for Vec3<T> {
+impl From<Normal> for Vec3 {
+    fn from(normal: Normal) -> Self {
+        Self {
+            x: normal.x,
+            y: normal.y,
+            z: normal.z,
+        }
+    }
+}
+
+impl ops::Add for Vec3 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
-        Self {
+        Self::Output {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
             z: self.z + rhs.z,
@@ -196,7 +164,7 @@ impl<T: ops::Add<Output = T>> ops::Add for Vec3<T> {
     }
 }
 
-impl<T: ops::AddAssign> ops::AddAssign for Vec3<T> {
+impl ops::AddAssign for Vec3 {
     fn add_assign(&mut self, rhs: Self) {
         self.x += rhs.x;
         self.y += rhs.y;
@@ -204,11 +172,11 @@ impl<T: ops::AddAssign> ops::AddAssign for Vec3<T> {
     }
 }
 
-impl<T: ops::Sub<Output = T>> ops::Sub for Vec3<T> {
+impl ops::Sub for Vec3 {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        Self {
+        Self::Output {
             x: self.x - rhs.x,
             y: self.y - rhs.y,
             z: self.z - rhs.z,
@@ -216,7 +184,7 @@ impl<T: ops::Sub<Output = T>> ops::Sub for Vec3<T> {
     }
 }
 
-impl<T: ops::SubAssign> ops::SubAssign for Vec3<T> {
+impl ops::SubAssign for Vec3 {
     fn sub_assign(&mut self, rhs: Self) {
         self.x -= rhs.x;
         self.y -= rhs.y;
@@ -224,11 +192,11 @@ impl<T: ops::SubAssign> ops::SubAssign for Vec3<T> {
     }
 }
 
-impl<T: Copy + ops::Mul<Output = T>> ops::Mul<T> for Vec3<T> {
+impl ops::Mul<f32> for Vec3 {
     type Output = Self;
 
-    fn mul(self, rhs: T) -> Self::Output {
-        Self {
+    fn mul(self, rhs: f32) -> Self::Output {
+        Self::Output {
             x: self.x * rhs,
             y: self.y * rhs,
             z: self.z * rhs,
@@ -236,39 +204,57 @@ impl<T: Copy + ops::Mul<Output = T>> ops::Mul<T> for Vec3<T> {
     }
 }
 
-impl<T: Copy + ops::MulAssign> ops::MulAssign<T> for Vec3<T> {
-    fn mul_assign(&mut self, rhs: T) {
+impl ops::MulAssign<f32> for Vec3 {
+    fn mul_assign(&mut self, rhs: f32) {
         self.x *= rhs;
         self.y *= rhs;
         self.z *= rhs;
     }
 }
 
-impl<T: Copy + ops::Div<Output = T>> ops::Div<T> for Vec3<T> {
+impl ops::Div<f32> for Vec3 {
     type Output = Self;
 
-    fn div(self, rhs: T) -> Self::Output {
-        Self {
-            x: self.x / rhs,
-            y: self.y / rhs,
-            z: self.z / rhs,
+    fn div(self, rhs: f32) -> Self::Output {
+        debug_assert!(rhs != 0.0);
+        let inverse = 1.0 / rhs;
+        Self::Output {
+            x: self.x * inverse,
+            y: self.y * inverse,
+            z: self.z * inverse,
         }
     }
 }
 
-impl<T: Copy + ops::DivAssign> ops::DivAssign<T> for Vec3<T> {
-    fn div_assign(&mut self, rhs: T) {
-        self.x /= rhs;
-        self.y /= rhs;
-        self.z /= rhs;
+impl ops::Div<f32> for &Vec3 {
+    type Output = Vec3;
+
+    fn div(self, rhs: f32) -> Self::Output {
+        debug_assert!(rhs != 0.0);
+        let inverse = 1.0 / rhs;
+        Self::Output {
+            x: self.x * inverse,
+            y: self.y * inverse,
+            z: self.z * inverse,
+        }
     }
 }
 
-impl<T: ops::Neg<Output = T>> ops::Neg for Vec3<T> {
+impl ops::DivAssign<f32> for Vec3 {
+    fn div_assign(&mut self, rhs: f32) {
+        debug_assert!(rhs != 0.0);
+        let inverse = 1.0 / rhs;
+        self.x *= inverse;
+        self.y *= inverse;
+        self.z *= inverse;
+    }
+}
+
+impl ops::Neg for Vec3 {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        Self {
+        Self::Output {
             x: -self.x,
             y: -self.y,
             z: -self.z,
@@ -276,8 +262,8 @@ impl<T: ops::Neg<Output = T>> ops::Neg for Vec3<T> {
     }
 }
 
-impl<T> ops::Index<u32> for Vec3<T> {
-    type Output = T;
+impl ops::Index<u32> for Vec3 {
+    type Output = f32;
 
     fn index(&self, index: u32) -> &Self::Output {
         assert!(index <= 2);
