@@ -82,6 +82,10 @@ impl Point3 {
     pub fn length(&self) -> f32 {
         self.length_squared().sqrt()
     }
+
+    pub fn is_nan(&self) -> bool {
+        self.x.is_nan() || self.y.is_nan() || self.z.is_nan()
+    }
 }
 
 impl Default for Point3 {
