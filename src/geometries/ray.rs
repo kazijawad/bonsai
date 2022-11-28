@@ -1,5 +1,6 @@
 use crate::geometries::{point3::Point3, vec3::Vec3};
 
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Ray {
     pub origin: Point3,
     pub direction: Vec3,
@@ -7,6 +8,7 @@ pub struct Ray {
     pub time: f32,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct RayDifferential {
     pub origin: Point3,
     pub direction: Vec3,

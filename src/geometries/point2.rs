@@ -68,7 +68,7 @@ impl ops::AddAssign for Point2 {
 }
 
 impl ops::Sub for Point2 {
-    type Output = Self;
+    type Output = Vec2;
 
     fn sub(self, rhs: Self) -> Self::Output {
         Self::Output {
