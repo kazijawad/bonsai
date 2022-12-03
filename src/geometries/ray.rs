@@ -1,4 +1,7 @@
-use crate::geometries::{point3::Point3, vec3::Vec3};
+use crate::{
+    geometries::{point3::Point3, vec3::Vec3},
+    medium::Medium,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Ray {
@@ -6,6 +9,7 @@ pub struct Ray {
     pub direction: Vec3,
     pub t_max: f32,
     pub time: f32,
+    pub medium: Option<Medium>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -14,6 +18,7 @@ pub struct RayDifferential {
     pub direction: Vec3,
     pub t_max: f32,
     pub time: f32,
+    pub medium: Option<Medium>,
     pub rx_origin: Point3,
     pub ry_origin: Point3,
     pub rx_direction: Vec3,
@@ -22,12 +27,19 @@ pub struct RayDifferential {
 }
 
 impl Ray {
-    pub fn new(origin: &Point3, direction: &Vec3, t_max: f32, time: f32) -> Self {
+    pub fn new(
+        origin: &Point3,
+        direction: &Vec3,
+        t_max: f32,
+        time: f32,
+        medium: Option<Medium>,
+    ) -> Self {
         Self {
             origin: origin.clone(),
             direction: direction.clone(),
             t_max,
             time,
+            medium,
         }
     }
 
@@ -41,12 +53,19 @@ impl Ray {
 }
 
 impl RayDifferential {
-    pub fn new(origin: &Point3, direction: &Vec3, t_max: f32, time: f32) -> Self {
+    pub fn new(
+        origin: &Point3,
+        direction: &Vec3,
+        t_max: f32,
+        time: f32,
+        medium: Option<Medium>,
+    ) -> Self {
         Self {
             origin: origin.clone(),
             direction: direction.clone(),
             t_max,
             time,
+            medium,
             rx_origin: Point3::default(),
             ry_origin: Point3::default(),
             rx_direction: Vec3::default(),
@@ -78,6 +97,7 @@ impl Default for Ray {
             direction: Vec3::default(),
             t_max: f32::INFINITY,
             time: 0.0,
+            medium: None,
         }
     }
 }
@@ -89,11 +109,26 @@ impl Default for RayDifferential {
             direction: Vec3::default(),
             t_max: f32::INFINITY,
             time: 0.0,
+            medium: None,
             rx_origin: Point3::default(),
             ry_origin: Point3::default(),
             rx_direction: Vec3::default(),
             ry_direction: Vec3::default(),
             has_differentials: false,
+        }
+    }
+}
+
+// TYPE CONVERSION
+
+impl From<RayDifferential> for Ray {
+    fn from(r: RayDifferential) -> Self {
+        Self {
+            origin: r.origin,
+            direction: r.direction,
+            t_max: r.t_max,
+            time: r.time,
+            medium: r.medium,
         }
     }
 }
@@ -105,6 +140,7 @@ impl From<Ray> for RayDifferential {
             direction: r.direction,
             t_max: r.t_max,
             time: r.time,
+            medium: r.medium,
             rx_origin: Point3::default(),
             ry_origin: Point3::default(),
             rx_direction: Vec3::default(),

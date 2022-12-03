@@ -15,64 +15,16 @@ impl Point3 {
         Self { x, y, z }
     }
 
-    pub fn permute(v: &Self, x: u32, y: u32, z: u32) -> Self {
-        Self {
-            x: v[x],
-            y: v[y],
-            z: v[z],
-        }
-    }
-
     pub fn lerp(t: f32, a: &Self, b: &Self) -> Self {
         (1.0 - t) * a + t * b
     }
 
-    pub fn distance_squared(a: &Self, b: &Self) -> f32 {
-        (a - b).length_squared()
+    pub fn distance_squared(&self, p: &Self) -> f32 {
+        (self - p).length_squared()
     }
 
-    pub fn distance(a: &Self, b: &Self) -> f32 {
-        (a - b).length()
-    }
-
-    pub fn abs(v: &Self) -> Self {
-        Self {
-            x: v.x.abs(),
-            y: v.y.abs(),
-            z: v.z.abs(),
-        }
-    }
-
-    pub fn floor(p: &Self) -> Self {
-        Self {
-            x: p.x.floor(),
-            y: p.y.floor(),
-            z: p.z.floor(),
-        }
-    }
-
-    pub fn ceil(p: &Self) -> Self {
-        Self {
-            x: p.x.ceil(),
-            y: p.y.ceil(),
-            z: p.z.ceil(),
-        }
-    }
-
-    pub fn min(v: &Self, w: &Self) -> Self {
-        Self {
-            x: v.x.min(w.x),
-            y: v.y.min(w.y),
-            z: v.z.min(w.z),
-        }
-    }
-
-    pub fn max(v: &Self, w: &Self) -> Self {
-        Self {
-            x: v.x.max(w.x),
-            y: v.y.max(w.y),
-            z: v.z.max(w.z),
-        }
+    pub fn distance(&self, p: &Self) -> f32 {
+        (self - p).length()
     }
 
     pub fn length_squared(&self) -> f32 {
@@ -81,6 +33,30 @@ impl Point3 {
 
     pub fn length(&self) -> f32 {
         self.length_squared().sqrt()
+    }
+
+    pub fn floor(&self) -> Self {
+        Self::new(self.x.floor(), self.y.floor(), self.z.floor())
+    }
+
+    pub fn ceil(&self) -> Self {
+        Self::new(self.x.ceil(), self.y.ceil(), self.z.floor())
+    }
+
+    pub fn min(&self, p: &Self) -> Self {
+        Self::new(self.x.min(p.x), self.y.min(p.y), self.z.min(p.z))
+    }
+
+    pub fn max(&self, p: &Self) -> Self {
+        Self::new(self.x.max(p.x), self.y.max(p.y), self.z.max(p.z))
+    }
+
+    pub fn abs(&self) -> Self {
+        Self::new(self.x.abs(), self.y.abs(), self.z.abs())
+    }
+
+    pub fn permute(&self, x: u32, y: u32, z: u32) -> Self {
+        Self::new(self[x], self[y], self[z])
     }
 
     pub fn is_nan(&self) -> bool {
@@ -98,6 +74,8 @@ impl Default for Point3 {
     }
 }
 
+// TYPE CONVERSION
+
 impl From<Vec3> for Point3 {
     fn from(v: Vec3) -> Self {
         Self {
@@ -108,8 +86,22 @@ impl From<Vec3> for Point3 {
     }
 }
 
+// ADDITION
+
 impl ops::Add for Point3 {
     type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self::Output {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+            z: self.z + rhs.z,
+        }
+    }
+}
+
+impl ops::Add for &Point3 {
+    type Output = Point3;
 
     fn add(self, rhs: Self) -> Self::Output {
         Self::Output {
@@ -124,6 +116,18 @@ impl ops::Add<Vec3> for Point3 {
     type Output = Self;
 
     fn add(self, rhs: Vec3) -> Self::Output {
+        Self::Output {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+            z: self.z + rhs.z,
+        }
+    }
+}
+
+impl ops::Add<&Vec3> for &Point3 {
+    type Output = Point3;
+
+    fn add(self, rhs: &Vec3) -> Self::Output {
         Self::Output {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
@@ -148,6 +152,8 @@ impl ops::AddAssign<Vec3> for Point3 {
     }
 }
 
+// SUBTRACTION
+
 impl ops::Sub for Point3 {
     type Output = Vec3;
 
@@ -160,7 +166,7 @@ impl ops::Sub for Point3 {
     }
 }
 
-impl ops::Sub<&Point3> for &Point3 {
+impl ops::Sub for &Point3 {
     type Output = Vec3;
 
     fn sub(self, rhs: &Point3) -> Self::Output {
@@ -184,6 +190,18 @@ impl ops::Sub<Vec3> for Point3 {
     }
 }
 
+impl ops::Sub<&Vec3> for &Point3 {
+    type Output = Point3;
+
+    fn sub(self, rhs: &Vec3) -> Self::Output {
+        Self::Output {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+            z: self.z - rhs.z,
+        }
+    }
+}
+
 impl ops::SubAssign for Point3 {
     fn sub_assign(&mut self, rhs: Self) {
         self.x -= rhs.x;
@@ -199,6 +217,8 @@ impl ops::SubAssign<Vec3> for Point3 {
         self.z -= rhs.z;
     }
 }
+
+// MULTIPLICATION
 
 impl ops::Mul<f32> for Point3 {
     type Output = Self;
@@ -224,15 +244,19 @@ impl ops::Mul<f32> for &Point3 {
     }
 }
 
+impl ops::Mul<Point3> for f32 {
+    type Output = Point3;
+
+    fn mul(self, rhs: Point3) -> Self::Output {
+        rhs * self
+    }
+}
+
 impl ops::Mul<&Point3> for f32 {
     type Output = Point3;
 
     fn mul(self, rhs: &Point3) -> Self::Output {
-        Self::Output {
-            x: self * rhs.x,
-            y: self * rhs.y,
-            z: self * rhs.z,
-        }
+        rhs * self
     }
 }
 
@@ -244,8 +268,24 @@ impl ops::MulAssign<f32> for Point3 {
     }
 }
 
+// DIVISION
+
 impl ops::Div<f32> for Point3 {
     type Output = Self;
+
+    fn div(self, rhs: f32) -> Self::Output {
+        debug_assert!(rhs != 0.0);
+        let inverse = 1.0 / rhs;
+        Self::Output {
+            x: self.x * inverse,
+            y: self.y * inverse,
+            z: self.z * inverse,
+        }
+    }
+}
+
+impl ops::Div<f32> for &Point3 {
+    type Output = Point3;
 
     fn div(self, rhs: f32) -> Self::Output {
         debug_assert!(rhs != 0.0);
@@ -268,6 +308,8 @@ impl ops::DivAssign<f32> for Point3 {
     }
 }
 
+// NEGATION
+
 impl ops::Neg for Point3 {
     type Output = Self;
 
@@ -279,6 +321,20 @@ impl ops::Neg for Point3 {
         }
     }
 }
+
+impl ops::Neg for &Point3 {
+    type Output = Point3;
+
+    fn neg(self) -> Self::Output {
+        Self::Output {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+        }
+    }
+}
+
+// INDEXING
 
 impl ops::Index<u32> for Point3 {
     type Output = f32;

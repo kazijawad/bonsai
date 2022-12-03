@@ -14,67 +14,30 @@ impl Vec2 {
         Self { x, y }
     }
 
-    pub fn permute(v: &Self, x: u32, y: u32) -> Self {
-        Self { x: v[x], y: v[y] }
-    }
-
-    pub fn dot(v: &Self, w: &Self) -> f32 {
-        debug_assert!(!v.is_nan() && !w.is_nan());
-        v.x * w.x + v.y * w.y
-    }
-
-    pub fn abs_dot(v: &Self, w: &Self) -> f32 {
-        debug_assert!(!v.is_nan() && !w.is_nan());
-        Self::dot(v, w).abs()
-    }
-
-    pub fn normalize(v: &Self) -> Self {
-        v / v.length()
-    }
-
-    pub fn abs(v: &Self) -> Self {
-        Self {
-            x: v.x.abs(),
-            y: v.y.abs(),
-        }
-    }
-
-    pub fn min(v: &Self, w: &Self) -> Self {
-        Self {
-            x: v.x.min(w.x),
-            y: v.y.min(w.y),
-        }
-    }
-
-    pub fn max(v: &Self, w: &Self) -> Self {
-        Self {
-            x: v.x.max(w.x),
-            y: v.y.max(w.y),
-        }
-    }
-
-    pub fn min_component(v: &Self) -> f32 {
-        v.x.min(v.y)
-    }
-
-    pub fn max_component(v: &Self) -> f32 {
-        v.x.max(v.y)
-    }
-
-    pub fn max_dimension(v: &Self) -> usize {
-        if v.x > v.y {
-            0
-        } else {
-            1
-        }
-    }
-
     pub fn length_squared(&self) -> f32 {
         self.x * self.x + self.y * self.y
     }
 
     pub fn length(&self) -> f32 {
         self.length_squared().sqrt()
+    }
+
+    pub fn dot(&self, v: &Self) -> f32 {
+        debug_assert!(!self.is_nan() && !v.is_nan());
+        self.x * v.x + self.y * v.y
+    }
+
+    pub fn abs_dot(&self, v: &Self) -> f32 {
+        debug_assert!(!self.is_nan() && !v.is_nan());
+        self.dot(v).abs()
+    }
+
+    pub fn normalize(&self) -> Self {
+        self / self.length()
+    }
+
+    pub fn abs(&self) -> Self {
+        Self::new(self.x.abs(), self.y.abs())
     }
 
     pub fn is_nan(&self) -> bool {
@@ -87,6 +50,8 @@ impl Default for Vec2 {
         Self { x: 0.0, y: 0.0 }
     }
 }
+
+// TYPE CONVERSION
 
 impl From<Point2> for Vec2 {
     fn from(point: Point2) -> Self {
@@ -108,8 +73,21 @@ impl From<Point3> for Vec2 {
     }
 }
 
+// ADDITION
+
 impl ops::Add for Vec2 {
     type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self::Output {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
+    }
+}
+
+impl ops::Add for &Vec2 {
+    type Output = Vec2;
 
     fn add(self, rhs: Self) -> Self::Output {
         Self::Output {
@@ -126,8 +104,21 @@ impl ops::AddAssign for Vec2 {
     }
 }
 
+// SUBTRACTION
+
 impl ops::Sub for Vec2 {
     type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self::Output {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+        }
+    }
+}
+
+impl ops::Sub for &Vec2 {
+    type Output = Vec2;
 
     fn sub(self, rhs: Self) -> Self::Output {
         Self::Output {
@@ -144,6 +135,8 @@ impl ops::SubAssign for Vec2 {
     }
 }
 
+// MULTIPLICATION
+
 impl ops::Mul<f32> for Vec2 {
     type Output = Self;
 
@@ -155,12 +148,41 @@ impl ops::Mul<f32> for Vec2 {
     }
 }
 
+impl ops::Mul<f32> for &Vec2 {
+    type Output = Vec2;
+
+    fn mul(self, rhs: f32) -> Self::Output {
+        Self::Output {
+            x: self.x * rhs,
+            y: self.y * rhs,
+        }
+    }
+}
+
+impl ops::Mul<Vec2> for f32 {
+    type Output = Vec2;
+
+    fn mul(self, rhs: Vec2) -> Self::Output {
+        rhs * self
+    }
+}
+
+impl ops::Mul<&Vec2> for f32 {
+    type Output = Vec2;
+
+    fn mul(self, rhs: &Vec2) -> Self::Output {
+        rhs * self
+    }
+}
+
 impl ops::MulAssign<f32> for Vec2 {
     fn mul_assign(&mut self, rhs: f32) {
         self.x *= rhs;
         self.y *= rhs;
     }
 }
+
+// DIVISION
 
 impl ops::Div<f32> for Vec2 {
     type Output = Self;
@@ -197,6 +219,8 @@ impl ops::DivAssign<f32> for Vec2 {
     }
 }
 
+// NEGATION
+
 impl ops::Neg for Vec2 {
     type Output = Self;
 
@@ -207,6 +231,19 @@ impl ops::Neg for Vec2 {
         }
     }
 }
+
+impl ops::Neg for &Vec2 {
+    type Output = Vec2;
+
+    fn neg(self) -> Self::Output {
+        Self::Output {
+            x: -self.x,
+            y: -self.y,
+        }
+    }
+}
+
+// INDEXING
 
 impl ops::Index<u32> for Vec2 {
     type Output = f32;

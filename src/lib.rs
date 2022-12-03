@@ -1,8 +1,10 @@
 mod camera;
 mod film;
+mod float;
 mod geometries;
 mod material;
 mod math;
+mod medium;
 mod object;
 mod objects;
 mod ray;

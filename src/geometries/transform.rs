@@ -1,6 +1,17 @@
-use crate::geometries::{
-    animated_transform::AnimatedTransform, mat4::Mat4, point3::Point3, quaternion::Quaternion,
-    vec3::Vec3,
+use std::{cmp::Ordering, ops};
+
+use crate::{
+    float,
+    geometries::{
+        animated_transform::AnimatedTransform,
+        bounds3::Bounds3,
+        mat4::Mat4,
+        normal::Normal,
+        point3::Point3,
+        quaternion::Quaternion,
+        ray::{Ray, RayDifferential},
+        vec3::Vec3,
+    },
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -19,6 +30,124 @@ impl Transform {
             animated_transform: None,
             quaternion: None,
         }
+    }
+
+    pub fn transform_point(&self, p: &Point3) -> Point3 {
+        let x = p.x;
+        let y = p.y;
+        let z = p.z;
+
+        let xp = self.m.m[0][0] * x + self.m.m[0][1] * y + self.m.m[0][2] * z + self.m.m[0][3];
+        let yp = self.m.m[1][0] * x + self.m.m[1][1] * y + self.m.m[1][2] * z + self.m.m[1][3];
+        let zp = self.m.m[2][0] * x + self.m.m[2][1] * y + self.m.m[2][2] * z + self.m.m[2][3];
+        let wp = self.m.m[3][0] * x + self.m.m[3][1] * y + self.m.m[3][2] * z + self.m.m[3][3];
+
+        if wp == 1.0 {
+            Point3::new(xp, yp, zp)
+        } else {
+            Point3::new(xp, yp, zp) / wp
+        }
+    }
+
+    pub fn transform_point_with_error(&self, p: &Point3, error: &mut Vec3) -> Point3 {
+        let x = p.x;
+        let y = p.y;
+        let z = p.z;
+
+        // Compute transformed coordinates from point.
+        let xp = (self.m.m[0][0] * x + self.m.m[0][1] * y) + (self.m.m[0][2] * z + self.m.m[0][3]);
+        let yp = (self.m.m[1][0] * x + self.m.m[1][1] * y) + (self.m.m[1][2] * z + self.m.m[1][3]);
+        let zp = (self.m.m[2][0] * x + self.m.m[2][1] * y) + (self.m.m[2][2] * z + self.m.m[2][3]);
+        let wp = (self.m.m[3][0] * x + self.m.m[3][1] * y) + (self.m.m[3][2] * z + self.m.m[3][3]);
+
+        // Compute absolute error for transformed point.
+        let x_abs_sum = ((self.m.m[0][0] * x).abs()
+            + (self.m.m[0][1] * y).abs()
+            + (self.m.m[0][2] * z).abs()
+            + (self.m.m[0][3]))
+            .abs();
+        let y_abs_sum = ((self.m.m[1][0] * x).abs()
+            + (self.m.m[1][1] * y).abs()
+            + (self.m.m[1][2] * z).abs()
+            + (self.m.m[1][3]))
+            .abs();
+        let z_abs_sum = ((self.m.m[2][0] * x).abs()
+            + (self.m.m[2][1] * y).abs()
+            + (self.m.m[2][2] * z).abs()
+            + (self.m.m[2][3]))
+            .abs();
+
+        *error = float::gamma(3.0) * Vec3::new(x_abs_sum, y_abs_sum, z_abs_sum);
+
+        debug_assert!(wp != 0.0);
+        if wp == 1.0 {
+            Point3::new(xp, yp, zp)
+        } else {
+            Point3::new(xp, yp, zp) / wp
+        }
+    }
+
+    pub fn transform_vec(&self, v: &Vec3) -> Vec3 {
+        let x = v.x;
+        let y = v.y;
+        let z = v.z;
+        Vec3::new(
+            self.m.m[0][0] * x + self.m.m[0][1] * y + self.m.m[0][2] * z,
+            self.m.m[1][0] * x + self.m.m[1][1] * y + self.m.m[1][2] * z,
+            self.m.m[2][0] * x + self.m.m[2][1] * y + self.m.m[2][2] * z,
+        )
+    }
+
+    pub fn transform_normal(&self, n: &Normal) -> Normal {
+        let x = n.x;
+        let y = n.y;
+        let z = n.z;
+        Normal::new(
+            self.m_inverse.m[0][0] * x + self.m_inverse.m[1][0] * y + self.m_inverse.m[2][0] * z,
+            self.m_inverse.m[0][1] * x + self.m_inverse.m[1][1] * y + self.m_inverse.m[2][1] * z,
+            self.m_inverse.m[0][2] * x + self.m_inverse.m[1][2] * y + self.m_inverse.m[2][2] * z,
+        )
+    }
+
+    pub fn transform_ray(&self, r: &Ray) -> Ray {
+        let mut origin_error = Vec3::default();
+        let mut origin = self.transform_point_with_error(&r.origin, &mut origin_error);
+
+        let direction = self.transform_vec(&r.direction);
+        // Offset ray origin to edge of error bounds and compute max.
+        let length_squared = direction.length_squared();
+        let mut t_max = r.t_max;
+
+        if length_squared > 0.0 {
+            let dt = direction.abs().dot(&origin_error) / length_squared;
+            origin += direction * dt;
+            t_max -= dt;
+        }
+
+        Ray::new(&origin, &direction, t_max, r.time, r.medium)
+    }
+
+    pub fn transform_ray_differential(&self, r: &RayDifferential) -> RayDifferential {
+        let tr = self.transform_ray(&Ray::from(r.clone()));
+        let mut ret = RayDifferential::new(&tr.origin, &tr.direction, tr.t_max, tr.time, tr.medium);
+        ret.has_differentials = r.has_differentials;
+        ret.rx_origin = self.transform_point(&r.rx_origin);
+        ret.ry_origin = self.transform_point(&r.ry_origin);
+        ret.rx_direction = self.transform_vec(&r.rx_direction);
+        ret.ry_direction = self.transform_vec(&r.ry_direction);
+        ret
+    }
+
+    pub fn transform_bounds(&self, b: &Bounds3) -> Bounds3 {
+        let mut ret = Bounds3::from(self.transform_point(&Point3::new(b.min.x, b.min.y, b.min.z)));
+        ret = ret.union_point(&self.transform_point(&Point3::new(b.max.x, b.min.y, b.min.z)));
+        ret = ret.union_point(&self.transform_point(&Point3::new(b.min.x, b.max.y, b.min.z)));
+        ret = ret.union_point(&self.transform_point(&Point3::new(b.min.x, b.min.y, b.max.z)));
+        ret = ret.union_point(&self.transform_point(&Point3::new(b.min.x, b.max.y, b.max.z)));
+        ret = ret.union_point(&self.transform_point(&Point3::new(b.max.x, b.max.y, b.min.z)));
+        ret = ret.union_point(&self.transform_point(&Point3::new(b.max.x, b.min.y, b.max.z)));
+        ret = ret.union_point(&self.transform_point(&Point3::new(b.max.x, b.max.y, b.max.z)));
+        ret
     }
 
     pub fn translate(delta: &Vec3) -> Self {
@@ -143,8 +272,52 @@ impl Transform {
         Self::new(camera_to_world.inverse(), camera_to_world)
     }
 
+    pub fn inverse(&self) -> Self {
+        Self::new(self.m_inverse, self.m)
+    }
+
+    pub fn transpose(&self) -> Self {
+        Self::new(self.m.transpose(), self.m_inverse.transpose())
+    }
+
+    pub fn is_identity(&self) -> bool {
+        self.m.m[0][0] == 1.0
+            && self.m.m[0][1] == 0.0
+            && self.m.m[0][2] == 0.0
+            && self.m.m[0][3] == 0.0
+            && self.m.m[1][0] == 0.0
+            && self.m.m[1][1] == 1.0
+            && self.m.m[1][2] == 0.0
+            && self.m.m[1][3] == 0.0
+            && self.m.m[2][0] == 0.0
+            && self.m.m[2][1] == 0.0
+            && self.m.m[2][2] == 1.0
+            && self.m.m[2][3] == 0.0
+            && self.m.m[3][0] == 0.0
+            && self.m.m[3][1] == 0.0
+            && self.m.m[3][2] == 0.0
+            && self.m.m[3][3] == 1.0
+    }
+
+    pub fn swaps_handedness(&self) -> bool {
+        let det = self.m.m[0][0]
+            * (self.m.m[1][1] * self.m.m[2][2] - self.m.m[1][2] * self.m.m[2][1])
+            - self.m.m[0][1] * (self.m.m[1][0] * self.m.m[2][2] - self.m.m[1][2] * self.m.m[2][0])
+            + self.m.m[0][2] * (self.m.m[1][0] * self.m.m[2][1] - self.m.m[1][1] * self.m.m[2][0]);
+        det < 0.0
+    }
+
     pub fn has_scale(&self) -> bool {
-        todo!()
+        let la2 = self
+            .transform_vec(&Vec3::new(1.0, 0.0, 0.0))
+            .length_squared();
+        let lb2 = self
+            .transform_vec(&Vec3::new(0.0, 1.0, 0.0))
+            .length_squared();
+        let lc2 = self
+            .transform_vec(&Vec3::new(0.0, 0.0, 1.0))
+            .length_squared();
+        float::not_one(la2) || float::not_one(lb2) || float::not_one(lc2)
     }
 }
 
@@ -156,5 +329,51 @@ impl Default for Transform {
             animated_transform: None,
             quaternion: None,
         }
+    }
+}
+
+// MULTIPLICATION
+
+impl ops::Mul for Transform {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        Transform::new(
+            Mat4::mul(&self.m, &rhs.m),
+            Mat4::mul(&rhs.m_inverse, &self.m_inverse),
+        )
+    }
+}
+
+impl ops::Mul for &Transform {
+    type Output = Transform;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        Transform::new(
+            Mat4::mul(&self.m, &rhs.m),
+            Mat4::mul(&rhs.m_inverse, &self.m_inverse),
+        )
+    }
+}
+
+// ORDERING
+
+impl PartialOrd for Transform {
+    fn lt(&self, other: &Self) -> bool {
+        for i in 0..4 {
+            for j in 0..4 {
+                if self.m.m[i][j] < other.m.m[i][j] {
+                    return true;
+                }
+                if self.m.m[i][j] > other.m.m[i][j] {
+                    return false;
+                }
+            }
+        }
+        false
+    }
+
+    fn partial_cmp(&self, _other: &Self) -> Option<Ordering> {
+        None
     }
 }
