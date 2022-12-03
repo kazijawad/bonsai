@@ -2,6 +2,16 @@ pub fn not_one(x: f32) -> bool {
     x < 0.999 || x > 1.001
 }
 
+pub fn clamp(x: f32, low: f32, high: f32) -> f32 {
+    if x < low {
+        low
+    } else if x > high {
+        high
+    } else {
+        x
+    }
+}
+
 pub fn gamma(n: f32) -> f32 {
     n * f32::EPSILON / (1.0 - n * f32::EPSILON)
 }

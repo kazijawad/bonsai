@@ -169,7 +169,7 @@ impl ops::Sub for Point3 {
 impl ops::Sub for &Point3 {
     type Output = Vec3;
 
-    fn sub(self, rhs: &Point3) -> Self::Output {
+    fn sub(self, rhs: Self) -> Self::Output {
         Self::Output {
             x: self.x - rhs.x,
             y: self.y - rhs.y,

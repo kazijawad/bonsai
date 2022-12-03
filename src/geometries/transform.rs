@@ -16,7 +16,7 @@ use crate::{
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Transform {
-    m: Mat4,
+    pub m: Mat4,
     m_inverse: Mat4,
     animated_transform: Option<AnimatedTransform>,
     quaternion: Option<Quaternion>,
@@ -329,6 +329,38 @@ impl Default for Transform {
             animated_transform: None,
             quaternion: None,
         }
+    }
+}
+
+// TYPE CONVERSION
+
+impl From<Quaternion> for Transform {
+    fn from(q: Quaternion) -> Self {
+        let xx = q.v.x * q.v.x;
+        let yy = q.v.y * q.v.y;
+        let zz = q.v.z * q.v.z;
+
+        let xy = q.v.x * q.v.y;
+        let xz = q.v.x * q.v.z;
+        let yz = q.v.y * q.v.z;
+
+        let wx = q.v.x * q.w;
+        let wy = q.v.y * q.w;
+        let wz = q.v.z * q.w;
+
+        let mut m = Mat4::default();
+        m.m[0][0] = 1.0 - 2.0 * (yy + zz);
+        m.m[0][1] = 2.0 * (xy + wz);
+        m.m[0][2] = 2.0 * (xz - wy);
+        m.m[1][0] = 2.0 * (xy - wz);
+        m.m[1][1] = 1.0 - 2.0 * (xx + zz);
+        m.m[1][2] = 2.0 * (yz + wx);
+        m.m[2][0] = 2.0 * (xz + wy);
+        m.m[2][1] = 2.0 * (yz - wx);
+        m.m[2][2] = 1.0 - 2.0 * (xx + yy);
+
+        // Transpose for left-handed.
+        Transform::new(m.transpose(), m)
     }
 }
 
