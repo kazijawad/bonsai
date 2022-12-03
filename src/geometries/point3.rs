@@ -160,10 +160,10 @@ impl ops::Sub for Point3 {
     }
 }
 
-impl ops::Sub<Vec3> for Point3 {
-    type Output = Self;
+impl ops::Sub<&Point3> for &Point3 {
+    type Output = Vec3;
 
-    fn sub(self, rhs: Vec3) -> Self::Output {
+    fn sub(self, rhs: &Point3) -> Self::Output {
         Self::Output {
             x: self.x - rhs.x,
             y: self.y - rhs.y,
@@ -172,10 +172,10 @@ impl ops::Sub<Vec3> for Point3 {
     }
 }
 
-impl ops::Sub<&Point3> for &Point3 {
-    type Output = Point3;
+impl ops::Sub<Vec3> for Point3 {
+    type Output = Self;
 
-    fn sub(self, rhs: &Point3) -> Self::Output {
+    fn sub(self, rhs: Vec3) -> Self::Output {
         Self::Output {
             x: self.x - rhs.x,
             y: self.y - rhs.y,
