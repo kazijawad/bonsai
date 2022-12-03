@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 pub mod animated_transform;
 pub mod bounds2;
 pub mod bounds3;
