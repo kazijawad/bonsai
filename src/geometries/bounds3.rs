@@ -1,8 +1,9 @@
 use std::ops;
 
 use crate::{
-    float,
     geometries::{point3::Point3, vec3::Vec3},
+    math,
+    math::Float,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -89,21 +90,21 @@ impl Bounds3 {
             && p.z < self.max.z
     }
 
-    pub fn expand(&self, delta: f32) -> Self {
+    pub fn expand(&self, delta: Float) -> Self {
         Self::new(
             &(self.min - Vec3::new(delta, delta, delta)),
             &(self.max + Vec3::new(delta, delta, delta)),
         )
     }
 
-    pub fn distance_squared(&self, p: &Point3) -> f32 {
-        let dx = (0.0 as f32).max(self.min.x - p.x).max(p.x - self.max.x);
-        let dy = (0.0 as f32).max(self.min.y - p.y).max(p.y - self.max.y);
-        let dz = (0.0 as f32).max(self.min.z - p.z).max(p.z - self.max.z);
+    pub fn distance_squared(&self, p: &Point3) -> Float {
+        let dx = (0.0 as Float).max(self.min.x - p.x).max(p.x - self.max.x);
+        let dy = (0.0 as Float).max(self.min.y - p.y).max(p.y - self.max.y);
+        let dz = (0.0 as Float).max(self.min.z - p.z).max(p.z - self.max.z);
         dx * dx + dy * dy + dz * dz
     }
 
-    pub fn distance(&self, p: &Point3) -> f32 {
+    pub fn distance(&self, p: &Point3) -> Float {
         self.distance_squared(p).sqrt()
     }
 
@@ -126,17 +127,17 @@ impl Bounds3 {
         self.max - self.min
     }
 
-    pub fn surface_area(&self) -> f32 {
+    pub fn surface_area(&self) -> Float {
         let diag = self.diagonal();
         2.0 * (diag.x * diag.y + diag.x * diag.z + diag.y * diag.z)
     }
 
-    pub fn volume(&self) -> f32 {
+    pub fn volume(&self) -> Float {
         let diag = self.diagonal();
         diag.x * diag.y * diag.z
     }
 
-    pub fn area(&self) -> f32 {
+    pub fn area(&self) -> Float {
         let distance = self.max - self.min;
         distance.x * distance.y
     }
@@ -154,9 +155,9 @@ impl Bounds3 {
 
     pub fn lerp(&self, t: &Point3) -> Point3 {
         Point3::new(
-            float::lerp(t.x, self.min.x, self.max.x),
-            float::lerp(t.y, self.min.y, self.max.y),
-            float::lerp(t.z, self.min.z, self.max.z),
+            math::lerp(t.x, self.min.x, self.max.x),
+            math::lerp(t.y, self.min.y, self.max.y),
+            math::lerp(t.z, self.min.z, self.max.z),
         )
     }
 
@@ -174,7 +175,7 @@ impl Bounds3 {
         offset
     }
 
-    pub fn bounding_sphere(&self) -> (Point3, f32) {
+    pub fn bounding_sphere(&self) -> (Point3, Float) {
         let center = (self.min + self.max) / 2.0;
         let radius = if self.inside(&center) {
             center.distance(&self.max)
@@ -188,8 +189,8 @@ impl Bounds3 {
 impl Default for Bounds3 {
     fn default() -> Self {
         Self {
-            min: Point3::new(f32::MAX, f32::MAX, f32::MAX),
-            max: Point3::new(f32::MIN, f32::MIN, f32::MIN),
+            min: Point3::new(Float::MAX, Float::MAX, Float::MAX),
+            max: Point3::new(Float::MIN, Float::MIN, Float::MIN),
         }
     }
 }

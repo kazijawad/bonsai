@@ -1,13 +1,15 @@
 use std::{mem, ops};
 
+use crate::math::{Float, PI};
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Interval {
-    low: f32,
-    high: f32,
+    low: Float,
+    high: Float,
 }
 
 impl Interval {
-    pub fn new(x: f32, y: f32) -> Self {
+    pub fn new(x: Float, y: Float) -> Self {
         Self {
             low: x.min(y),
             high: x.max(y),
@@ -15,14 +17,14 @@ impl Interval {
     }
 
     pub fn find_zeros(
-        c1: f32,
-        c2: f32,
-        c3: f32,
-        c4: f32,
-        c5: f32,
-        theta: f32,
+        c1: Float,
+        c2: Float,
+        c3: Float,
+        c4: Float,
+        c5: Float,
+        theta: Float,
         t_interval: Self,
-        zeros: &mut [f32; 8],
+        zeros: &mut [Float; 8],
         zero_count: &mut u32,
         depth: i32,
     ) {
@@ -85,7 +87,7 @@ impl Interval {
     }
 
     pub fn sin(&self) -> Self {
-        debug_assert!(self.low >= 0.0 && self.high <= 2.0001 * std::f32::consts::PI);
+        debug_assert!(self.low >= 0.0 && self.high <= 2.0001 * PI);
         let mut sin_low = self.low.sin();
         let mut sin_high = self.high.sin();
 
@@ -93,13 +95,11 @@ impl Interval {
             mem::swap(&mut sin_low, &mut sin_high);
         }
 
-        if self.low < std::f32::consts::PI / 2.0 && self.high > std::f32::consts::PI / 2.0 {
+        if self.low < PI / 2.0 && self.high > PI / 2.0 {
             sin_high = 1.0;
         }
 
-        if self.low < (3.0 / 2.0) * std::f32::consts::PI
-            && self.high > (3.0 / 2.0) * std::f32::consts::PI
-        {
+        if self.low < (3.0 / 2.0) * PI && self.high > (3.0 / 2.0) * PI {
             sin_low = -1.0;
         }
 
@@ -107,7 +107,7 @@ impl Interval {
     }
 
     pub fn cos(&self) -> Self {
-        debug_assert!(self.low >= 0.0 && self.high <= 2.0001 * std::f32::consts::PI);
+        debug_assert!(self.low >= 0.0 && self.high <= 2.0001 * PI);
         let mut cos_low = self.low.cos();
         let mut cos_high = self.high.cos();
 
@@ -115,7 +115,7 @@ impl Interval {
             mem::swap(&mut cos_low, &mut cos_high);
         }
 
-        if self.low < std::f32::consts::PI && self.high > std::f32::consts::PI {
+        if self.low < PI && self.high > PI {
             cos_low = -1.0;
         }
 
@@ -125,8 +125,8 @@ impl Interval {
 
 // TYPE CONVERSION
 
-impl From<f32> for Interval {
-    fn from(x: f32) -> Self {
+impl From<Float> for Interval {
+    fn from(x: Float) -> Self {
         Self { low: x, high: x }
     }
 }

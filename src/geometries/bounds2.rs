@@ -1,8 +1,9 @@
 use std::ops;
 
 use crate::{
-    float,
     geometries::{point2::Point2, vec2::Vec2},
+    math,
+    math::Float,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -57,7 +58,7 @@ impl Bounds2 {
         p.x >= self.min.x && p.x < self.max.x && p.y >= self.min.y && p.y < self.max.y
     }
 
-    pub fn expand(&self, delta: f32) -> Self {
+    pub fn expand(&self, delta: Float) -> Self {
         Self::new(
             &(self.min - Vec2::new(delta, delta)),
             &(self.max + Vec2::new(delta, delta)),
@@ -68,7 +69,7 @@ impl Bounds2 {
         self.max - self.min
     }
 
-    pub fn area(&self) -> f32 {
+    pub fn area(&self) -> Float {
         let distance = self.max - self.min;
         distance.x * distance.y
     }
@@ -84,8 +85,8 @@ impl Bounds2 {
 
     pub fn lerp(&self, t: &Point2) -> Point2 {
         Point2::new(
-            float::lerp(t.x, self.min.x, self.max.x),
-            float::lerp(t.y, self.min.y, self.max.y),
+            math::lerp(t.x, self.min.x, self.max.x),
+            math::lerp(t.y, self.min.y, self.max.y),
         )
     }
 
@@ -100,7 +101,7 @@ impl Bounds2 {
         offset
     }
 
-    pub fn bounding_sphere(&self) -> (Point2, f32) {
+    pub fn bounding_sphere(&self) -> (Point2, Float) {
         let center = (self.min + self.max) / 2.0;
         let radius = if self.inside(&center) {
             center.distance(&self.max)
@@ -114,8 +115,8 @@ impl Bounds2 {
 impl Default for Bounds2 {
     fn default() -> Self {
         Self {
-            min: Point2::new(f32::MAX, f32::MAX),
-            max: Point2::new(f32::MIN, f32::MIN),
+            min: Point2::new(Float::MAX, Float::MAX),
+            max: Point2::new(Float::MIN, Float::MIN),
         }
     }
 }

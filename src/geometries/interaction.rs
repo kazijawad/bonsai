@@ -1,5 +1,6 @@
 use crate::{
     geometries::{normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3},
+    math::Float,
     medium::{Medium, MediumInterface},
 };
 
@@ -26,7 +27,7 @@ struct InteractionProperties {
     point_error: Point3,
     normal: Normal,
     negative_direction: Vec3,
-    time: f32,
+    time: Float,
     medium: MediumInterface,
 }
 
@@ -54,9 +55,9 @@ pub struct SurfaceInteraction {
     // bssrdf: BSSRDF,
     dpdx: Vec3,
     dpdy: Vec3,
-    dudx: f32,
-    dvdx: f32,
-    dudy: f32,
-    dvdy: f32,
+    dudx: Float,
+    dvdx: Float,
+    dudy: Float,
+    dvdy: Float,
     face_index: i32,
 }

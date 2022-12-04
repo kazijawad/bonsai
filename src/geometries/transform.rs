@@ -1,7 +1,6 @@
 use std::{cmp::Ordering, ops};
 
 use crate::{
-    float,
     geometries::{
         bounds3::Bounds3,
         mat4::Mat4,
@@ -11,6 +10,8 @@ use crate::{
         ray::{Ray, RayDifferential},
         vec3::Vec3,
     },
+    math,
+    math::Float,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -69,7 +70,7 @@ impl Transform {
             + (self.m.m[2][3]))
             .abs();
 
-        *error = float::gamma(3.0) * Vec3::new(x_abs_sum, y_abs_sum, z_abs_sum);
+        *error = math::gamma(3.0) * Vec3::new(x_abs_sum, y_abs_sum, z_abs_sum);
 
         debug_assert!(wp != 0.0);
         if wp == 1.0 {
@@ -154,7 +155,7 @@ impl Transform {
         Self::new(m, m_inverse)
     }
 
-    pub fn scale(x: f32, y: f32, z: f32) -> Self {
+    pub fn scale(x: Float, y: Float, z: Float) -> Self {
         debug_assert!(x != 0.0 && y != 0.0 && z != 0.0);
         let m = Mat4::new(
             x, 0.0, 0.0, 0.0, 0.0, y, 0.0, 0.0, 0.0, 0.0, z, 0.0, 0.0, 0.0, 0.0, 1.0,
@@ -180,7 +181,7 @@ impl Transform {
         Self::new(m, m_inverse)
     }
 
-    pub fn rotate_x(theta: f32) -> Self {
+    pub fn rotate_x(theta: Float) -> Self {
         let sin_theta = theta.to_radians().sin();
         let cos_theta = theta.to_radians().cos();
         let m = Mat4::new(
@@ -190,7 +191,7 @@ impl Transform {
         Self::new(m, m.transpose())
     }
 
-    pub fn rotate_y(theta: f32) -> Self {
+    pub fn rotate_y(theta: Float) -> Self {
         let sin_theta = theta.to_radians().sin();
         let cos_theta = theta.to_radians().cos();
         let m = Mat4::new(
@@ -200,7 +201,7 @@ impl Transform {
         Self::new(m, m.transpose())
     }
 
-    pub fn rotate_z(theta: f32) -> Self {
+    pub fn rotate_z(theta: Float) -> Self {
         let sin_theta = theta.to_radians().sin();
         let cos_theta = theta.to_radians().cos();
         let m = Mat4::new(
@@ -210,7 +211,7 @@ impl Transform {
         Self::new(m, m.transpose())
     }
 
-    pub fn rotate(theta: f32, axis: &Vec3) -> Self {
+    pub fn rotate(theta: Float, axis: &Vec3) -> Self {
         let a = Vec3::normalize(axis);
         let sin_theta = theta.to_radians().sin();
         let cos_theta = theta.to_radians().cos();
@@ -309,7 +310,7 @@ impl Transform {
         let lc2 = self
             .transform_vec(&Vec3::new(0.0, 0.0, 1.0))
             .length_squared();
-        float::not_one(la2) || float::not_one(lb2) || float::not_one(lc2)
+        math::not_one(la2) || math::not_one(lb2) || math::not_one(lc2)
     }
 }
 

@@ -1,26 +1,28 @@
+use crate::math::Float;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Mat4 {
-    pub m: [[f32; 4]; 4],
+    pub m: [[Float; 4]; 4],
 }
 
 impl Mat4 {
     pub fn new(
-        t00: f32,
-        t01: f32,
-        t02: f32,
-        t03: f32,
-        t10: f32,
-        t11: f32,
-        t12: f32,
-        t13: f32,
-        t20: f32,
-        t21: f32,
-        t22: f32,
-        t23: f32,
-        t30: f32,
-        t31: f32,
-        t32: f32,
-        t33: f32,
+        t00: Float,
+        t01: Float,
+        t02: Float,
+        t03: Float,
+        t10: Float,
+        t11: Float,
+        t12: Float,
+        t13: Float,
+        t20: Float,
+        t21: Float,
+        t22: Float,
+        t23: Float,
+        t30: Float,
+        t31: Float,
+        t32: Float,
+        t33: Float,
     ) -> Self {
         Self {
             m: [
@@ -83,7 +85,7 @@ impl Mat4 {
                     for k in 0..4 {
                         if pivot[k] == 0 {
                             if m_inverse[j][k].abs() >= big {
-                                big = m_inverse[j][k].abs() as f32;
+                                big = m_inverse[j][k].abs() as Float;
                                 row = j;
                                 col = k;
                             }
@@ -155,8 +157,8 @@ impl Default for Mat4 {
     }
 }
 
-impl From<[[f32; 4]; 4]> for Mat4 {
-    fn from(m: [[f32; 4]; 4]) -> Self {
+impl From<[[Float; 4]; 4]> for Mat4 {
+    fn from(m: [[Float; 4]; 4]) -> Self {
         Self { m }
     }
 }

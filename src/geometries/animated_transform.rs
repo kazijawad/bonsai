@@ -1,7 +1,6 @@
 use std::ptr;
 
 use crate::{
-    float,
     geometries::{
         bounds3::Bounds3,
         interval::Interval,
@@ -12,14 +11,16 @@ use crate::{
         transform::Transform,
         vec3::Vec3,
     },
+    math,
+    math::Float,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct AnimatedTransform {
     start_transform: Transform,
     end_transform: Transform,
-    start_time: f32,
-    end_time: f32,
+    start_time: Float,
+    end_time: Float,
     is_animated: bool,
     has_rotation: bool,
     translation: Option<[Vec3; 2]>,
@@ -34,18 +35,18 @@ pub struct AnimatedTransform {
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 struct DerivativeTerm {
-    kc: f32,
-    kx: f32,
-    ky: f32,
-    kz: f32,
+    kc: Float,
+    kx: Float,
+    ky: Float,
+    kz: Float,
 }
 
 impl AnimatedTransform {
     pub fn new(
         start_transform: Transform,
-        start_time: f32,
+        start_time: Float,
         end_transform: Transform,
-        end_time: f32,
+        end_time: Float,
     ) -> Self {
         if ptr::eq(&start_transform, &end_transform) {
             return Self {
@@ -131,7 +132,7 @@ impl AnimatedTransform {
             let scale = transform.scale.unwrap();
 
             let cos_theta = rotation[0].dot(&rotation[1]);
-            let theta = float::clamp(cos_theta, -1.0, 1.0).acos();
+            let theta = math::clamp(cos_theta, -1.0, 1.0).acos();
             let qperp = (rotation[1] - rotation[0] * cos_theta).normalize();
 
             let t0x = translation[0].x;
@@ -1263,7 +1264,7 @@ impl AnimatedTransform {
             }
 
             // Compute norm of difference.
-            let mut norm: f32 = 0.0;
+            let mut norm: Float = 0.0;
             for i in 0..3 {
                 let n = (rotation_m.m[i][0] - rot_next.m[i][0]).abs()
                     + (rotation_m.m[i][1] - rot_next.m[i][1]).abs()
@@ -1283,7 +1284,7 @@ impl AnimatedTransform {
         scale.clone_from(&Mat4::mul(&rotation_m.inverse(), &transform_m));
     }
 
-    pub fn interpolate(&self, time: f32, t: &mut Transform) {
+    pub fn interpolate(&self, time: Float, t: &mut Transform) {
         // Handle boundary conditions for matrix interpolation.
         if !self.is_animated || time <= self.start_time {
             t.clone_from(&self.start_transform);
@@ -1306,7 +1307,7 @@ impl AnimatedTransform {
         let mut scale = Mat4::default();
         for i in 0..3 {
             for j in 0..3 {
-                scale.m[i][j] = float::lerp(
+                scale.m[i][j] = math::lerp(
                     dt,
                     self.scale.unwrap()[0].m[i][j],
                     self.scale.unwrap()[1].m[i][j],
@@ -1346,7 +1347,7 @@ impl AnimatedTransform {
         }
     }
 
-    pub fn transform_point(&self, p: &Point3, time: f32) -> Point3 {
+    pub fn transform_point(&self, p: &Point3, time: Float) -> Point3 {
         if !self.is_animated || time <= self.start_time {
             self.start_transform.transform_point(p)
         } else if time >= self.end_time {
@@ -1358,7 +1359,7 @@ impl AnimatedTransform {
         }
     }
 
-    pub fn transform_vec(&self, v: &Vec3, time: f32) -> Vec3 {
+    pub fn transform_vec(&self, v: &Vec3, time: Float) -> Vec3 {
         if !self.is_animated || time <= self.start_time {
             self.start_transform.transform_vec(v)
         } else if time >= self.end_time {
@@ -1398,7 +1399,7 @@ impl AnimatedTransform {
         );
 
         let cos_theta = self.rotation.unwrap()[0].dot(&self.rotation.unwrap()[1]);
-        let theta = float::clamp(cos_theta, -1.0, 1.0).acos();
+        let theta = math::clamp(cos_theta, -1.0, 1.0).acos();
 
         for c in 0..3 {
             // Find any motion derivative zeros for the component.
@@ -1422,7 +1423,7 @@ impl AnimatedTransform {
             for i in 0..n_zeros {
                 let pz = self.transform_point(
                     p,
-                    float::lerp(zeros[i as usize], self.start_time, self.end_time),
+                    math::lerp(zeros[i as usize], self.start_time, self.end_time),
                 );
                 bounds = bounds.union_point(&pz);
             }
@@ -1433,11 +1434,11 @@ impl AnimatedTransform {
 }
 
 impl DerivativeTerm {
-    pub fn new(kc: f32, kx: f32, ky: f32, kz: f32) -> Self {
+    pub fn new(kc: Float, kx: Float, ky: Float, kz: Float) -> Self {
         Self { kc, kx, ky, kz }
     }
 
-    pub fn eval(&self, p: &Point3) -> f32 {
+    pub fn eval(&self, p: &Point3) -> Float {
         self.kc + self.kx * p.x + self.ky * p.y + self.kz * p.z
     }
 }

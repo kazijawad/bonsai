@@ -1,33 +1,36 @@
 use std::ops;
 
-use crate::geometries::{point2::Point2, point3::Point3};
+use crate::{
+    geometries::{point2::Point2, point3::Point3},
+    math::Float,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Vec2 {
-    pub x: f32,
-    pub y: f32,
+    pub x: Float,
+    pub y: Float,
 }
 
 impl Vec2 {
-    pub fn new(x: f32, y: f32) -> Self {
+    pub fn new(x: Float, y: Float) -> Self {
         debug_assert!(!x.is_nan() && !y.is_nan());
         Self { x, y }
     }
 
-    pub fn length_squared(&self) -> f32 {
+    pub fn length_squared(&self) -> Float {
         self.x * self.x + self.y * self.y
     }
 
-    pub fn length(&self) -> f32 {
+    pub fn length(&self) -> Float {
         self.length_squared().sqrt()
     }
 
-    pub fn dot(&self, v: &Self) -> f32 {
+    pub fn dot(&self, v: &Self) -> Float {
         debug_assert!(!self.is_nan() && !v.is_nan());
         self.x * v.x + self.y * v.y
     }
 
-    pub fn abs_dot(&self, v: &Self) -> f32 {
+    pub fn abs_dot(&self, v: &Self) -> Float {
         debug_assert!(!self.is_nan() && !v.is_nan());
         self.dot(v).abs()
     }
@@ -137,10 +140,10 @@ impl ops::SubAssign for Vec2 {
 
 // MULTIPLICATION
 
-impl ops::Mul<f32> for Vec2 {
+impl ops::Mul<Float> for Vec2 {
     type Output = Self;
 
-    fn mul(self, rhs: f32) -> Self::Output {
+    fn mul(self, rhs: Float) -> Self::Output {
         Self::Output {
             x: self.x * rhs,
             y: self.y * rhs,
@@ -148,10 +151,10 @@ impl ops::Mul<f32> for Vec2 {
     }
 }
 
-impl ops::Mul<f32> for &Vec2 {
+impl ops::Mul<Float> for &Vec2 {
     type Output = Vec2;
 
-    fn mul(self, rhs: f32) -> Self::Output {
+    fn mul(self, rhs: Float) -> Self::Output {
         Self::Output {
             x: self.x * rhs,
             y: self.y * rhs,
@@ -159,7 +162,7 @@ impl ops::Mul<f32> for &Vec2 {
     }
 }
 
-impl ops::Mul<Vec2> for f32 {
+impl ops::Mul<Vec2> for Float {
     type Output = Vec2;
 
     fn mul(self, rhs: Vec2) -> Self::Output {
@@ -167,7 +170,7 @@ impl ops::Mul<Vec2> for f32 {
     }
 }
 
-impl ops::Mul<&Vec2> for f32 {
+impl ops::Mul<&Vec2> for Float {
     type Output = Vec2;
 
     fn mul(self, rhs: &Vec2) -> Self::Output {
@@ -175,8 +178,8 @@ impl ops::Mul<&Vec2> for f32 {
     }
 }
 
-impl ops::MulAssign<f32> for Vec2 {
-    fn mul_assign(&mut self, rhs: f32) {
+impl ops::MulAssign<Float> for Vec2 {
+    fn mul_assign(&mut self, rhs: Float) {
         self.x *= rhs;
         self.y *= rhs;
     }
@@ -184,10 +187,10 @@ impl ops::MulAssign<f32> for Vec2 {
 
 // DIVISION
 
-impl ops::Div<f32> for Vec2 {
+impl ops::Div<Float> for Vec2 {
     type Output = Self;
 
-    fn div(self, rhs: f32) -> Self::Output {
+    fn div(self, rhs: Float) -> Self::Output {
         debug_assert!(rhs != 0.0);
         let inverse = 1.0 / rhs;
         Self::Output {
@@ -197,10 +200,10 @@ impl ops::Div<f32> for Vec2 {
     }
 }
 
-impl ops::Div<f32> for &Vec2 {
+impl ops::Div<Float> for &Vec2 {
     type Output = Vec2;
 
-    fn div(self, rhs: f32) -> Self::Output {
+    fn div(self, rhs: Float) -> Self::Output {
         debug_assert!(rhs != 0.0);
         let inverse = 1.0 / rhs;
         Self::Output {
@@ -210,8 +213,8 @@ impl ops::Div<f32> for &Vec2 {
     }
 }
 
-impl ops::DivAssign<f32> for Vec2 {
-    fn div_assign(&mut self, rhs: f32) {
+impl ops::DivAssign<Float> for Vec2 {
+    fn div_assign(&mut self, rhs: Float) {
         debug_assert!(rhs != 0.0);
         let inverse = 1.0 / rhs;
         self.x *= inverse;
@@ -246,7 +249,7 @@ impl ops::Neg for &Vec2 {
 // INDEXING
 
 impl ops::Index<u32> for Vec2 {
-    type Output = f32;
+    type Output = Float;
 
     fn index(&self, index: u32) -> &Self::Output {
         debug_assert!(index <= 1);

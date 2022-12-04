@@ -1,5 +1,6 @@
 use crate::{
     geometries::{point3::Point3, vec3::Vec3},
+    math::Float,
     medium::Medium,
 };
 
@@ -7,8 +8,8 @@ use crate::{
 pub struct Ray {
     pub origin: Point3,
     pub direction: Vec3,
-    pub t_max: f32,
-    pub time: f32,
+    pub t_max: Float,
+    pub time: Float,
     pub medium: Option<Medium>,
 }
 
@@ -16,8 +17,8 @@ pub struct Ray {
 pub struct RayDifferential {
     pub origin: Point3,
     pub direction: Vec3,
-    pub t_max: f32,
-    pub time: f32,
+    pub t_max: Float,
+    pub time: Float,
     pub medium: Option<Medium>,
     pub rx_origin: Point3,
     pub ry_origin: Point3,
@@ -30,8 +31,8 @@ impl Ray {
     pub fn new(
         origin: &Point3,
         direction: &Vec3,
-        t_max: f32,
-        time: f32,
+        t_max: Float,
+        time: Float,
         medium: Option<Medium>,
     ) -> Self {
         Self {
@@ -43,7 +44,7 @@ impl Ray {
         }
     }
 
-    pub fn at(&self, t: f32) -> Point3 {
+    pub fn at(&self, t: Float) -> Point3 {
         self.origin + self.direction * t
     }
 
@@ -56,8 +57,8 @@ impl RayDifferential {
     pub fn new(
         origin: &Point3,
         direction: &Vec3,
-        t_max: f32,
-        time: f32,
+        t_max: Float,
+        time: Float,
         medium: Option<Medium>,
     ) -> Self {
         Self {
@@ -74,11 +75,11 @@ impl RayDifferential {
         }
     }
 
-    pub fn at(&self, t: f32) -> Point3 {
+    pub fn at(&self, t: Float) -> Point3 {
         self.origin + self.direction * t
     }
 
-    pub fn scale_differentials(&mut self, s: f32) {
+    pub fn scale_differentials(&mut self, s: Float) {
         self.rx_origin = self.origin + (self.rx_origin - self.origin) * s;
         self.ry_origin = self.origin + (self.ry_origin - self.origin) * s;
         self.rx_direction = self.direction + (self.rx_direction - self.direction) * s;
@@ -95,7 +96,7 @@ impl Default for Ray {
         Self {
             origin: Point3::default(),
             direction: Vec3::default(),
-            t_max: f32::INFINITY,
+            t_max: Float::INFINITY,
             time: 0.0,
             medium: None,
         }
@@ -107,7 +108,7 @@ impl Default for RayDifferential {
         Self {
             origin: Point3::default(),
             direction: Vec3::default(),
-            t_max: f32::INFINITY,
+            t_max: Float::INFINITY,
             time: 0.0,
             medium: None,
             rx_origin: Point3::default(),

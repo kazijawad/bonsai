@@ -1,30 +1,31 @@
 use std::ops;
 
 use crate::{
-    float,
     geometries::{mat4::Mat4, transform::Transform, vec3::Vec3},
+    math,
+    math::Float,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Quaternion {
     pub v: Vec3,
-    pub w: f32,
+    pub w: Float,
 }
 
 impl Quaternion {
-    pub fn slerp(t: f32, a: &Self, b: &Self) -> Self {
+    pub fn slerp(t: Float, a: &Self, b: &Self) -> Self {
         let cos_theta = a.dot(&b);
         if cos_theta > 0.9995 {
             ((1.0 - t) * a + t * b).normalize()
         } else {
-            let theta = float::clamp(cos_theta, -1.0, 1.0).cos();
+            let theta = math::clamp(cos_theta, -1.0, 1.0).cos();
             let theta_p = theta * t;
             let q_perp = (b - &(a * cos_theta)).normalize();
             a * theta_p.cos() + q_perp * theta_p.sin()
         }
     }
 
-    pub fn dot(&self, q: &Self) -> f32 {
+    pub fn dot(&self, q: &Self) -> Float {
         self.v.dot(&q.v) + self.w * q.w
     }
 
@@ -210,10 +211,10 @@ impl ops::SubAssign for Quaternion {
 
 // MULTIPLICATION
 
-impl ops::Mul<f32> for Quaternion {
+impl ops::Mul<Float> for Quaternion {
     type Output = Self;
 
-    fn mul(self, rhs: f32) -> Self::Output {
+    fn mul(self, rhs: Float) -> Self::Output {
         Self::Output {
             v: self.v * rhs,
             w: self.w * rhs,
@@ -221,10 +222,10 @@ impl ops::Mul<f32> for Quaternion {
     }
 }
 
-impl ops::Mul<f32> for &Quaternion {
+impl ops::Mul<Float> for &Quaternion {
     type Output = Quaternion;
 
-    fn mul(self, rhs: f32) -> Self::Output {
+    fn mul(self, rhs: Float) -> Self::Output {
         Self::Output {
             v: self.v * rhs,
             w: self.w * rhs,
@@ -232,7 +233,7 @@ impl ops::Mul<f32> for &Quaternion {
     }
 }
 
-impl ops::Mul<Quaternion> for f32 {
+impl ops::Mul<Quaternion> for Float {
     type Output = Quaternion;
 
     fn mul(self, rhs: Quaternion) -> Self::Output {
@@ -240,7 +241,7 @@ impl ops::Mul<Quaternion> for f32 {
     }
 }
 
-impl ops::Mul<&Quaternion> for f32 {
+impl ops::Mul<&Quaternion> for Float {
     type Output = Quaternion;
 
     fn mul(self, rhs: &Quaternion) -> Self::Output {
@@ -248,8 +249,8 @@ impl ops::Mul<&Quaternion> for f32 {
     }
 }
 
-impl ops::MulAssign<f32> for Quaternion {
-    fn mul_assign(&mut self, rhs: f32) {
+impl ops::MulAssign<Float> for Quaternion {
+    fn mul_assign(&mut self, rhs: Float) {
         self.v *= rhs;
         self.w *= rhs;
     }
@@ -257,10 +258,10 @@ impl ops::MulAssign<f32> for Quaternion {
 
 // DIVISION
 
-impl ops::Div<f32> for Quaternion {
+impl ops::Div<Float> for Quaternion {
     type Output = Self;
 
-    fn div(self, rhs: f32) -> Self::Output {
+    fn div(self, rhs: Float) -> Self::Output {
         debug_assert!(rhs != 0.0);
         let inverse = 1.0 / rhs;
         Self::Output {
@@ -270,10 +271,10 @@ impl ops::Div<f32> for Quaternion {
     }
 }
 
-impl ops::Div<f32> for &Quaternion {
+impl ops::Div<Float> for &Quaternion {
     type Output = Quaternion;
 
-    fn div(self, rhs: f32) -> Self::Output {
+    fn div(self, rhs: Float) -> Self::Output {
         debug_assert!(rhs != 0.0);
         let inverse = 1.0 / rhs;
         Self::Output {
@@ -283,8 +284,8 @@ impl ops::Div<f32> for &Quaternion {
     }
 }
 
-impl ops::DivAssign<f32> for Quaternion {
-    fn div_assign(&mut self, rhs: f32) {
+impl ops::DivAssign<Float> for Quaternion {
+    fn div_assign(&mut self, rhs: Float) {
         debug_assert!(rhs != 0.0);
         let inverse = 1.0 / rhs;
         self.v *= inverse;
