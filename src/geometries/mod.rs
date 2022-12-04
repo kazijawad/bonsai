@@ -1,6 +1,7 @@
 pub mod animated_transform;
 pub mod bounds2;
 pub mod bounds3;
+pub mod interval;
 pub mod mat4;
 pub mod normal;
 pub mod point2;

@@ -3,7 +3,6 @@ use std::{cmp::Ordering, ops};
 use crate::{
     float,
     geometries::{
-        animated_transform::AnimatedTransform,
         bounds3::Bounds3,
         mat4::Mat4,
         normal::Normal,
@@ -17,19 +16,12 @@ use crate::{
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Transform {
     pub m: Mat4,
-    m_inverse: Mat4,
-    animated_transform: Option<AnimatedTransform>,
-    quaternion: Option<Quaternion>,
+    pub m_inverse: Mat4,
 }
 
 impl Transform {
     pub fn new(m: Mat4, m_inverse: Mat4) -> Self {
-        Self {
-            m,
-            m_inverse,
-            animated_transform: None,
-            quaternion: None,
-        }
+        Self { m, m_inverse }
     }
 
     pub fn transform_point(&self, p: &Point3) -> Point3 {
@@ -326,8 +318,6 @@ impl Default for Transform {
         Self {
             m: Mat4::default(),
             m_inverse: Mat4::default(),
-            animated_transform: None,
-            quaternion: None,
         }
     }
 }
