@@ -42,16 +42,16 @@ struct DerivativeTerm {
 
 impl AnimatedTransform {
     pub fn new(
-        start_transform: &Transform,
+        start_transform: Transform,
         start_time: f32,
-        end_transform: &Transform,
+        end_transform: Transform,
         end_time: f32,
     ) -> Self {
-        if ptr::eq(start_transform, end_transform) {
+        if ptr::eq(&start_transform, &end_transform) {
             return Self {
-                start_transform: start_transform.clone(),
+                start_transform,
                 start_time,
-                end_transform: end_transform.clone(),
+                end_transform,
                 end_time,
                 is_animated: false,
                 has_rotation: false,
@@ -67,9 +67,9 @@ impl AnimatedTransform {
         }
 
         let mut transform = Self {
-            start_transform: start_transform.clone(),
+            start_transform,
             start_time,
-            end_transform: end_transform.clone(),
+            end_transform,
             end_time,
             is_animated: true,
             has_rotation: false,
