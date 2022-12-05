@@ -78,7 +78,7 @@ impl Mat4 {
         for i in 0..4 {
             let mut row = 0;
             let mut col = 0;
-            let mut big = 0.0;
+            let mut big: Float = 0.0;
 
             for j in 0..4 {
                 if pivot[j] != 1 {
@@ -119,7 +119,7 @@ impl Mat4 {
 
             for j in 0..4 {
                 if j != col {
-                    let save = m_inverse[j][col];
+                    let save: Float = m_inverse[j][col];
                     m_inverse[j][col] = 0.0;
                     for k in 0..4 {
                         m_inverse[j][k] -= m_inverse[col][k] * save;

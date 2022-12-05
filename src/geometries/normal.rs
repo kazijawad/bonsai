@@ -256,7 +256,7 @@ impl ops::Index<u32> for Normal {
     type Output = Float;
 
     fn index(&self, index: u32) -> &Self::Output {
-        assert!(index <= 2);
+        debug_assert!(index <= 2);
         if index == 0 {
             return &self.x;
         } else if index == 1 {
