@@ -15,6 +15,7 @@ pub trait Shape: Send + Sync {
         interaction: &mut SurfaceInteraction,
         include_alpha: bool,
     ) -> bool;
+    fn intersect_test(&self, ray: &Ray, include_alpha: bool) -> bool;
 
     fn sample(&self, u: &Point2, pdf: &mut Float) -> Box<dyn Interaction>;
     fn sample_from_ref(

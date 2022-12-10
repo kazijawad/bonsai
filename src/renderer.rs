@@ -96,9 +96,9 @@ impl<'a> Renderer<'a> {
             return Vec3::default();
         }
 
-        let mut t_hit = 0.0;
-        let mut interaction = SurfaceInteraction::default();
-        if self.scene.intersect(&ray, &mut t_hit, &mut interaction) {
+        // let mut t_hit = 0.0;
+        // let mut interaction = SurfaceInteraction::default();
+        if self.scene.intersect_test(&ray) {
             Vec3::new(1.0, 0.0, 0.0)
         } else {
             self.background

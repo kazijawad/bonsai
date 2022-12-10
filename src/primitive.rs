@@ -6,6 +6,7 @@ use crate::{
 pub trait Primitive: Send + Sync {
     fn intersect(&self, ray: &Ray, t_hit: &mut Float, interaction: &mut SurfaceInteraction)
         -> bool;
+    fn intersect_test(&self, ray: &Ray) -> bool;
 }
 
 pub struct AggregatePrimitive {
@@ -51,6 +52,16 @@ impl Primitive for AggregatePrimitive {
         }
         hit
     }
+
+    fn intersect_test(&self, ray: &Ray) -> bool {
+        let mut hit = false;
+        for primitive in self.primitives.iter() {
+            if primitive.intersect_test(ray) {
+                hit = true;
+            }
+        }
+        hit
+    }
 }
 
 impl Primitive for GeometricPrimitive {
@@ -61,5 +72,9 @@ impl Primitive for GeometricPrimitive {
         interaction: &mut SurfaceInteraction,
     ) -> bool {
         self.shape.intersect(ray, t_hit, interaction, false)
+    }
+
+    fn intersect_test(&self, ray: &Ray) -> bool {
+        self.shape.intersect_test(ray, false)
     }
 }

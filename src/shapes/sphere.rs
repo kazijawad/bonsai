@@ -65,8 +65,8 @@ impl Shape for Sphere {
         &self,
         r: &Ray,
         t_hit: &mut Float,
-        surface_interaction: &mut SurfaceInteraction,
-        _test_alpha_texture: bool,
+        interaction: &mut SurfaceInteraction,
+        _include_alpha: bool,
     ) -> bool {
         // Transform ray to object space.
         let mut origin_error = Vec3::default();
@@ -207,7 +207,7 @@ impl Shape for Sphere {
         let p_error = gamma(5.0) * Vec3::from(p_hit).abs();
 
         // Initialize interaction from parametric information.
-        *surface_interaction =
+        *interaction =
             self.object_transform
                 .transform_surface_interaction(&SurfaceInteraction::new(
                     p_hit,
@@ -226,6 +226,97 @@ impl Shape for Sphere {
 
         // Update hit for quadric intersection.
         *t_hit = Float::from(t_shape_hit);
+
+        true
+    }
+
+    fn intersect_test(&self, r: &Ray, _include_alpha: bool) -> bool {
+        // Transform ray to object space.
+        let mut origin_error = Vec3::default();
+        let mut direction_error = Vec3::default();
+        let ray = self.world_transform.transform_ray_with_error(
+            r,
+            &mut origin_error,
+            &mut direction_error,
+        );
+
+        // Initialize ray coordinate values.
+        let ox = EFloat::new(ray.origin.x, origin_error.x);
+        let oy = EFloat::new(ray.origin.y, origin_error.y);
+        let oz = EFloat::new(ray.origin.z, origin_error.z);
+        let dx = EFloat::new(ray.direction.x, direction_error.x);
+        let dy = EFloat::new(ray.direction.y, direction_error.y);
+        let dz = EFloat::new(ray.direction.z, direction_error.z);
+        let a = dx * dx + dy * dy + dz * dz;
+        let b = 2.0 * (dx * ox + dy * oy + dz * oz);
+        let c = ox * ox + oy * oy + oz * oz
+            - EFloat::new(self.radius, 0.0) * EFloat::new(self.radius, 0.0);
+
+        // Solve quadratic equation for t values.
+        let mut t0 = EFloat::default();
+        let mut t1 = EFloat::default();
+        if !EFloat::quadratic(a, b, c, &mut t0, &mut t1) {
+            return false;
+        }
+
+        // Check quadric shape for nearest intersection.
+        if t0.upper_bound() > ray.t_max || t1.lower_bound() <= 0.0 {
+            return false;
+        }
+        let mut t_shape_hit = t0;
+        if t_shape_hit.lower_bound() <= 0.0 {
+            t_shape_hit = t1;
+            if t_shape_hit.upper_bound() > ray.t_max {
+                return false;
+            }
+        }
+
+        // Compute sphere hit position and phi.
+        let mut p_hit = ray.at(Float::from(t_shape_hit));
+
+        // Refine sphere intersection point.
+        p_hit *= self.radius / p_hit.distance(&Point3::default());
+        if p_hit.x == 0.0 && p_hit.y == 0.0 {
+            p_hit.x = 1e-5 * self.radius;
+        }
+
+        let mut phi = p_hit.y.atan2(p_hit.x);
+        if phi < 0.0 {
+            phi += 2.0 * PI;
+        }
+
+        // Test sphere intersection against clipping parameters.
+        if (self.z_min > -self.radius && p_hit.z < self.z_min)
+            || (self.z_max < self.radius && p_hit.z > self.z_max)
+            || phi > self.phi_max
+        {
+            if t_shape_hit == t1 {
+                return false;
+            }
+            if t1.upper_bound() > ray.t_max {
+                return false;
+            }
+
+            t_shape_hit = t1;
+            // Recompute sphere hit position and phi.
+            p_hit = ray.at(Float::from(t_shape_hit));
+
+            // Refine sphere intersection point.
+            p_hit *= self.radius / p_hit.distance(&Point3::default());
+            if p_hit.x == 0.0 && p_hit.y == 0.0 {
+                p_hit.x = 1e-5 * self.radius;
+            }
+            phi = p_hit.y.atan2(p_hit.x);
+            if phi < 0.0 {
+                phi += 2.0 * PI;
+            }
+            if (self.z_min > -self.radius && p_hit.z < self.z_min)
+                || (self.z_max < self.radius && p_hit.z > self.z_max)
+                || phi > self.phi_max
+            {
+                return false;
+            }
+        }
 
         true
     }
