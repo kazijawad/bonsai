@@ -1391,7 +1391,7 @@ impl AnimatedTransform {
                 c4[c].eval(p),
                 c5[c].eval(p),
                 theta,
-                &Interval::new(0.0, 1.0),
+                Interval::new(0.0, 1.0),
                 &mut zeros,
                 &mut n_zeros,
                 8,
