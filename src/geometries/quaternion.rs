@@ -1,9 +1,10 @@
 use std::ops;
 
 use crate::{
-    geometries::{mat4::Mat4, transform::Transform, vec3::Vec3},
+    geometries::{mat4::Mat4, vec3::Vec3},
     math,
     math::Float,
+    transform::Transform,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]

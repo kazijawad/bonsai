@@ -1,10 +1,8 @@
 use crate::{
-    geometries::{
-        bounds3::Bounds3, point2::Point2, point3::Point3, ray::Ray, transform::Transform,
-        vec3::Vec3,
-    },
+    geometries::{bounds3::Bounds3, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3},
     interaction::{Interaction, SurfaceInteraction},
     math::Float,
+    transform::Transform,
 };
 
 pub trait Shape: Send + Sync {
