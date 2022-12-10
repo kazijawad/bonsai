@@ -8,8 +8,8 @@ use crate::{
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Bounds2 {
-    min: Point2,
-    max: Point2,
+    pub min: Point2,
+    pub max: Point2,
 }
 
 impl Bounds2 {

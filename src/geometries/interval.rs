@@ -4,8 +4,8 @@ use crate::math::{Float, PI};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Interval {
-    low: Float,
-    high: Float,
+    pub low: Float,
+    pub high: Float,
 }
 
 impl Interval {

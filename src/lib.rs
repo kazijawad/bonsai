@@ -1,7 +1,11 @@
+mod bssrdf;
+mod efloat;
 mod geometries;
 mod interaction;
 mod math;
 mod medium;
 mod primitive;
+mod reflection;
 mod shape;
+mod shapes;
 mod transform;

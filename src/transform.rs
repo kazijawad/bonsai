@@ -11,6 +11,7 @@ use crate::{
         ray::{Ray, RayDifferential},
         vec3::Vec3,
     },
+    interaction::{InteractionProperties, Shading, SurfaceInteraction},
     math,
     math::Float,
 };
@@ -107,10 +108,84 @@ impl Transform {
         }
     }
 
+    pub fn transform_point_with_transform_error(
+        &self,
+        p: &Point3,
+        p_error: &Vec3,
+        abs_error: &mut Vec3,
+    ) -> Point3 {
+        let x = p.x;
+        let y = p.y;
+        let z = p.z;
+
+        let xp = (self.m.m[0][0] * x + self.m.m[0][1] * y) + (self.m.m[0][2] * z + self.m.m[0][3]);
+        let yp = (self.m.m[1][0] * x + self.m.m[1][1] * y) + (self.m.m[1][2] * z + self.m.m[1][3]);
+        let zp = (self.m.m[2][0] * x + self.m.m[2][1] * y) + (self.m.m[2][2] * z + self.m.m[2][3]);
+        let wp = (self.m.m[3][0] * x + self.m.m[3][1] * y) + (self.m.m[3][2] * z + self.m.m[3][3]);
+
+        abs_error.x = (math::gamma(3.0) + 1.0)
+            * (self.m.m[0][0].abs() * p_error.x
+                + self.m.m[0][1].abs() * p_error.y
+                + self.m.m[0][2].abs() * p_error.z)
+            + math::gamma(3.0)
+                * ((self.m.m[0][0] * x).abs()
+                    + (self.m.m[0][1] * y).abs()
+                    + (self.m.m[0][2] * z).abs()
+                    + (self.m.m[0][3]).abs());
+        abs_error.y = (math::gamma(3.0) + 1.0)
+            * ((self.m.m[1][0]).abs() * p_error.x
+                + (self.m.m[1][1]).abs() * p_error.y
+                + (self.m.m[1][2]).abs() * p_error.z)
+            + math::gamma(3.0)
+                * ((self.m.m[1][0] * x).abs()
+                    + (self.m.m[1][1] * y).abs()
+                    + (self.m.m[1][2] * z).abs()
+                    + (self.m.m[1][3]).abs());
+        abs_error.z = (math::gamma(3.0) + 1.0)
+            * ((self.m.m[2][0]).abs() * p_error.x
+                + (self.m.m[2][1]).abs() * p_error.y
+                + (self.m.m[2][2]).abs() * p_error.z)
+            + math::gamma(3.0)
+                * ((self.m.m[2][0] * x).abs()
+                    + (self.m.m[2][1] * y).abs()
+                    + (self.m.m[2][2] * z).abs()
+                    + (self.m.m[2][3]).abs());
+
+        assert_ne!(wp, 0.0);
+        if wp == 1.0 {
+            Point3::new(xp, yp, zp)
+        } else {
+            Point3::new(xp, yp, zp) / wp
+        }
+    }
+
     pub fn transform_vec(&self, v: &Vec3) -> Vec3 {
         let x = v.x;
         let y = v.y;
         let z = v.z;
+        Vec3::new(
+            self.m.m[0][0] * x + self.m.m[0][1] * y + self.m.m[0][2] * z,
+            self.m.m[1][0] * x + self.m.m[1][1] * y + self.m.m[1][2] * z,
+            self.m.m[2][0] * x + self.m.m[2][1] * y + self.m.m[2][2] * z,
+        )
+    }
+
+    pub fn transform_vec_with_error(&self, v: &Vec3, error: &mut Vec3) -> Vec3 {
+        let x = v.x;
+        let y = v.y;
+        let z = v.z;
+        error.x = math::gamma(3.0)
+            * ((self.m.m[0][0] * v.x).abs()
+                + (self.m.m[0][1] * v.y).abs()
+                + (self.m.m[0][2] * v.z).abs());
+        error.y = math::gamma(3.0)
+            * ((self.m.m[1][0] * v.x).abs()
+                + (self.m.m[1][1] * v.y).abs()
+                + (self.m.m[1][2] * v.z).abs());
+        error.z = math::gamma(3.0)
+            * ((self.m.m[2][0] * v.x).abs()
+                + (self.m.m[2][1] * v.y).abs()
+                + (self.m.m[2][2] * v.z).abs());
         Vec3::new(
             self.m.m[0][0] * x + self.m.m[0][1] * y + self.m.m[0][2] * z,
             self.m.m[1][0] * x + self.m.m[1][1] * y + self.m.m[1][2] * z,
@@ -147,6 +222,23 @@ impl Transform {
         Ray::new(&origin, &direction, t_max, r.time, r.medium)
     }
 
+    pub fn transform_ray_with_error(
+        &self,
+        r: &Ray,
+        origin_error: &mut Vec3,
+        direction_error: &mut Vec3,
+    ) -> Ray {
+        let mut origin = self.transform_point_with_error(&r.origin, origin_error);
+        let direction = self.transform_vec_with_error(&r.direction, direction_error);
+        let t_max = r.t_max;
+        let length_squared = direction.length_squared();
+        if length_squared > 0.0 {
+            let dt = direction.abs().dot(&origin_error) / length_squared;
+            origin += direction * dt;
+        }
+        Ray::new(&origin, &direction, t_max, r.time, r.medium)
+    }
+
     pub fn transform_ray_differential(&self, r: &RayDifferential) -> RayDifferential {
         let tr = self.transform_ray(&Ray::from(r.clone()));
         let mut ret = RayDifferential::new(&tr.origin, &tr.direction, tr.t_max, tr.time, tr.medium);
@@ -168,6 +260,89 @@ impl Transform {
         ret = ret.union_point(&self.transform_point(&Point3::new(b.max.x, b.min.y, b.max.z)));
         ret = ret.union_point(&self.transform_point(&Point3::new(b.max.x, b.max.y, b.max.z)));
         ret
+    }
+
+    pub fn transform_surface_interaction(
+        &self,
+        surface_interaction: &SurfaceInteraction,
+    ) -> SurfaceInteraction {
+        let mut point_error = Vec3::default();
+        let point = self.transform_point_with_transform_error(
+            &surface_interaction.interaction.point,
+            &surface_interaction.interaction.point_error,
+            &mut point_error,
+        );
+
+        let normal = self
+            .transform_normal(&surface_interaction.interaction.normal)
+            .normalize();
+        let negative_direction = self
+            .transform_vec(&surface_interaction.interaction.negative_direction)
+            .normalize();
+        let time = surface_interaction.interaction.time;
+        let medium_interface = surface_interaction.interaction.medium_interface;
+        let uv = surface_interaction.uv;
+        let shape = surface_interaction.shape.clone();
+        let dpdu = self.transform_vec(&surface_interaction.dpdu);
+        let dpdv = self.transform_vec(&surface_interaction.dpdv);
+        let dndu = self.transform_normal(&surface_interaction.dndu);
+        let dndv = self.transform_normal(&surface_interaction.dndv);
+        let mut shading = Shading {
+            normal: self
+                .transform_normal(&surface_interaction.shading.normal)
+                .normalize(),
+            dpdu: self.transform_vec(&surface_interaction.shading.dpdu),
+            dpdv: self.transform_vec(&surface_interaction.shading.dpdv),
+            dndu: self.transform_normal(&surface_interaction.shading.dndu),
+            dndv: self.transform_normal(&surface_interaction.shading.dndv),
+        };
+        shading.normal = shading.normal.face_forward(&normal);
+        let dudx = surface_interaction.dudx;
+        let dvdx = surface_interaction.dvdx;
+        let dudy = surface_interaction.dudy;
+        let dvdy = surface_interaction.dvdy;
+        let dpdx = if let Some(dpdx) = surface_interaction.dpdx {
+            Some(self.transform_vec(&dpdx))
+        } else {
+            None
+        };
+        let dpdy = if let Some(dpdy) = surface_interaction.dpdy {
+            Some(self.transform_vec(&dpdy))
+        } else {
+            None
+        };
+        let bsdf = surface_interaction.bsdf.clone();
+        let bssrdf = surface_interaction.bssrdf.clone();
+        let primitive = surface_interaction.primitive.clone();
+        let face_index = surface_interaction.face_index;
+
+        SurfaceInteraction {
+            interaction: InteractionProperties {
+                point,
+                point_error,
+                normal,
+                negative_direction,
+                time,
+                medium_interface,
+            },
+            uv,
+            dpdu,
+            dpdv,
+            dndu,
+            dndv,
+            shading,
+            shape,
+            primitive,
+            bsdf,
+            bssrdf,
+            dpdx,
+            dpdy,
+            dudx,
+            dvdx,
+            dudy,
+            dvdy,
+            face_index,
+        }
     }
 
     pub fn translate(delta: &Vec3) -> Self {
@@ -1552,10 +1727,11 @@ impl AnimatedTransform {
                 break;
             }
         }
-        let rotation = Quaternion::from(rotation_m.clone());
 
         // Compute scale using rotation and original matrix.
         let scale = Mat4::mul(&rotation_m.inverse(), &transform_m);
+
+        let rotation = Quaternion::from(rotation_m);
 
         (translation, rotation, scale)
     }

@@ -32,6 +32,38 @@ pub fn clamp<T: PartialOrd>(x: T, low: T, high: T) -> T {
     }
 }
 
+pub fn next_down(mut v: f32) -> f32 {
+    if v.is_infinite() && v < 0.0 {
+        return v;
+    }
+    if v == 0.0 {
+        v = -0.0;
+    }
+    let mut ui = v.to_bits();
+    if v > 0.0 {
+        ui -= 1;
+    } else {
+        ui += 1;
+    }
+    f32::from_bits(ui)
+}
+
+pub fn next_up(mut v: f32) -> f32 {
+    if v.is_infinite() && v > 0.0 {
+        return v;
+    }
+    if v == -0.0 {
+        v = 0.0;
+    }
+    let mut ui = v.to_bits();
+    if v >= 0.0 {
+        ui += 1;
+    } else {
+        ui -= 1;
+    }
+    f32::from_bits(ui)
+}
+
 pub fn find_interval<F>(size: u32, f: F) -> u32
 where
     F: Fn(u32) -> bool,
