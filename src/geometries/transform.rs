@@ -14,7 +14,7 @@ use crate::{
     math::Float,
 };
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Transform {
     pub m: Mat4,
     pub m_inverse: Mat4,
@@ -188,7 +188,8 @@ impl Transform {
             1.0, 0.0, 0.0, 0.0, 0.0, cos_theta, -sin_theta, 0.0, 0.0, sin_theta, cos_theta, 0.0,
             0.0, 0.0, 0.0, 1.0,
         );
-        Self::new(m, m.transpose())
+        let m_transpose = m.transpose();
+        Self::new(m, m_transpose)
     }
 
     pub fn rotate_y(theta: Float) -> Self {
@@ -198,7 +199,8 @@ impl Transform {
             cos_theta, 0.0, sin_theta, 0.0, 0.0, 1.0, 0.0, 0.0, -sin_theta, 0.0, cos_theta, 0.0,
             0.0, 0.0, 0.0, 1.0,
         );
-        Self::new(m, m.transpose())
+        let m_transpose = m.transpose();
+        Self::new(m, m_transpose)
     }
 
     pub fn rotate_z(theta: Float) -> Self {
@@ -208,7 +210,8 @@ impl Transform {
             cos_theta, -sin_theta, 0.0, 0.0, sin_theta, cos_theta, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
             0.0, 0.0, 0.0, 1.0,
         );
-        Self::new(m, m.transpose())
+        let m_transpose = m.transpose();
+        Self::new(m, m_transpose)
     }
 
     pub fn rotate(theta: Float, axis: &Vec3) -> Self {
@@ -232,7 +235,8 @@ impl Transform {
         m.m[2][2] = a.z * a.z + (1.0 - a.z * a.z) * cos_theta;
         m.m[2][3] = 0.0;
 
-        Self::new(m, m.transpose())
+        let m_transpose = m.transpose();
+        Self::new(m, m_transpose)
     }
 
     pub fn look_at(position: &Point3, look: &Point3, up: &Vec3) -> Self {
@@ -266,7 +270,7 @@ impl Transform {
     }
 
     pub fn inverse(&self) -> Self {
-        Self::new(self.m_inverse, self.m)
+        Self::new(self.m_inverse.clone(), self.m.clone())
     }
 
     pub fn transpose(&self) -> Self {

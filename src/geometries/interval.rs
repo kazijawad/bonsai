@@ -23,17 +23,17 @@ impl Interval {
         c4: Float,
         c5: Float,
         theta: Float,
-        t_interval: Self,
+        t_interval: &Self,
         zeros: &mut [Float; 8],
         zero_count: &mut u32,
         depth: i32,
     ) {
         // Evaluate motion derivative in interval form, return if no zeros
         let range = Interval::from(c1)
-            + (Interval::from(c2) + Interval::from(c3) * t_interval)
-                * (Interval::from(2.0 * theta) * t_interval).cos()
-            + (Interval::from(c4) + Interval::from(c5) * t_interval)
-                * (Interval::from(2.0 * theta) * t_interval).sin();
+            + (Interval::from(c2) + &Interval::from(c3) * t_interval)
+                * (&Interval::from(2.0 * theta) * t_interval).cos()
+            + (Interval::from(c4) + &Interval::from(c5) * t_interval)
+                * (&Interval::from(2.0 * theta) * t_interval).sin();
         if range.low > 0.0 || range.high < 0.0 || range.low == range.high {
             return;
         }
@@ -47,7 +47,7 @@ impl Interval {
                 c4,
                 c5,
                 theta,
-                Interval::new(t_interval.low, mid),
+                &Interval::new(t_interval.low, mid),
                 zeros,
                 zero_count,
                 depth - 1,
@@ -59,7 +59,7 @@ impl Interval {
                 c4,
                 c5,
                 theta,
-                Interval::new(mid, t_interval.high),
+                &Interval::new(mid, t_interval.high),
                 zeros,
                 zero_count,
                 depth - 1,

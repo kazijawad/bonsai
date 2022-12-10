@@ -1,6 +1,6 @@
 use crate::math::Float;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Mat4 {
     pub m: [[Float; 4]; 4],
 }

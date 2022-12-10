@@ -1,7 +1,7 @@
-use std::ops;
+use std::{mem, ops};
 
 use crate::{
-    geometries::{point3::Point3, vec3::Vec3},
+    geometries::{point3::Point3, ray::Ray, vec3::Vec3},
     math,
     math::Float,
 };
@@ -183,6 +183,82 @@ impl Bounds3 {
             0.0
         };
         (center, radius)
+    }
+
+    pub fn intersect_range(&self, ray: &Ray, hit0: &mut Float, hit1: &mut Float) -> bool {
+        let mut t0 = 0.0;
+        let mut t1 = ray.t_max;
+
+        for i in 0..3 {
+            // Update interval for ith bounding box slab.
+            let inverted_direction = 1.0 / ray.direction[i];
+            let mut t_near = (self.min[i] - ray.origin[i]) * inverted_direction;
+            let mut t_far = (self.max[i] - ray.origin[i]) * inverted_direction;
+            if t_near > t_far {
+                mem::swap(&mut t_near, &mut t_far)
+            }
+
+            // Update far to ensure robust ray-bound intersection.
+            t_far *= 1.0 * 2.0 * math::gamma(3.0);
+            t0 = if t_near > t0 { t_near } else { t0 };
+            t1 = if t_far < t1 { t_far } else { t1 };
+
+            if t0 > t1 {
+                return false;
+            }
+        }
+
+        *hit0 = t0;
+        *hit1 = t1;
+
+        true
+    }
+
+    pub fn intersect_range_precomputed(
+        &self,
+        ray: &Ray,
+        inverted_direction: &Vec3,
+        is_negative_direction: [u32; 3],
+    ) -> bool {
+        // Check for ray intersection against x and y slabs.
+        let mut t_min = (self[is_negative_direction[0]].x - ray.origin.x) * inverted_direction.x;
+        let mut t_max =
+            (self[1 - is_negative_direction[0]].x - ray.origin.x) * inverted_direction.x;
+        let ty_min = (self[is_negative_direction[1]].y - ray.origin.y) * inverted_direction.y;
+        let mut ty_max =
+            (self[1 - is_negative_direction[1]].y - ray.origin.y) * inverted_direction.y;
+
+        // Update t max to ensure robust bounds intersection.
+        t_max *= 1.0 + 2.0 * math::gamma(3.0);
+        ty_max *= 1.0 + 2.0 * math::gamma(3.0);
+        if t_min > ty_max || ty_min > t_max {
+            return false;
+        }
+        if ty_min > t_min {
+            t_min = ty_min;
+        }
+        if ty_max < t_max {
+            t_max = ty_max;
+        }
+
+        // Check for ray intersection against z slab.
+        let tz_min = (self[is_negative_direction[2]].z - ray.origin.z) * inverted_direction.z;
+        let mut tz_max =
+            (self[1 - is_negative_direction[2]].z - ray.origin.z) * inverted_direction.z;
+
+        // Update max to ensure robust bounds intersection.
+        tz_max *= 1.0 + 2.0 * math::gamma(3.0);
+        if t_min > tz_max || tz_min > t_max {
+            return false;
+        }
+        if tz_min > t_min {
+            t_min = tz_min;
+        }
+        if tz_max < t_max {
+            t_max = tz_max;
+        }
+
+        (t_min < ray.t_max) && (t_max > 0.0)
     }
 }
 

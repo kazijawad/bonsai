@@ -1,4 +1,5 @@
 mod geometries;
+mod interaction;
 mod math;
 mod medium;
 mod primitive;
