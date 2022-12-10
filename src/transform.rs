@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, ops, ptr, sync::Arc};
+use std::{cmp::Ordering, ops, ptr};
 
 use crate::{
     geometries::{
@@ -11,7 +11,7 @@ use crate::{
         ray::{Ray, RayDifferential},
         vec3::Vec3,
     },
-    interaction::{InteractionProperties, Shading, SurfaceInteraction},
+    interaction::{Shading, SurfaceInteraction},
     math,
     math::Float,
 };
@@ -24,8 +24,8 @@ pub struct Transform {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct AnimatedTransform {
-    start_transform: Arc<Transform>,
-    end_transform: Arc<Transform>,
+    start_transform: Box<Transform>,
+    end_transform: Box<Transform>,
     start_time: Float,
     end_time: Float,
     is_animated: bool,
@@ -268,21 +268,19 @@ impl Transform {
     ) -> SurfaceInteraction {
         let mut point_error = Vec3::default();
         let point = self.transform_point_with_transform_error(
-            &surface_interaction.interaction.point,
-            &surface_interaction.interaction.point_error,
+            &surface_interaction.point,
+            &surface_interaction.point_error,
             &mut point_error,
         );
 
         let normal = self
-            .transform_normal(&surface_interaction.interaction.normal)
+            .transform_normal(&surface_interaction.normal)
             .normalize();
         let negative_direction = self
-            .transform_vec(&surface_interaction.interaction.negative_direction)
+            .transform_vec(&surface_interaction.negative_direction)
             .normalize();
-        let time = surface_interaction.interaction.time;
-        let medium_interface = surface_interaction.interaction.medium_interface;
+        let time = surface_interaction.time;
         let uv = surface_interaction.uv;
-        let shape = surface_interaction.shape.clone();
         let dpdu = self.transform_vec(&surface_interaction.dpdu);
         let dpdv = self.transform_vec(&surface_interaction.dpdv);
         let dndu = self.transform_normal(&surface_interaction.dndu);
@@ -313,26 +311,20 @@ impl Transform {
         };
         let bsdf = surface_interaction.bsdf.clone();
         let bssrdf = surface_interaction.bssrdf.clone();
-        let primitive = surface_interaction.primitive.clone();
         let face_index = surface_interaction.face_index;
 
         SurfaceInteraction {
-            interaction: InteractionProperties {
-                point,
-                point_error,
-                normal,
-                negative_direction,
-                time,
-                medium_interface,
-            },
+            point,
+            point_error,
+            normal,
+            negative_direction,
+            time,
             uv,
             dpdu,
             dpdv,
             dndu,
             dndv,
             shading,
-            shape,
-            primitive,
             bsdf,
             bssrdf,
             dpdx,
@@ -522,16 +514,16 @@ impl Transform {
 
 impl AnimatedTransform {
     pub fn new(
-        start_transform: Arc<Transform>,
+        start_transform: Transform,
         start_time: Float,
-        end_transform: Arc<Transform>,
+        end_transform: Transform,
         end_time: Float,
     ) -> Self {
-        if ptr::eq(Arc::as_ptr(&start_transform), Arc::as_ptr(&end_transform)) {
+        if ptr::eq(&start_transform, &end_transform) {
             return Self {
-                start_transform: start_transform.clone(),
+                start_transform: Box::new(start_transform),
                 start_time,
-                end_transform: end_transform.clone(),
+                end_transform: Box::new(end_transform),
                 end_time,
                 is_animated: false,
                 has_rotation: false,
@@ -1669,9 +1661,9 @@ impl AnimatedTransform {
         }
 
         Self {
-            start_transform: start_transform.clone(),
+            start_transform: Box::new(start_transform),
             start_time,
-            end_transform: start_transform.clone(),
+            end_transform: Box::new(end_transform),
             end_time,
             is_animated: true,
             has_rotation: false,

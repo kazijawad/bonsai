@@ -54,6 +54,16 @@ impl Normal {
     }
 }
 
+impl Default for Normal {
+    fn default() -> Self {
+        Self {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        }
+    }
+}
+
 // TYPE CONVERSION
 
 impl From<Vec3> for Normal {

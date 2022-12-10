@@ -1,13 +1,9 @@
-use std::sync::Arc;
-
 use crate::{
     bssrdf::BSSRDF,
     geometries::{normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3},
     math::Float,
-    medium::{Medium, MediumInterface},
-    primitive::Primitive,
+    medium::Medium,
     reflection::BSDF,
-    shape::Shape,
 };
 
 pub trait Interaction: Send + Sync {
@@ -21,23 +17,12 @@ pub trait Interaction: Send + Sync {
 
     fn spawn_ray(&self, d: &Vec3) -> Ray;
     fn spawn_ray_to_point(&self, p: Point3) -> Ray;
-    fn spawn_ray_to_interaction(&self, it: Arc<dyn Interaction>) -> Ray;
+    fn spawn_ray_to_interaction(&self, it: Box<dyn Interaction>) -> Ray;
 
     fn get_medium(&self) -> Medium;
     fn get_medium_with_vec(&self, w: &Vec3) -> Medium;
 }
 
-#[derive(Debug)]
-pub struct InteractionProperties {
-    pub point: Point3,
-    pub point_error: Vec3,
-    pub normal: Normal,
-    pub negative_direction: Vec3,
-    pub time: Float,
-    pub medium_interface: Option<MediumInterface>,
-}
-
-#[derive(Debug)]
 pub struct Shading {
     pub normal: Normal,
     pub dpdu: Vec3,
@@ -47,15 +32,17 @@ pub struct Shading {
 }
 
 pub struct SurfaceInteraction {
-    pub interaction: InteractionProperties,
+    pub point: Point3,
+    pub point_error: Vec3,
+    pub normal: Normal,
+    pub negative_direction: Vec3,
+    pub time: Float,
     pub uv: Point2,
     pub dpdu: Vec3,
     pub dpdv: Vec3,
     pub dndu: Normal,
     pub dndv: Normal,
     pub shading: Shading,
-    pub shape: Option<Arc<dyn Shape + Send + Sync>>,
-    pub primitive: Option<Arc<dyn Primitive>>,
     pub bsdf: Option<BSDF>,
     pub bssrdf: Option<BSSRDF>,
     pub dpdx: Option<Vec3>,
@@ -69,52 +56,44 @@ pub struct SurfaceInteraction {
 
 impl SurfaceInteraction {
     pub fn new(
-        p: &Point3,
-        p_error: &Vec3,
-        uv: &Point2,
-        wo: &Vec3,
-        dpdu: &Vec3,
-        dpdv: &Vec3,
-        dndu: &Normal,
-        dndv: &Normal,
+        point: Point3,
+        point_error: Vec3,
+        uv: Point2,
+        negative_direction: Vec3,
+        dpdu: Vec3,
+        dpdv: Vec3,
+        dndu: Normal,
+        dndv: Normal,
         time: Float,
-        shape: &dyn Shape,
         face_index: i32,
+        reverse_orientation: bool,
+        transform_swaps_handedness: bool,
     ) -> Self {
-        let point = p.clone();
-        let point_error = p_error.clone();
-        let mut normal = Normal::from(dpdu.cross(dpdv).normalize());
-        let negative_direction = wo.clone();
-
+        let mut normal = Normal::from(dpdu.cross(&dpdv).normalize());
         // Adjust normal based on orientation and handedness.
-        if shape.reverse_orientation() ^ shape.transform_swaps_handedness() {
+        if reverse_orientation ^ transform_swaps_handedness {
             normal *= -1.0;
         }
 
         Self {
-            interaction: InteractionProperties {
-                point,
-                point_error,
-                normal,
-                negative_direction,
-                time,
-                medium_interface: None,
-            },
-            uv: uv.clone(),
-            dpdu: dpdu.clone(),
-            dpdv: dpdv.clone(),
-            dndu: dndu.clone(),
-            dndv: dndv.clone(),
+            point,
+            point_error,
+            normal,
+            negative_direction,
+            time,
+            uv,
+            dpdu,
+            dpdv,
+            dndu,
+            dndv,
             // Initialize shading geometry from true geometry.
             shading: Shading {
                 normal,
-                dpdu: dpdu.clone(),
-                dpdv: dpdv.clone(),
-                dndu: dndu.clone(),
-                dndv: dndv.clone(),
+                dpdu,
+                dpdv,
+                dndu,
+                dndv,
             },
-            shape: None,
-            primitive: None,
             bsdf: None,
             bssrdf: None,
             dpdx: None,
@@ -124,6 +103,39 @@ impl SurfaceInteraction {
             dudy: None,
             dvdy: None,
             face_index,
+        }
+    }
+}
+
+impl Default for SurfaceInteraction {
+    fn default() -> Self {
+        Self {
+            point: Point3::default(),
+            point_error: Vec3::default(),
+            normal: Normal::default(),
+            negative_direction: Vec3::default(),
+            time: 0.0,
+            uv: Point2::default(),
+            dpdu: Vec3::default(),
+            dpdv: Vec3::default(),
+            dndu: Normal::default(),
+            dndv: Normal::default(),
+            shading: Shading {
+                normal: Normal::default(),
+                dpdu: Vec3::default(),
+                dpdv: Vec3::default(),
+                dndu: Normal::default(),
+                dndv: Normal::default(),
+            },
+            bsdf: None,
+            bssrdf: None,
+            dpdx: None,
+            dpdy: None,
+            dudx: None,
+            dvdx: None,
+            dudy: None,
+            dvdy: None,
+            face_index: 0,
         }
     }
 }
