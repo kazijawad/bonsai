@@ -10,16 +10,16 @@ use crate::{
 };
 
 pub struct Sphere {
-    pub object_transform: Box<Transform>,
-    pub world_transform: Box<Transform>,
-    pub reverse_orientation: bool,
-    pub transform_swaps_handedness: bool,
-    pub radius: Float,
-    pub z_min: Float,
-    pub z_max: Float,
-    pub theta_min: Float,
-    pub theta_max: Float,
-    pub phi_max: Float,
+    object_transform: Box<Transform>,
+    world_transform: Box<Transform>,
+    reverse_orientation: bool,
+    transform_swaps_handedness: bool,
+    radius: Float,
+    z_min: Float,
+    z_max: Float,
+    theta_min: Float,
+    theta_max: Float,
+    phi_max: Float,
 }
 
 impl Sphere {
@@ -134,8 +134,8 @@ impl Shape for Sphere {
                 return false;
             }
 
-            t_shape_hit = t1;
             // Recompute sphere hit position and phi.
+            t_shape_hit = t1;
             p_hit = ray.at(Float::from(t_shape_hit));
 
             // Refine sphere intersection point.

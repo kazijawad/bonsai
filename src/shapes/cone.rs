@@ -4,30 +4,28 @@ use crate::{
         bounds3::Bounds3, normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3,
     },
     interaction::{Interaction, SurfaceInteraction},
-    math::{gamma, Float, PI},
+    math::{Float, PI},
     shape::Shape,
     transform::Transform,
 };
 
-pub struct Cylinder {
+pub struct Cone {
     object_transform: Box<Transform>,
     world_transform: Box<Transform>,
     reverse_orientation: bool,
     transform_swaps_handedness: bool,
+    height: Float,
     radius: Float,
-    z_min: Float,
-    z_max: Float,
     phi_max: Float,
 }
 
-impl Cylinder {
+impl Cone {
     pub fn new(
         object_transform: &Transform,
         world_transform: &Transform,
         reverse_orientation: bool,
+        height: Float,
         radius: Float,
-        z_min: Float,
-        z_max: Float,
         phi_max: Float,
     ) -> Self {
         let transform_swaps_handedness = object_transform.swaps_handedness();
@@ -37,19 +35,18 @@ impl Cylinder {
             world_transform: Box::new(world_transform.clone()),
             reverse_orientation,
             transform_swaps_handedness,
+            height,
             radius,
-            z_min: z_min.min(z_max),
-            z_max: z_min.max(z_max),
             phi_max: phi_max.clamp(0.0, 360.0).to_radians(),
         }
     }
 }
 
-impl Shape for Cylinder {
+impl Shape for Cone {
     fn object_bound(&self) -> Bounds3 {
         Bounds3::new(
-            &Point3::new(-self.radius, -self.radius, self.z_min),
-            &Point3::new(self.radius, self.radius, self.z_max),
+            &Point3::new(-self.radius, -self.radius, 0.0),
+            &Point3::new(self.radius, self.radius, self.height),
         )
     }
 
@@ -76,11 +73,17 @@ impl Shape for Cylinder {
         // Initialize ray coordinate values.
         let ox = EFloat::new(ray.origin.x, origin_error.x);
         let oy = EFloat::new(ray.origin.y, origin_error.y);
+        let oz = EFloat::new(ray.origin.z, origin_error.z);
         let dx = EFloat::new(ray.direction.x, direction_error.x);
         let dy = EFloat::new(ray.direction.y, direction_error.y);
-        let a = dx * dx + dy * dy;
-        let b = 2.0 * (dx * ox + dy * oy);
-        let c = ox * ox + oy * oy - EFloat::new(self.radius, 0.0) * EFloat::new(self.radius, 0.0);
+        let dz = EFloat::new(ray.direction.z, direction_error.z);
+
+        let mut k = EFloat::new(self.radius, 0.0) / EFloat::new(self.height, 0.0);
+        k = k * k;
+
+        let a = dx * dx + dy * dy - k * dz * dz;
+        let b = 2.0 * (dx * ox + dy * oy - k * dz * (oz - self.height));
+        let c = ox * ox + oy * oy - k * (oz - self.height) * (oz - self.height);
 
         // Solve quadratic equation for t values.
         let mut t0 = EFloat::default();
@@ -101,21 +104,15 @@ impl Shape for Cylinder {
             }
         }
 
-        // Compute cylinder hit position and phi.
+        // Compute cone inverse mapping.
         let mut p_hit = ray.at(Float::from(t_shape_hit));
-
-        // Refine cylinder intersection point.
-        let hit_radius = (p_hit.x * p_hit.x + p_hit.y * p_hit.y).sqrt();
-        p_hit.x *= self.radius / hit_radius;
-        p_hit.y *= self.radius / hit_radius;
-
         let mut phi = p_hit.y.atan2(p_hit.x);
         if phi < 0.0 {
-            phi += 2.0 * PI
+            phi += 2.0 * PI;
         }
 
-        // Test cylinder intersection against clipping parameters.
-        if p_hit.z < self.z_min || p_hit.z > self.z_max || phi > self.phi_max {
+        // Test cone intersection against clipping parameters.
+        if p_hit.z < 0.0 || p_hit.z > self.height || phi > self.phi_max {
             if t_shape_hit == t1 {
                 return false;
             }
@@ -123,34 +120,30 @@ impl Shape for Cylinder {
                 return false;
             }
 
-            // Recompute cylinder hit position and phi.
+            // Recompute cone inverse mapping.
             t_shape_hit = t1;
             p_hit = ray.at(Float::from(t_shape_hit));
-
-            // Refine cylinder intersection point.
-            let hit_radius = (p_hit.x * p_hit.x + p_hit.y * p_hit.y).sqrt();
-            p_hit.x *= self.radius / hit_radius;
-            p_hit.y *= self.radius / hit_radius;
             phi = p_hit.y.atan2(p_hit.x);
             if phi < 0.0 {
                 phi += 2.0 * PI;
             }
-            if p_hit.z < self.z_min || p_hit.z > self.z_max || phi > self.phi_max {
+
+            if p_hit.z < 0.0 || p_hit.z > self.height || phi > self.phi_max {
                 return false;
             }
         }
 
-        // Find parametric representation of cylinder hit.
+        // Find parametric representation of cone hit.
         let u = phi / self.phi_max;
-        let v = (p_hit.z - self.z_min) / (self.z_max - self.z_min);
+        let v = p_hit.z / self.height;
 
-        // Compute cylinder UV derivatives.
+        // Compute cone UV derivatives.
         let dpdu = Vec3::new(-self.phi_max * p_hit.y, self.phi_max * p_hit.x, 0.0);
-        let dpdv = Vec3::new(0.0, 0.0, self.z_max - self.z_min);
+        let dpdv = Vec3::new(-p_hit.x / (1.0 - v), -p_hit.y / (1.0 - v), self.height);
 
-        // Compute cylinder normal derivatives.
+        // Compute cone normal derivatives.
         let d2pduu = -self.phi_max * self.phi_max * Vec3::new(p_hit.x, p_hit.y, 0.0);
-        let d2pduv = Vec3::default();
+        let d2pduv = self.phi_max / (1.0 - v) * Vec3::new(p_hit.y, -p_hit.x, 0.0);
         let d2pdvv = Vec3::default();
 
         // Compute coefficients for fundamental forms.
@@ -173,8 +166,15 @@ impl Shape for Cylinder {
                 + (second_f * first_f - second_g * first_e) * inverted_second_egf * dpdv,
         );
 
-        // Compute error bounds for cylinder intersection.
-        let p_error = gamma(3.0) * Vec3::new(p_hit.x, p_hit.y, 0.0).abs();
+        // Compute error bounds for intersection computed with ray equation.
+        let px = ox + t_shape_hit * dx;
+        let py = oy + t_shape_hit * dy;
+        let pz = oz + t_shape_hit * dz;
+        let p_error = Vec3::new(
+            px.absolute_error(),
+            py.absolute_error(),
+            pz.absolute_error(),
+        );
 
         // Initialize interaction from parametric information.
         *interaction =
@@ -213,11 +213,17 @@ impl Shape for Cylinder {
         // Initialize ray coordinate values.
         let ox = EFloat::new(ray.origin.x, origin_error.x);
         let oy = EFloat::new(ray.origin.y, origin_error.y);
+        let oz = EFloat::new(ray.origin.z, origin_error.z);
         let dx = EFloat::new(ray.direction.x, direction_error.x);
         let dy = EFloat::new(ray.direction.y, direction_error.y);
-        let a = dx * dx + dy * dy;
-        let b = 2.0 * (dx * ox + dy * oy);
-        let c = ox * ox + oy * oy - EFloat::new(self.radius, 0.0) * EFloat::new(self.radius, 0.0);
+        let dz = EFloat::new(ray.direction.z, direction_error.z);
+
+        let mut k = EFloat::new(self.radius, 0.0) / EFloat::new(self.height, 0.0);
+        k = k * k;
+
+        let a = dx * dx + dy * dy - k * dz * dz;
+        let b = 2.0 * (dx * ox + dy * oy - k * dz * (oz - self.height));
+        let c = ox * ox + oy * oy - k * (oz - self.height) * (oz - self.height);
 
         // Solve quadratic equation for t values.
         let mut t0 = EFloat::default();
@@ -238,21 +244,15 @@ impl Shape for Cylinder {
             }
         }
 
-        // Compute cylinder hit position and phi.
+        // Compute cone inverse mapping.
         let mut p_hit = ray.at(Float::from(t_shape_hit));
-
-        // Refine cylinder intersection point.
-        let hit_radius = (p_hit.x * p_hit.x + p_hit.y * p_hit.y).sqrt();
-        p_hit.x *= self.radius / hit_radius;
-        p_hit.y *= self.radius / hit_radius;
-
         let mut phi = p_hit.y.atan2(p_hit.x);
         if phi < 0.0 {
-            phi += 2.0 * PI
+            phi += 2.0 * PI;
         }
 
-        // Test cylinder intersection against clipping parameters.
-        if p_hit.z < self.z_min || p_hit.z > self.z_max || phi > self.phi_max {
+        // Test cone intersection against clipping parameters.
+        if p_hit.z < 0.0 || p_hit.z > self.height || phi > self.phi_max {
             if t_shape_hit == t1 {
                 return false;
             }
@@ -260,19 +260,15 @@ impl Shape for Cylinder {
                 return false;
             }
 
-            // Recompute cylinder hit position and phi.
+            // Recompute cone inverse mapping.
             t_shape_hit = t1;
             p_hit = ray.at(Float::from(t_shape_hit));
-
-            // Refine cylinder intersection point.
-            let hit_radius = (p_hit.x * p_hit.x + p_hit.y * p_hit.y).sqrt();
-            p_hit.x *= self.radius / hit_radius;
-            p_hit.y *= self.radius / hit_radius;
             phi = p_hit.y.atan2(p_hit.x);
             if phi < 0.0 {
                 phi += 2.0 * PI;
             }
-            if p_hit.z < self.z_min || p_hit.z > self.z_max || phi > self.phi_max {
+
+            if p_hit.z < 0.0 || p_hit.z > self.height || phi > self.phi_max {
                 return false;
             }
         }
@@ -302,7 +298,10 @@ impl Shape for Cylinder {
     }
 
     fn area(&self) -> Float {
-        (self.z_max - self.z_min) * self.radius * self.phi_max
+        self.radius
+            * ((self.height * self.height) + (self.radius * self.radius)).sqrt()
+            * self.phi_max
+            / 2.0
     }
 
     fn solid_angle(&self, p: &Point3, n_samples: u32) -> Float {

@@ -190,6 +190,14 @@ impl ops::Sub<EFloat> for f32 {
     }
 }
 
+impl ops::Sub<f32> for EFloat {
+    type Output = Self;
+
+    fn sub(self, rhs: f32) -> Self::Output {
+        self - EFloat::new(rhs, 0.0)
+    }
+}
+
 // MULTIPLICATION
 
 impl ops::Mul for EFloat {
