@@ -40,8 +40,6 @@ struct CameraSettings {
     fov: Float,
     aperature: Float,
     focus_distance: Float,
-    start_time: Float,
-    end_time: Float,
 }
 
 fn main() {
@@ -66,15 +64,7 @@ fn main() {
     let mut scene = AggregatePrimitive::new();
 
     let transform = Transform::default();
-    let shape = Sphere::new(
-        &transform,
-        &transform,
-        false,
-        1.0,
-        Float::NEG_INFINITY,
-        Float::INFINITY,
-        360.0,
-    );
+    let shape = Sphere::new(&transform, &transform, false, 0.5, 0.0, 1.0, 360.0);
     let material = TestMaterial::new();
     let mesh = GeometricPrimitive::new(shape, material);
 
@@ -87,8 +77,6 @@ fn main() {
         settings.film.width as f32 / settings.film.height as f32,
         settings.camera.aperature,
         settings.camera.focus_distance,
-        settings.camera.start_time,
-        settings.camera.end_time,
     );
 
     // Render

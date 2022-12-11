@@ -4,8 +4,8 @@ max_depth = 5
 
 [film]
 aspect_ratio = 1.0
-width = 640
-height = 640
+width = 1280
+height = 720
 background = [0.53, 0.80, 0.92]
 
 [camera]
@@ -14,5 +14,3 @@ look_at = [0.0, 0.0, 0.0]
 fov = 45.0
 aperature = 0.0
 focus_distance = 10.0
-start_time = 0.0
-end_time = 0.0
