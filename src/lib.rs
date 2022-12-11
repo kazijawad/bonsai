@@ -20,5 +20,5 @@ pub use material::*;
 pub use math::*;
 pub use primitive::{AggregatePrimitive, GeometricPrimitive};
 pub use renderer::*;
-pub use shapes::sphere::*;
+pub use shapes::{cylinder::Cylinder, sphere::Sphere};
 pub use transform::*;
