@@ -2,13 +2,13 @@ use std::fs;
 
 use image::{imageops, ImageBuffer, Rgb, RgbImage};
 
-use crate::geometries::vec3::Vec3;
+use crate::geometries::point3::Point3;
 
 pub struct Film {
     width: u32,
     height: u32,
     sample_count: u32,
-    samples: Vec<Vec3>,
+    samples: Vec<Point3>,
     buffer: RgbImage,
 }
 
@@ -23,7 +23,7 @@ impl Film {
         }
     }
 
-    pub fn add_sample(&mut self, x: u32, y: u32, sample: Vec3) {
+    pub fn add_sample(&mut self, x: u32, y: u32, sample: Point3) {
         assert!(
             self.samples.capacity() == ((self.width * self.height) as usize),
             "Invalid sample amount"
@@ -35,7 +35,7 @@ impl Film {
         self.buffer.put_pixel(x, y, Rgb(color));
     }
 
-    pub fn add_samples(&mut self, samples: Vec<Vec<Vec3>>) {
+    pub fn add_samples(&mut self, samples: Vec<Vec<Point3>>) {
         for (y, row) in samples.iter().enumerate() {
             for (x, color) in row.iter().enumerate() {
                 self.add_sample(x as u32, y as u32, *color);
@@ -57,7 +57,7 @@ impl Film {
         println!("Image Location: dist/output.png");
     }
 
-    pub fn get_srgb_color(&self, sample: &Vec3) -> [u8; 3] {
+    pub fn get_srgb_color(&self, sample: &Point3) -> [u8; 3] {
         let mut r = sample.x;
         let mut g = sample.y;
         let mut b = sample.z;

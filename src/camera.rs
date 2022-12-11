@@ -4,15 +4,15 @@ use crate::{
 };
 
 pub struct Camera {
-    pub position: Vec3,
-    pub look_at: Vec3,
-    pub fov: Float,
-    pub aspect_ratio: Float,
-    pub aperature: Float,
-    pub focus_distance: Float,
-    pub start_time: Float,
-    pub end_time: Float,
-    lower_left_corner: Vec3,
+    position: Point3,
+    look_at: Vec3,
+    fov: Float,
+    aspect_ratio: Float,
+    aperature: Float,
+    focus_distance: Float,
+    start_time: Float,
+    end_time: Float,
+    lower_left_corner: Point3,
     horizontal: Vec3,
     vertical: Vec3,
     u: Vec3,
@@ -22,7 +22,7 @@ pub struct Camera {
 
 impl Camera {
     pub fn new(
-        position: Vec3,
+        position: Point3,
         look_at: Vec3,
         fov: Float,
         aspect_ratio: Float,
@@ -38,7 +38,7 @@ impl Camera {
         let viewport_width = 2.0 * h;
         let viewport_height = aspect_ratio * viewport_width;
 
-        let w = (position - look_at).normalize();
+        let w = (Vec3::from(position) - look_at).normalize();
         let u = up.cross(&w).normalize();
         let v = w.cross(&u);
 

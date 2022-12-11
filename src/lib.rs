@@ -15,7 +15,7 @@ mod shapes;
 mod transform;
 
 pub use camera::Camera;
-pub use geometries::{mat4::Mat4, vec3::Vec3};
+pub use geometries::{mat4::Mat4, point3::Point3, vec3::Vec3};
 pub use material::*;
 pub use math::*;
 pub use primitive::{AggregatePrimitive, GeometricPrimitive};

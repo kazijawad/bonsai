@@ -6,21 +6,20 @@ use rayon::prelude::*;
 use crate::{
     camera::Camera,
     film::Film,
-    geometries::{ray::Ray, vec3::Vec3},
+    geometries::{point3::Point3, ray::Ray},
     interaction::SurfaceInteraction,
     math::Float,
-    primitive::Primitive,
-    AggregatePrimitive,
+    primitive::{AggregatePrimitive, Primitive},
 };
 
 pub struct Renderer<'a> {
-    pub width: u32,
-    pub height: u32,
-    pub background: Vec3,
-    pub max_sample_count: u32,
-    pub max_depth: u32,
-    pub camera: &'a Camera,
-    pub scene: &'a AggregatePrimitive,
+    width: u32,
+    height: u32,
+    background: Point3,
+    max_sample_count: u32,
+    max_depth: u32,
+    camera: &'a Camera,
+    scene: &'a AggregatePrimitive,
     film: Film,
 }
 
@@ -28,13 +27,12 @@ impl<'a> Renderer<'a> {
     pub fn new(
         width: u32,
         height: u32,
-        background: Vec3,
+        background: Point3,
         max_sample_count: u32,
         max_depth: u32,
         camera: &'a Camera,
         scene: &'a AggregatePrimitive,
     ) -> Self {
-        println!("Aspect Ratio: {}", camera.aspect_ratio);
         println!("Width: {}", width);
         println!("Height: {}", height);
         println!("Sample Count: {}", max_sample_count);
@@ -66,7 +64,7 @@ impl<'a> Renderer<'a> {
                     .into_par_iter()
                     .map(|x| {
                         let mut rng = StdRng::from_entropy();
-                        let mut color = Vec3::default();
+                        let mut color = Point3::default();
                         for _ in 0..self.max_sample_count {
                             color += self.get_color(x, y, &mut rng);
                         }
@@ -80,7 +78,7 @@ impl<'a> Renderer<'a> {
         self.film.add_samples(samples);
     }
 
-    fn get_color(&self, x: u32, y: u32, rng: &mut StdRng) -> Vec3 {
+    fn get_color(&self, x: u32, y: u32, rng: &mut StdRng) -> Point3 {
         let width = self.width as Float;
         let height = self.height as Float;
 
@@ -91,15 +89,15 @@ impl<'a> Renderer<'a> {
         self.trace_ray(ray, self.max_depth)
     }
 
-    fn trace_ray(&self, ray: Ray, depth: u32) -> Vec3 {
+    fn trace_ray(&self, ray: Ray, depth: u32) -> Point3 {
         if depth <= 0 {
-            return Vec3::default();
+            return Point3::default();
         }
 
         let mut t_hit = 0.0;
         let mut interaction = SurfaceInteraction::default();
         if self.scene.intersect(&ray, &mut t_hit, &mut interaction) {
-            Vec3::new(1.0, 0.0, 0.0)
+            Point3::new(1.0, 0.0, 0.0)
         } else {
             self.background
         }
