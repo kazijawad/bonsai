@@ -10,8 +10,8 @@ use crate::{
 };
 
 pub struct Cone {
-    object_transform: Box<Transform>,
-    world_transform: Box<Transform>,
+    object_to_world: Box<Transform>,
+    world_to_object: Box<Transform>,
     reverse_orientation: bool,
     transform_swaps_handedness: bool,
     height: Float,
@@ -21,18 +21,18 @@ pub struct Cone {
 
 impl Cone {
     pub fn new(
-        object_transform: &Transform,
-        world_transform: &Transform,
+        object_to_world: &Transform,
+        world_to_object: &Transform,
         reverse_orientation: bool,
         height: Float,
         radius: Float,
         phi_max: Float,
     ) -> Self {
-        let transform_swaps_handedness = object_transform.swaps_handedness();
+        let transform_swaps_handedness = object_to_world.swaps_handedness();
 
         Self {
-            object_transform: Box::new(object_transform.clone()),
-            world_transform: Box::new(world_transform.clone()),
+            object_to_world: Box::new(object_to_world.clone()),
+            world_to_object: Box::new(world_to_object.clone()),
             reverse_orientation,
             transform_swaps_handedness,
             height,
@@ -51,7 +51,7 @@ impl Shape for Cone {
     }
 
     fn world_bound(&self) -> Bounds3 {
-        self.object_transform.transform_bounds(&self.object_bound())
+        self.object_to_world.transform_bounds(&self.object_bound())
     }
 
     fn intersect(
@@ -64,7 +64,7 @@ impl Shape for Cone {
         // Transform ray to object space.
         let mut origin_error = Vec3::default();
         let mut direction_error = Vec3::default();
-        let ray = self.world_transform.transform_ray_with_error(
+        let ray = self.world_to_object.transform_ray_with_error(
             r,
             &mut origin_error,
             &mut direction_error,
@@ -178,7 +178,7 @@ impl Shape for Cone {
 
         // Initialize interaction from parametric information.
         *interaction =
-            self.object_transform
+            self.object_to_world
                 .transform_surface_interaction(&SurfaceInteraction::new(
                     p_hit,
                     p_error,
@@ -204,7 +204,7 @@ impl Shape for Cone {
         // Transform ray to object space.
         let mut origin_error = Vec3::default();
         let mut direction_error = Vec3::default();
-        let ray = self.world_transform.transform_ray_with_error(
+        let ray = self.world_to_object.transform_ray_with_error(
             r,
             &mut origin_error,
             &mut direction_error,

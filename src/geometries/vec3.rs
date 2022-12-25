@@ -18,14 +18,14 @@ impl Vec3 {
         Self { x, y, z }
     }
 
-    pub fn coordinate_system(v1: &Self) -> (Self, Self) {
-        let v2 = if v1.x.abs() > v1.y.abs() {
+    pub fn coordinate_system(v1: &Self, v2: &mut Self, v3: &mut Self) {
+        let new_v2 = if v1.x.abs() > v1.y.abs() {
             Vec3::new(-v1.z, 0.0, v1.x) / (v1.x * v1.x + v1.z * v1.z).sqrt()
         } else {
             Vec3::new(0.0, v1.z, -v1.y) / (v1.y * v1.y + v1.z * v1.z).sqrt()
         };
-        let v3 = v1.cross(&v2);
-        (v2, v3)
+        v2.clone_from(&new_v2);
+        v3.clone_from(&v1.cross(&v2));
     }
 
     pub fn length_squared(&self) -> Float {

@@ -51,7 +51,7 @@ pub struct SurfaceInteraction {
     pub dvdx: Option<Float>,
     pub dudy: Option<Float>,
     pub dvdy: Option<Float>,
-    pub face_index: i32,
+    pub face_index: usize,
 }
 
 impl SurfaceInteraction {
@@ -65,7 +65,7 @@ impl SurfaceInteraction {
         dndu: Normal,
         dndv: Normal,
         time: Float,
-        face_index: i32,
+        face_index: usize,
         reverse_orientation: bool,
         transform_swaps_handedness: bool,
     ) -> Self {
@@ -104,6 +104,17 @@ impl SurfaceInteraction {
             dvdy: None,
             face_index,
         }
+    }
+
+    pub fn set_shading_geometry(
+        &self,
+        dpdu: &Vec3,
+        dpdv: &Vec3,
+        dndu: &Normal,
+        dndv: &Normal,
+        orientation_is_authoritative: bool,
+    ) {
+        todo!()
     }
 }
 

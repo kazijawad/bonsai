@@ -1,3 +1,7 @@
+// Temporarily disable while in development.
+#![allow(unused_variables)]
+#![allow(dead_code)]
+
 mod bssrdf;
 mod camera;
 mod efloat;
@@ -12,6 +16,7 @@ mod reflection;
 mod renderer;
 mod shape;
 mod shapes;
+mod texture;
 mod transform;
 
 pub use camera::Camera;
