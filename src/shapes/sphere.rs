@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     efloat::EFloat,
     geometries::{
@@ -9,9 +11,9 @@ use crate::{
     transform::Transform,
 };
 
-pub struct Sphere {
-    object_to_world: Box<Transform>,
-    world_to_object: Box<Transform>,
+pub struct Sphere<'a> {
+    object_to_world: &'a Transform,
+    world_to_object: &'a Transform,
     reverse_orientation: bool,
     transform_swaps_handedness: bool,
     radius: Float,
@@ -22,21 +24,21 @@ pub struct Sphere {
     phi_max: Float,
 }
 
-impl Sphere {
+impl<'a> Sphere<'a> {
     pub fn new(
-        object_to_world: &Transform,
-        world_to_object: &Transform,
+        object_to_world: &'a Transform,
+        world_to_object: &'a Transform,
         reverse_orientation: bool,
         radius: Float,
         z_min: Float,
         z_max: Float,
         phi_max: Float,
-    ) -> Self {
+    ) -> Arc<Self> {
         let transform_swaps_handedness = object_to_world.swaps_handedness();
 
-        Self {
-            object_to_world: Box::new(object_to_world.clone()),
-            world_to_object: Box::new(world_to_object.clone()),
+        Arc::new(Self {
+            object_to_world,
+            world_to_object,
             reverse_orientation,
             transform_swaps_handedness,
             radius,
@@ -45,11 +47,11 @@ impl Sphere {
             theta_min: (z_min.min(z_max) / radius).clamp(-1.0, 1.0).acos(),
             theta_max: (z_min.max(z_max) / radius).clamp(-1.0, 1.0).acos(),
             phi_max: phi_max.clamp(0.0, 360.0).to_radians(),
-        }
+        })
     }
 }
 
-impl Shape for Sphere {
+impl<'a> Shape for Sphere<'a> {
     fn object_bound(&self) -> Bounds3 {
         Bounds3::new(
             &Point3::new(-self.radius, -self.radius, self.z_min),

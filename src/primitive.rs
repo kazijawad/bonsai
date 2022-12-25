@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     geometries::ray::Ray, interaction::SurfaceInteraction, material::Material, math::Float,
     shape::Shape,
@@ -9,35 +11,31 @@ pub trait Primitive: Send + Sync {
     fn intersect_test(&self, ray: &Ray) -> bool;
 }
 
-pub struct AggregatePrimitive {
-    primitives: Vec<Box<dyn Primitive>>,
+pub struct AggregatePrimitive<'a> {
+    primitives: Vec<Arc<dyn Primitive + 'a>>,
 }
 
-pub struct GeometricPrimitive {
-    pub shape: Box<dyn Shape>,
-    pub material: Box<dyn Material>,
+pub struct GeometricPrimitive<'a> {
+    pub shape: Arc<dyn Shape + 'a>,
+    pub material: Arc<dyn Material + 'a>,
 }
 
-impl AggregatePrimitive {
-    pub fn new() -> Self {
-        Self { primitives: vec![] }
-    }
-
-    pub fn add<T: Primitive + 'static>(&mut self, object: T) {
-        self.primitives.push(Box::new(object));
+impl<'a> AggregatePrimitive<'a> {
+    pub fn new(primitives: Vec<Arc<dyn Primitive + 'a>>) -> Arc<Self> {
+        Arc::new(Self { primitives })
     }
 }
 
-impl GeometricPrimitive {
-    pub fn new<T: Shape + 'static, U: Material + 'static>(shape: T, material: U) -> Self {
-        Self {
-            shape: Box::new(shape),
-            material: Box::new(material),
-        }
+impl<'a> GeometricPrimitive<'a> {
+    pub fn new(shape: Arc<dyn Shape + 'a>, material: Arc<dyn Material + 'a>) -> Arc<Self> {
+        Arc::new(Self {
+            shape: shape.clone(),
+            material: material.clone(),
+        })
     }
 }
 
-impl Primitive for AggregatePrimitive {
+impl<'a> Primitive for AggregatePrimitive<'a> {
     fn intersect(
         &self,
         ray: &Ray,
@@ -64,7 +62,7 @@ impl Primitive for AggregatePrimitive {
     }
 }
 
-impl Primitive for GeometricPrimitive {
+impl<'a> Primitive for GeometricPrimitive<'a> {
     fn intersect(
         &self,
         ray: &Ray,

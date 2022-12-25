@@ -8,9 +8,9 @@ use crate::{
     transform::Transform,
 };
 
-pub struct Disk {
-    object_to_world: Box<Transform>,
-    world_to_object: Box<Transform>,
+pub struct Disk<'a> {
+    object_to_world: &'a Transform,
+    world_to_object: &'a Transform,
     reverse_orientation: bool,
     transform_swaps_handedness: bool,
     height: Float,
@@ -19,10 +19,10 @@ pub struct Disk {
     phi_max: Float,
 }
 
-impl Disk {
+impl<'a> Disk<'a> {
     pub fn new(
-        object_to_world: &Transform,
-        world_to_object: &Transform,
+        object_to_world: &'a Transform,
+        world_to_object: &'a Transform,
         reverse_orientation: bool,
         height: Float,
         radius: Float,
@@ -32,8 +32,8 @@ impl Disk {
         let transform_swaps_handedness = object_to_world.swaps_handedness();
 
         Self {
-            object_to_world: Box::new(object_to_world.clone()),
-            world_to_object: Box::new(world_to_object.clone()),
+            object_to_world,
+            world_to_object,
             reverse_orientation,
             transform_swaps_handedness,
             height,
@@ -44,7 +44,7 @@ impl Disk {
     }
 }
 
-impl Shape for Disk {
+impl<'a> Shape for Disk<'a> {
     fn object_bound(&self) -> Bounds3 {
         Bounds3::new(
             &Point3::new(-self.radius, -self.radius, self.height),

@@ -61,14 +61,12 @@ fn main() {
         }
     };
 
-    let mut scene = AggregatePrimitive::new();
-
     let transform = Transform::default();
     let shape = Sphere::new(&transform, &transform, false, 0.5, 0.0, 1.0, 360.0);
     let material = TestMaterial::new();
     let mesh = GeometricPrimitive::new(shape, material);
 
-    scene.add(mesh);
+    let scene = AggregatePrimitive::new(vec![mesh]);
 
     let camera = Camera::new(
         Point3::from(settings.camera.position),
@@ -79,7 +77,6 @@ fn main() {
         settings.camera.focus_distance,
     );
 
-    // Render
     let mut renderer = Renderer::new(
         settings.film.width,
         settings.film.height,
@@ -87,7 +84,7 @@ fn main() {
         settings.render.max_sample_count,
         settings.render.max_depth,
         &camera,
-        &scene,
+        scene,
     );
     renderer.render();
 }

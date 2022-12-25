@@ -9,9 +9,9 @@ use crate::{
     transform::Transform,
 };
 
-pub struct Cylinder {
-    object_to_world: Box<Transform>,
-    world_to_object: Box<Transform>,
+pub struct Cylinder<'a> {
+    object_to_world: &'a Transform,
+    world_to_object: &'a Transform,
     reverse_orientation: bool,
     transform_swaps_handedness: bool,
     radius: Float,
@@ -20,10 +20,10 @@ pub struct Cylinder {
     phi_max: Float,
 }
 
-impl Cylinder {
+impl<'a> Cylinder<'a> {
     pub fn new(
-        object_to_world: &Transform,
-        world_to_object: &Transform,
+        object_to_world: &'a Transform,
+        world_to_object: &'a Transform,
         reverse_orientation: bool,
         radius: Float,
         z_min: Float,
@@ -33,8 +33,8 @@ impl Cylinder {
         let transform_swaps_handedness = object_to_world.swaps_handedness();
 
         Self {
-            object_to_world: Box::new(object_to_world.clone()),
-            world_to_object: Box::new(world_to_object.clone()),
+            object_to_world,
+            world_to_object,
             reverse_orientation,
             transform_swaps_handedness,
             radius,
@@ -45,7 +45,7 @@ impl Cylinder {
     }
 }
 
-impl Shape for Cylinder {
+impl<'a> Shape for Cylinder<'a> {
     fn object_bound(&self) -> Bounds3 {
         Bounds3::new(
             &Point3::new(-self.radius, -self.radius, self.z_min),

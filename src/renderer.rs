@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::{sync::Arc, time::Instant};
 
 use rand::{rngs::StdRng, Rng, SeedableRng};
 use rayon::prelude::*;
@@ -19,7 +19,7 @@ pub struct Renderer<'a> {
     max_sample_count: u32,
     max_depth: u32,
     camera: &'a Camera,
-    scene: &'a AggregatePrimitive,
+    scene: Arc<AggregatePrimitive<'a>>,
     film: Film,
 }
 
@@ -31,7 +31,7 @@ impl<'a> Renderer<'a> {
         max_sample_count: u32,
         max_depth: u32,
         camera: &'a Camera,
-        scene: &'a AggregatePrimitive,
+        scene: Arc<AggregatePrimitive<'a>>,
     ) -> Self {
         println!("Width: {}", width);
         println!("Height: {}", height);
@@ -45,7 +45,7 @@ impl<'a> Renderer<'a> {
             max_sample_count,
             max_depth,
             camera,
-            scene,
+            scene: scene.clone(),
             film: Film::new(width, height, max_sample_count),
         }
     }
