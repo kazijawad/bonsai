@@ -567,7 +567,7 @@ impl AnimatedTransform {
         // Compute terms of motion derivative function.
         if has_rotation {
             let cos_theta = rotation[0].dot(&rotation[1]);
-            let theta = math::clamp(cos_theta, -1.0, 1.0).acos();
+            let theta = cos_theta.clamp(-1.0, 1.0).acos();
             let qperp = (rotation[1] - rotation[0] * cos_theta).normalize();
 
             let t0x = translation[0].x;
@@ -1843,7 +1843,7 @@ impl AnimatedTransform {
 
         let rotation = self.rotation.as_ref().unwrap();
         let cos_theta = rotation[0].dot(&rotation[1]);
-        let theta = math::clamp(cos_theta, -1.0, 1.0).acos();
+        let theta = cos_theta.clamp(-1.0, 1.0).acos();
 
         let c1 = self.c1.as_ref().unwrap();
         let c2 = self.c2.as_ref().unwrap();

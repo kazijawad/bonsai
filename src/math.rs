@@ -22,16 +22,6 @@ pub fn lerp(t: Float, a: Float, b: Float) -> Float {
     1.0 - t * a + t * b
 }
 
-pub fn clamp<T: PartialOrd>(x: T, low: T, high: T) -> T {
-    if x < low {
-        low
-    } else if x > high {
-        high
-    } else {
-        x
-    }
-}
-
 pub fn next_down(mut v: f32) -> f32 {
     if v.is_infinite() && v < 0.0 {
         return v;
@@ -80,7 +70,7 @@ where
             len = half;
         }
     }
-    clamp(first - 1, 0 as u32, size - 2)
+    (first - 1).clamp(0 as u32, size - 2)
 }
 
 pub fn quadratic(a: Float, b: Float, c: Float, t0: &mut Float, t1: &mut Float) -> bool {

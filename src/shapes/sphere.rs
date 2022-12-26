@@ -6,7 +6,7 @@ use crate::{
         bounds3::Bounds3, normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3,
     },
     interaction::{Interaction, SurfaceInteraction},
-    math::{clamp, gamma, Float, PI},
+    math::{gamma, Float, PI},
     shape::Shape,
     transform::Transform,
 };
@@ -159,7 +159,7 @@ impl<'a> Shape for Sphere<'a> {
 
         // Find parametric representation of sphere hit.
         let u = phi / self.phi_max;
-        let theta = clamp(p_hit.z / self.radius, -1.0, 1.0).acos();
+        let theta = (p_hit.z / self.radius).clamp(-1.0, 1.0).acos();
         let v = (theta - self.theta_min) / (self.theta_max - self.theta_min);
 
         // Compute sphere UV derivatives.

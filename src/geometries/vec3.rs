@@ -141,8 +141,8 @@ impl From<Normal> for Vec3 {
     }
 }
 
-impl From<[f32; 3]> for Vec3 {
-    fn from(v: [f32; 3]) -> Self {
+impl From<[Float; 3]> for Vec3 {
+    fn from(v: [Float; 3]) -> Self {
         Self {
             x: v[0],
             y: v[1],

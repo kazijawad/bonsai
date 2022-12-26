@@ -2,7 +2,6 @@ use std::ops;
 
 use crate::{
     geometries::{mat4::Mat4, vec3::Vec3},
-    math,
     math::Float,
     transform::Transform,
 };
@@ -19,7 +18,7 @@ impl Quaternion {
         if cos_theta > 0.9995 {
             ((1.0 - t) * a + t * b).normalize()
         } else {
-            let theta = math::clamp(cos_theta, -1.0, 1.0).cos();
+            let theta = cos_theta.clamp(-1.0, 1.0).cos();
             let theta_p = theta * t;
             let q_perp = (b - &(a * cos_theta)).normalize();
             a * theta_p.cos() + q_perp * theta_p.sin()
