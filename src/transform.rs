@@ -100,7 +100,6 @@ impl Transform {
 
         *error = math::gamma(3.0) * Vec3::new(x_abs_sum, y_abs_sum, z_abs_sum);
 
-        debug_assert!(wp != 0.0);
         if wp == 1.0 {
             Point3::new(xp, yp, zp)
         } else {
@@ -108,7 +107,7 @@ impl Transform {
         }
     }
 
-    pub fn transform_point_with_transform_error(
+    pub fn transform_point_with_point_error(
         &self,
         p: &Point3,
         p_error: &Vec3,
@@ -151,7 +150,6 @@ impl Transform {
                     + (self.m.m[2][2] * z).abs()
                     + (self.m.m[2][3]).abs());
 
-        assert_ne!(wp, 0.0);
         if wp == 1.0 {
             Point3::new(xp, yp, zp)
         } else {
@@ -267,7 +265,7 @@ impl Transform {
         surface_interaction: &SurfaceInteraction,
     ) -> SurfaceInteraction {
         let mut point_error = Vec3::default();
-        let point = self.transform_point_with_transform_error(
+        let point = self.transform_point_with_point_error(
             &surface_interaction.point,
             &surface_interaction.point_error,
             &mut point_error,
