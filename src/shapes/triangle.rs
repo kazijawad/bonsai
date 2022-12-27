@@ -105,7 +105,7 @@ impl<'a> Triangle<'a> {
     }
 }
 
-impl<'a> Shape for Triangle<'a> {
+impl<'a> Shape<'a> for Triangle<'a> {
     fn object_bound(&self) -> Bounds3 {
         let p0 = self
             .world_to_object

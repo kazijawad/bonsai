@@ -89,14 +89,13 @@ impl<'a> Renderer<'a> {
         self.trace_ray(ray, self.max_depth)
     }
 
-    fn trace_ray(&self, ray: Ray, depth: u32) -> Point3 {
+    fn trace_ray(&self, mut ray: Ray, depth: u32) -> Point3 {
         if depth <= 0 {
             return Point3::default();
         }
 
-        let mut t_hit = 0.0;
         let mut interaction = SurfaceInteraction::default();
-        if self.scene.intersect(&ray, &mut t_hit, &mut interaction) {
+        if self.scene.intersect(&mut ray, &mut interaction) {
             Point3::new(1.0, 0.0, 0.0)
         } else {
             self.background

@@ -1,5 +1,8 @@
+use std::sync::Arc;
+
 use crate::{
     bssrdf::BSSRDF,
+    geometric::GeometricPrimitive,
     geometries::{normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3},
     medium::Medium,
     reflection::BSDF,
@@ -31,7 +34,7 @@ pub struct Shading {
     pub dndv: Normal,
 }
 
-pub struct SurfaceInteraction {
+pub struct SurfaceInteraction<'a> {
     pub point: Point3,
     pub point_error: Vec3,
     pub normal: Normal,
@@ -43,6 +46,7 @@ pub struct SurfaceInteraction {
     pub dndu: Normal,
     pub dndv: Normal,
     pub shading: Shading,
+    pub primitive: Option<Arc<GeometricPrimitive<'a>>>,
     pub bsdf: Option<BSDF>,
     pub bssrdf: Option<BSSRDF>,
     pub dpdx: Option<Vec3>,
@@ -54,7 +58,7 @@ pub struct SurfaceInteraction {
     pub face_index: usize,
 }
 
-impl SurfaceInteraction {
+impl<'a> SurfaceInteraction<'a> {
     pub fn new(
         point: Point3,
         point_error: Vec3,
@@ -94,6 +98,7 @@ impl SurfaceInteraction {
                 dndu,
                 dndv,
             },
+            primitive: None,
             bsdf: None,
             bssrdf: None,
             dpdx: None,
@@ -118,7 +123,7 @@ impl SurfaceInteraction {
     }
 }
 
-impl Default for SurfaceInteraction {
+impl<'a> Default for SurfaceInteraction<'a> {
     fn default() -> Self {
         Self {
             point: Point3::default(),
@@ -138,6 +143,7 @@ impl Default for SurfaceInteraction {
                 dndu: Normal::default(),
                 dndv: Normal::default(),
             },
+            primitive: None,
             bsdf: None,
             bssrdf: None,
             dpdx: None,

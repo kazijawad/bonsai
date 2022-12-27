@@ -267,7 +267,7 @@ fn loop_gamma(valence: i32) -> Float {
     1.0 / ((valence as Float) + 3.0 / (8.0 * beta(valence)))
 }
 
-pub fn loop_subdivision(
+pub fn loop_subdivision<'a>(
     object_to_world: &Transform,
     world_to_object: &Transform,
     reverse_orientation: bool,
@@ -276,7 +276,7 @@ pub fn loop_subdivision(
     num_vertices: usize,
     vertex_indices: Vec<usize>,
     positions: Vec<Point3>,
-) -> Vec<Arc<dyn Shape>> {
+) -> Vec<Arc<dyn Shape<'a>>> {
     let num_faces = num_indices / 3;
 
     let mut vertices: Vec<SDVertex> = Vec::with_capacity(num_vertices);

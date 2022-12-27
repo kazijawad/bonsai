@@ -142,7 +142,7 @@ impl<'a> Curve<'a> {
         &self,
         ray: &Ray,
         t_hit: &mut Float,
-        interaction: &mut SurfaceInteraction,
+        interaction: &mut SurfaceInteraction<'a>,
         cp: [Point3; 4],
         ray_to_object: &Transform,
         u0: Float,
@@ -357,7 +357,7 @@ impl<'a> Curve<'a> {
     }
 }
 
-impl<'a> Shape for Curve<'a> {
+impl<'a> Shape<'a> for Curve<'a> {
     fn object_bound(&self) -> Bounds3 {
         let cp = [
             Curve::blossom_bezier(
@@ -403,7 +403,7 @@ impl<'a> Shape for Curve<'a> {
         &self,
         r: &Ray,
         t_hit: &mut Float,
-        interaction: &mut SurfaceInteraction,
+        interaction: &mut SurfaceInteraction<'a>,
         _include_alpha: bool,
     ) -> bool {
         // Transform ray to object-space.

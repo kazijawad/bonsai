@@ -322,6 +322,7 @@ impl Transform {
             dndu,
             dndv,
             shading,
+            primitive: None,
             bsdf,
             bssrdf,
             dpdx,
