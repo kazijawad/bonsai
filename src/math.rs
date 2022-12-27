@@ -22,7 +22,7 @@ pub fn lerp(t: Float, a: Float, b: Float) -> Float {
     1.0 - t * a + t * b
 }
 
-pub fn next_down(mut v: f32) -> f32 {
+pub fn next_down(mut v: Float) -> Float {
     if v.is_infinite() && v < 0.0 {
         return v;
     }
@@ -35,10 +35,10 @@ pub fn next_down(mut v: f32) -> f32 {
     } else {
         ui += 1;
     }
-    f32::from_bits(ui)
+    Float::from_bits(ui)
 }
 
-pub fn next_up(mut v: f32) -> f32 {
+pub fn next_up(mut v: Float) -> Float {
     if v.is_infinite() && v > 0.0 {
         return v;
     }
@@ -51,7 +51,7 @@ pub fn next_up(mut v: f32) -> f32 {
     } else {
         ui -= 1;
     }
-    f32::from_bits(ui)
+    Float::from_bits(ui)
 }
 
 pub fn find_interval<F>(size: u32, f: F) -> u32

@@ -449,7 +449,7 @@ impl<'a> Shape for Curve<'a> {
         // allows curve bounds with minimal extent in y, which in turn
         // lets us early out earlier in the recursive test.
         let mut dx = ray.direction.cross(&(cp[3] - cp[0]));
-        if dx.length_squared() < Float::EPSILON {
+        if dx.length_squared() == 0.0 {
             // If the ray and the vector between the first and last control
             // points are parallel, dx will be zero.  Generate an arbitrary xy
             // orientation for the ray coordinate system so that intersection
