@@ -1,4 +1,4 @@
-use std::mem;
+use std::{mem, sync::Arc};
 
 use crate::{
     base::shape::Shape,
@@ -36,7 +36,7 @@ impl<'a> Hyperboloid<'a> {
         mut p1: Point3,
         mut p2: Point3,
         phi_max: Float,
-    ) -> Self {
+    ) -> Arc<Self> {
         let transform_swaps_handedness = object_to_world.swaps_handedness();
 
         let radius1 = (p1.x * p1.x + p1.y * p1.y).sqrt();
@@ -61,7 +61,7 @@ impl<'a> Hyperboloid<'a> {
             ch = (ah * xy2 - 1.0) / (p2.z * p2.z);
         }
 
-        Self {
+        Arc::new(Self {
             object_to_world,
             world_to_object,
             reverse_orientation,
@@ -74,7 +74,7 @@ impl<'a> Hyperboloid<'a> {
             radius_max: radius1.max(radius2),
             ah,
             ch,
-        }
+        })
     }
 }
 

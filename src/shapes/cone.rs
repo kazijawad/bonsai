@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     base::shape::Shape,
     geometries::{
@@ -29,10 +31,10 @@ impl<'a> Cone<'a> {
         height: Float,
         radius: Float,
         phi_max: Float,
-    ) -> Self {
+    ) -> Arc<Self> {
         let transform_swaps_handedness = object_to_world.swaps_handedness();
 
-        Self {
+        Arc::new(Self {
             object_to_world,
             world_to_object,
             reverse_orientation,
@@ -40,7 +42,7 @@ impl<'a> Cone<'a> {
             height,
             radius,
             phi_max: phi_max.clamp(0.0, 360.0).to_radians(),
-        }
+        })
     }
 }
 

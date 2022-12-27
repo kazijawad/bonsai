@@ -47,7 +47,7 @@ impl TriangleMesh {
         face_indices: Vec<u32>,
         alpha_mask: Option<Arc<dyn Texture<Float>>>,
         shadow_alpha_mask: Option<Arc<dyn Texture<Float>>>,
-    ) -> Self {
+    ) -> Arc<Self> {
         // Convert mesh vertices to world space.
         let mut world_positions = Vec::with_capacity(positions.len());
         for i in 0..positions.len() {
@@ -64,7 +64,7 @@ impl TriangleMesh {
             world_tangents[i] = object_to_world.transform_vec(&tangents[i]);
         }
 
-        Self {
+        Arc::new(Self {
             num_triangles,
             num_vertices,
             vertex_indices,
@@ -75,7 +75,7 @@ impl TriangleMesh {
             face_indices,
             alpha_mask: alpha_mask.clone(),
             shadow_alpha_mask: shadow_alpha_mask.clone(),
-        }
+        })
     }
 }
 
@@ -86,10 +86,10 @@ impl<'a> Triangle<'a> {
         reverse_orientation: bool,
         mesh: Arc<TriangleMesh>,
         triangle_index: usize,
-    ) -> Self {
+    ) -> Arc<Self> {
         let transform_swaps_handedness = object_to_world.swaps_handedness();
 
-        Self {
+        Arc::new(Self {
             object_to_world,
             world_to_object,
             reverse_orientation,
@@ -97,7 +97,7 @@ impl<'a> Triangle<'a> {
             mesh: mesh.clone(),
             vertex_index: mesh.vertex_indices[3 * triangle_index] as usize,
             face_index: mesh.face_indices.len(),
-        }
+        })
     }
 
     fn get_uvs(&self, uvs: &mut [Point2; 3]) {

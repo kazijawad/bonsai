@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     base::shape::Shape,
     geometries::{
@@ -31,10 +33,10 @@ impl<'a> Cylinder<'a> {
         z_min: Float,
         z_max: Float,
         phi_max: Float,
-    ) -> Self {
+    ) -> Arc<Self> {
         let transform_swaps_handedness = object_to_world.swaps_handedness();
 
-        Self {
+        Arc::new(Self {
             object_to_world,
             world_to_object,
             reverse_orientation,
@@ -43,7 +45,7 @@ impl<'a> Cylinder<'a> {
             z_min: z_min.min(z_max),
             z_max: z_min.max(z_max),
             phi_max: phi_max.clamp(0.0, 360.0).to_radians(),
-        }
+        })
     }
 }
 

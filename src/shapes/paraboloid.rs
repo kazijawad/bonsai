@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     base::shape::Shape,
     geometries::{
@@ -31,10 +33,10 @@ impl<'a> Paraboloid<'a> {
         z0: Float,
         z1: Float,
         phi_max: Float,
-    ) -> Self {
+    ) -> Arc<Self> {
         let transform_swaps_handedness = object_to_world.swaps_handedness();
 
-        Self {
+        Arc::new(Self {
             object_to_world,
             world_to_object,
             reverse_orientation,
@@ -43,7 +45,7 @@ impl<'a> Paraboloid<'a> {
             z_min: z0.min(z1),
             z_max: z1.max(z0),
             phi_max: phi_max.clamp(0.0, 360.0).to_radians(),
-        }
+        })
     }
 }
 
