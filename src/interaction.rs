@@ -1,12 +1,14 @@
 use std::sync::Arc;
 
 use crate::{
+    base::shape::Shape,
     bssrdf::BSSRDF,
     geometric::GeometricPrimitive,
     geometries::{normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3},
     medium::Medium,
     reflection::BSDF,
     utils::math::Float,
+    MediumInterface,
 };
 
 pub trait Interaction: Send + Sync {
@@ -26,6 +28,7 @@ pub trait Interaction: Send + Sync {
     fn get_medium_with_vec(&self, w: &Vec3) -> Medium;
 }
 
+#[derive(Clone)]
 pub struct Shading {
     pub normal: Normal,
     pub dpdu: Vec3,
@@ -34,17 +37,20 @@ pub struct Shading {
     pub dndv: Normal,
 }
 
+#[derive(Clone)]
 pub struct SurfaceInteraction<'a> {
     pub point: Point3,
     pub point_error: Vec3,
     pub normal: Normal,
     pub negative_direction: Vec3,
     pub time: Float,
+    pub medium_interface: MediumInterface,
     pub uv: Point2,
     pub dpdu: Vec3,
     pub dpdv: Vec3,
     pub dndu: Normal,
     pub dndv: Normal,
+    pub shape: Option<Arc<dyn Shape<'a>>>,
     pub shading: Shading,
     pub primitive: Option<Arc<GeometricPrimitive<'a>>>,
     pub bsdf: Option<BSDF>,
@@ -85,11 +91,13 @@ impl<'a> SurfaceInteraction<'a> {
             normal,
             negative_direction,
             time,
+            medium_interface: MediumInterface,
             uv,
             dpdu,
             dpdv,
             dndu,
             dndv,
+            shape: None,
             // Initialize shading geometry from true geometry.
             shading: Shading {
                 normal,
@@ -131,11 +139,13 @@ impl<'a> Default for SurfaceInteraction<'a> {
             normal: Normal::default(),
             negative_direction: Vec3::default(),
             time: 0.0,
+            medium_interface: MediumInterface,
             uv: Point2::default(),
             dpdu: Vec3::default(),
             dpdv: Vec3::default(),
             dndu: Normal::default(),
             dndv: Normal::default(),
+            shape: None,
             shading: Shading {
                 normal: Normal::default(),
                 dpdu: Vec3::default(),

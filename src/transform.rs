@@ -259,56 +259,51 @@ impl Transform {
         ret
     }
 
-    pub fn transform_surface_interaction(
+    pub fn transform_surface_interaction<'a>(
         &self,
-        surface_interaction: &SurfaceInteraction,
-    ) -> SurfaceInteraction {
+        si: &SurfaceInteraction<'a>,
+    ) -> SurfaceInteraction<'a> {
+        // Transform point and point error in surface interaction.
         let mut point_error = Vec3::default();
-        let point = self.transform_point_with_point_error(
-            &surface_interaction.point,
-            &surface_interaction.point_error,
-            &mut point_error,
-        );
+        let point =
+            self.transform_point_with_point_error(&si.point, &si.point_error, &mut point_error);
 
-        let normal = self
-            .transform_normal(&surface_interaction.normal)
-            .normalize();
-        let negative_direction = self
-            .transform_vec(&surface_interaction.negative_direction)
-            .normalize();
-        let time = surface_interaction.time;
-        let uv = surface_interaction.uv;
-        let dpdu = self.transform_vec(&surface_interaction.dpdu);
-        let dpdv = self.transform_vec(&surface_interaction.dpdv);
-        let dndu = self.transform_normal(&surface_interaction.dndu);
-        let dndv = self.transform_normal(&surface_interaction.dndv);
+        // Transform remaining members of surface interaction.
+        let normal = self.transform_normal(&si.normal).normalize();
+        let negative_direction = self.transform_vec(&si.negative_direction).normalize();
+        let time = si.time;
+        let medium_interface = si.medium_interface;
+        let uv = si.uv;
+        let shape = si.shape.clone();
+        let dpdu = self.transform_vec(&si.dpdu);
+        let dpdv = self.transform_vec(&si.dpdv);
+        let dndu = self.transform_normal(&si.dndu);
+        let dndv = self.transform_normal(&si.dndv);
         let mut shading = Shading {
-            normal: self
-                .transform_normal(&surface_interaction.shading.normal)
-                .normalize(),
-            dpdu: self.transform_vec(&surface_interaction.shading.dpdu),
-            dpdv: self.transform_vec(&surface_interaction.shading.dpdv),
-            dndu: self.transform_normal(&surface_interaction.shading.dndu),
-            dndv: self.transform_normal(&surface_interaction.shading.dndv),
+            normal: self.transform_normal(&si.shading.normal).normalize(),
+            dpdu: self.transform_vec(&si.shading.dpdu),
+            dpdv: self.transform_vec(&si.shading.dpdv),
+            dndu: self.transform_normal(&si.shading.dndu),
+            dndv: self.transform_normal(&si.shading.dndv),
         };
         shading.normal = shading.normal.face_forward(&normal);
-        let dudx = surface_interaction.dudx;
-        let dvdx = surface_interaction.dvdx;
-        let dudy = surface_interaction.dudy;
-        let dvdy = surface_interaction.dvdy;
-        let dpdx = if let Some(dpdx) = surface_interaction.dpdx {
+        let dudx = si.dudx;
+        let dvdx = si.dvdx;
+        let dudy = si.dudy;
+        let dvdy = si.dvdy;
+        let dpdx = if let Some(dpdx) = si.dpdx {
             Some(self.transform_vec(&dpdx))
         } else {
             None
         };
-        let dpdy = if let Some(dpdy) = surface_interaction.dpdy {
+        let dpdy = if let Some(dpdy) = si.dpdy {
             Some(self.transform_vec(&dpdy))
         } else {
             None
         };
-        let bsdf = surface_interaction.bsdf.clone();
-        let bssrdf = surface_interaction.bssrdf.clone();
-        let face_index = surface_interaction.face_index;
+        let bsdf = si.bsdf.clone();
+        let bssrdf = si.bssrdf.clone();
+        let face_index = si.face_index;
 
         SurfaceInteraction {
             point,
@@ -316,11 +311,13 @@ impl Transform {
             normal,
             negative_direction,
             time,
+            medium_interface,
             uv,
             dpdu,
             dpdv,
             dndu,
             dndv,
+            shape: None,
             shading,
             primitive: None,
             bsdf,
