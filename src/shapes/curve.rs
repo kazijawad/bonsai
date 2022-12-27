@@ -1,14 +1,14 @@
 use std::sync::Arc;
 
 use crate::{
+    base::shape::Shape,
     geometries::{
         bounds3::Bounds3, normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec2::Vec2,
         vec3::Vec3,
     },
     interaction::{Interaction, SurfaceInteraction},
-    math::{lerp, Float},
-    shape::Shape,
     transform::Transform,
+    utils::math::{lerp, Float},
 };
 
 pub enum CurveType {

@@ -1,7 +1,7 @@
 use crate::{
     geometries::{bounds3::Bounds3, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3},
     interaction::{Interaction, SurfaceInteraction},
-    math::Float,
+    utils::math::Float,
 };
 
 pub trait Shape: Send + Sync {

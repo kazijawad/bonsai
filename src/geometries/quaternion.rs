@@ -2,8 +2,8 @@ use std::ops;
 
 use crate::{
     geometries::{mat4::Mat4, vec3::Vec3},
-    math::Float,
     transform::Transform,
+    utils::math::Float,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]

@@ -1,14 +1,14 @@
 use std::{mem, sync::Arc};
 
 use crate::{
+    base::shape::Shape,
     geometries::{
         bounds3::Bounds3, normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3,
     },
     interaction::{Interaction, SurfaceInteraction},
-    math::{gamma, Float},
-    shape::Shape,
     texture::Texture,
     transform::Transform,
+    utils::math::{gamma, Float},
 };
 
 pub struct TriangleMesh {

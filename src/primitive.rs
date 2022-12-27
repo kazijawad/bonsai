@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use crate::{
-    geometries::ray::Ray, interaction::SurfaceInteraction, material::Material, math::Float,
-    shape::Shape,
+    base::shape::Shape, geometries::ray::Ray, interaction::SurfaceInteraction, material::Material,
+    utils::math::Float,
 };
 
 pub trait Primitive: Send + Sync {

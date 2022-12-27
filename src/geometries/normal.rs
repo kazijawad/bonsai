@@ -1,6 +1,6 @@
 use std::ops;
 
-use crate::{geometries::vec3::Vec3, math::Float};
+use crate::{geometries::vec3::Vec3, utils::math::Float};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Normal {

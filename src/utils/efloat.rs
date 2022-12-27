@@ -1,6 +1,6 @@
 use std::{mem, ops};
 
-use crate::math::{self, Float};
+use crate::utils::math::{self, Float};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct EFloat {

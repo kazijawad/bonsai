@@ -2,8 +2,8 @@ use std::{mem, ops};
 
 use crate::{
     geometries::{point3::Point3, ray::Ray, vec3::Vec3},
-    math,
-    math::Float,
+    utils::math,
+    utils::math::Float,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]

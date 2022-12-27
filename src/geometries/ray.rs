@@ -1,7 +1,7 @@
 use crate::{
     geometries::{point3::Point3, vec3::Vec3},
-    math::Float,
     medium::Medium,
+    utils::math::Float,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]

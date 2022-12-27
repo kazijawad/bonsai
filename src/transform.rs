@@ -12,8 +12,7 @@ use crate::{
         vec3::Vec3,
     },
     interaction::{Shading, SurfaceInteraction},
-    math,
-    math::Float,
+    utils::math::{self, Float},
 };
 
 #[derive(Debug, Clone, PartialEq)]

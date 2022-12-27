@@ -2,28 +2,28 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 
+mod base;
 mod bssrdf;
 mod camera;
-mod efloat;
 mod film;
 mod geometries;
 mod interaction;
 mod material;
-mod math;
 mod medium;
 mod primitive;
 mod reflection;
 mod renderer;
-mod shape;
 mod shapes;
 mod texture;
 mod transform;
+mod utils;
 
-pub use camera::Camera;
-pub use geometries::{mat4::Mat4, point3::Point3, vec3::Vec3};
+pub use base::*;
+pub use camera::*;
+pub use geometries::*;
 pub use material::*;
-pub use math::*;
-pub use primitive::{AggregatePrimitive, GeometricPrimitive};
+pub use primitive::*;
 pub use renderer::*;
-pub use shapes::{cylinder::Cylinder, sphere::Sphere};
+pub use shapes::*;
 pub use transform::*;
+pub use utils::math::*;

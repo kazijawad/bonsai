@@ -6,10 +6,10 @@ use std::{
 };
 
 use crate::{
+    base::shape::Shape,
     geometries::{normal::Normal, point3::Point3, vec3::Vec3},
-    math::{Float, PI},
-    shape::Shape,
     transform::Transform,
+    utils::math::{Float, PI},
 };
 
 #[derive(Debug, Clone, PartialEq)]

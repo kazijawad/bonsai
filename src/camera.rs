@@ -1,6 +1,6 @@
 use crate::{
     geometries::{point3::Point3, ray::Ray, vec3::Vec3},
-    math::Float,
+    utils::math::Float,
 };
 
 pub struct Camera {

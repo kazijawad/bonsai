@@ -8,8 +8,8 @@ use crate::{
     film::Film,
     geometries::{point3::Point3, ray::Ray},
     interaction::SurfaceInteraction,
-    math::Float,
     primitive::{AggregatePrimitive, Primitive},
+    utils::math::Float,
 };
 
 pub struct Renderer<'a> {

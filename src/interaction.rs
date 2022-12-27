@@ -1,9 +1,9 @@
 use crate::{
     bssrdf::BSSRDF,
     geometries::{normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3},
-    math::Float,
     medium::Medium,
     reflection::BSDF,
+    utils::math::Float,
 };
 
 pub trait Interaction: Send + Sync {

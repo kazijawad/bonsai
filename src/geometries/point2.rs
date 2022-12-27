@@ -2,7 +2,7 @@ use std::ops;
 
 use crate::{
     geometries::{point3::Point3, vec2::Vec2},
-    math::Float,
+    utils::math::Float,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]

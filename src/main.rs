@@ -4,8 +4,8 @@ use clap::Parser;
 use serde::Deserialize;
 
 use pat::{
-    AggregatePrimitive, Camera, Float, GeometricPrimitive, Point3, Renderer, Sphere, TestMaterial,
-    Transform, Vec3,
+    point3::Point3, sphere::Sphere, vec3::Vec3, AggregatePrimitive, Camera, Float,
+    GeometricPrimitive, Renderer, TestMaterial, Transform,
 };
 
 #[derive(Debug, Parser)]
