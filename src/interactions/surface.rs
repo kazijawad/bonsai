@@ -1,32 +1,13 @@
-use std::sync::Arc;
-
 use crate::{
-    base::shape::Shape,
+    base::{material::TransportMode, primitive::Primitive},
     bssrdf::BSSRDF,
-    geometric::GeometricPrimitive,
-    geometries::{normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3},
-    medium::Medium,
+    geometries::{
+        normal::Normal, point2::Point2, point3::Point3, ray::RayDifferential, vec3::Vec3,
+    },
+    medium::MediumInterface,
     reflection::BSDF,
     utils::math::Float,
-    MediumInterface,
 };
-
-pub trait Interaction: Send + Sync {
-    fn is_surface_interaction(&self) -> bool {
-        false
-    }
-
-    fn is_medium_interaction(&self) -> bool {
-        false
-    }
-
-    fn spawn_ray(&self, d: &Vec3) -> Ray;
-    fn spawn_ray_to_point(&self, p: Point3) -> Ray;
-    fn spawn_ray_to_interaction(&self, it: Box<dyn Interaction>) -> Ray;
-
-    fn get_medium(&self) -> Medium;
-    fn get_medium_with_vec(&self, w: &Vec3) -> Medium;
-}
 
 #[derive(Clone)]
 pub struct Shading {
@@ -50,17 +31,16 @@ pub struct SurfaceInteraction<'a> {
     pub dpdv: Vec3,
     pub dndu: Normal,
     pub dndv: Normal,
-    pub shape: Option<Arc<dyn Shape<'a>>>,
     pub shading: Shading,
-    pub primitive: Option<Arc<GeometricPrimitive<'a>>>,
+    pub primitive: Option<&'a dyn Primitive<'a>>,
     pub bsdf: Option<BSDF>,
     pub bssrdf: Option<BSSRDF>,
-    pub dpdx: Option<Vec3>,
-    pub dpdy: Option<Vec3>,
-    pub dudx: Option<Float>,
-    pub dvdx: Option<Float>,
-    pub dudy: Option<Float>,
-    pub dvdy: Option<Float>,
+    pub dpdx: Vec3,
+    pub dpdy: Vec3,
+    pub dudx: Float,
+    pub dvdx: Float,
+    pub dudy: Float,
+    pub dvdy: Float,
     pub face_index: usize,
 }
 
@@ -80,7 +60,6 @@ impl<'a> SurfaceInteraction<'a> {
         transform_swaps_handedness: bool,
     ) -> Self {
         let mut normal = Normal::from(dpdu.cross(&dpdv).normalize());
-        // Adjust normal based on orientation and handedness.
         if reverse_orientation ^ transform_swaps_handedness {
             normal *= -1.0;
         }
@@ -97,7 +76,6 @@ impl<'a> SurfaceInteraction<'a> {
             dpdv,
             dndu,
             dndv,
-            shape: None,
             // Initialize shading geometry from true geometry.
             shading: Shading {
                 normal,
@@ -109,24 +87,54 @@ impl<'a> SurfaceInteraction<'a> {
             primitive: None,
             bsdf: None,
             bssrdf: None,
-            dpdx: None,
-            dpdy: None,
-            dudx: None,
-            dvdx: None,
-            dudy: None,
-            dvdy: None,
+            dpdx: Vec3::default(),
+            dpdy: Vec3::default(),
+            dudx: 0.0,
+            dvdx: 0.0,
+            dudy: 0.0,
+            dvdy: 0.0,
             face_index,
         }
     }
 
     pub fn set_shading_geometry(
-        &self,
-        dpdu: &Vec3,
-        dpdv: &Vec3,
-        dndu: &Normal,
-        dndv: &Normal,
+        &mut self,
+        dpdus: &Vec3,
+        dpdvs: &Vec3,
+        dndus: &Normal,
+        dndvs: &Normal,
         orientation_is_authoritative: bool,
     ) {
+        // Compute shading normal.
+        self.shading.normal = Normal::from(dpdus.cross(dpdvs)).normalize();
+        if orientation_is_authoritative {
+            self.normal = self.normal.face_forward(&self.shading.normal);
+        } else {
+            self.shading.normal = self.shading.normal.face_forward(&self.normal);
+        }
+
+        // Initialize shading partial derivatives.
+        self.shading.dpdu.clone_from(dpdus);
+        self.shading.dpdv.clone_from(dpdvs);
+        self.shading.dndu.clone_from(dndus);
+        self.shading.dndv.clone_from(dndvs);
+    }
+
+    pub fn compute_scattering_functions(
+        &self,
+        ray: &RayDifferential,
+        allow_multiple_lobes: bool,
+        mode: TransportMode,
+    ) {
+        self.compute_differentials(ray);
+        todo!()
+    }
+
+    pub fn compute_differentials(&self, ray: &RayDifferential) {
+        todo!()
+    }
+
+    pub fn le(&self) {
         todo!()
     }
 }
@@ -145,7 +153,6 @@ impl<'a> Default for SurfaceInteraction<'a> {
             dpdv: Vec3::default(),
             dndu: Normal::default(),
             dndv: Normal::default(),
-            shape: None,
             shading: Shading {
                 normal: Normal::default(),
                 dpdu: Vec3::default(),
@@ -156,12 +163,12 @@ impl<'a> Default for SurfaceInteraction<'a> {
             primitive: None,
             bsdf: None,
             bssrdf: None,
-            dpdx: None,
-            dpdy: None,
-            dudx: None,
-            dvdx: None,
-            dudy: None,
-            dvdy: None,
+            dpdx: Vec3::default(),
+            dpdy: Vec3::default(),
+            dudx: 0.0,
+            dvdx: 0.0,
+            dudy: 0.0,
+            dvdy: 0.0,
             face_index: 0,
         }
     }

@@ -1,5 +1,10 @@
 use std::sync::Arc;
 
+pub enum TransportMode {
+    Radiance,
+    Importance,
+}
+
 pub trait Material: Send + Sync {}
 
 pub struct TestMaterial;

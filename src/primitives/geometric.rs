@@ -1,11 +1,10 @@
 use std::sync::Arc;
 
 use crate::{
-    base::{primitive::Primitive, shape::Shape},
+    base::{material::Material, primitive::Primitive, shape::Shape},
     geometries::{bounds3::Bounds3, ray::Ray},
-    interaction::SurfaceInteraction,
+    interactions::surface::SurfaceInteraction,
     light::AreaLight,
-    material::Material,
     medium::MediumInterface,
     utils::math::Float,
 };
@@ -33,7 +32,7 @@ impl<'a> GeometricPrimitive<'a> {
     }
 }
 
-impl<'a> Primitive<'a> for Arc<GeometricPrimitive<'a>> {
+impl<'a> Primitive<'a> for GeometricPrimitive<'a> {
     fn world_bound(&self) -> Bounds3 {
         self.shape.world_bound()
     }
@@ -44,7 +43,7 @@ impl<'a> Primitive<'a> for Arc<GeometricPrimitive<'a>> {
             return false;
         }
         ray.t_max = t_hit;
-        interaction.primitive = Some(self.clone());
+        // interaction.primitive = Some(self);
         // TODO: Initialize medium interface after shape intersection.
         true
     }
@@ -53,7 +52,7 @@ impl<'a> Primitive<'a> for Arc<GeometricPrimitive<'a>> {
         self.shape.intersect_test(ray, true)
     }
 
-    fn area_light(&self) -> Option<Arc<AreaLight>> {
+    fn get_area_light(&self) -> Option<Arc<AreaLight>> {
         self.area_light.clone()
     }
 
@@ -61,7 +60,7 @@ impl<'a> Primitive<'a> for Arc<GeometricPrimitive<'a>> {
         self.material.clone()
     }
 
-    fn compute_scattering_function(&self, interaction: &mut SurfaceInteraction) {
+    fn compute_scattering_functions(&self, interaction: &mut SurfaceInteraction) {
         todo!()
     }
 }

@@ -1,6 +1,7 @@
 use crate::{
+    base::interaction::Interaction,
     geometries::{bounds3::Bounds3, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3},
-    interaction::{Interaction, SurfaceInteraction},
+    interactions::surface::SurfaceInteraction,
     utils::math::Float,
 };
 

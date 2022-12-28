@@ -11,7 +11,7 @@ use crate::{
         ray::{Ray, RayDifferential},
         vec3::Vec3,
     },
-    interaction::{Shading, SurfaceInteraction},
+    interactions::surface::{Shading, SurfaceInteraction},
     utils::math::{self, Float},
 };
 
@@ -274,7 +274,6 @@ impl Transform {
         let time = si.time;
         let medium_interface = si.medium_interface;
         let uv = si.uv;
-        let shape = si.shape.clone();
         let dpdu = self.transform_vec(&si.dpdu);
         let dpdv = self.transform_vec(&si.dpdv);
         let dndu = self.transform_normal(&si.dndu);
@@ -291,16 +290,8 @@ impl Transform {
         let dvdx = si.dvdx;
         let dudy = si.dudy;
         let dvdy = si.dvdy;
-        let dpdx = if let Some(dpdx) = si.dpdx {
-            Some(self.transform_vec(&dpdx))
-        } else {
-            None
-        };
-        let dpdy = if let Some(dpdy) = si.dpdy {
-            Some(self.transform_vec(&dpdy))
-        } else {
-            None
-        };
+        let dpdx = self.transform_vec(&si.dpdx);
+        let dpdy = self.transform_vec(&si.dpdy);
         let bsdf = si.bsdf.clone();
         let bssrdf = si.bssrdf.clone();
         let face_index = si.face_index;
@@ -317,7 +308,6 @@ impl Transform {
             dpdv,
             dndu,
             dndv,
-            shape: None,
             shading,
             primitive: None,
             bsdf,

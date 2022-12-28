@@ -4,8 +4,8 @@ use clap::Parser;
 use serde::Deserialize;
 
 use pat::{
-    geometric::GeometricPrimitive, point3::Point3, sphere::Sphere, vec3::Vec3, AggregatePrimitive,
-    Camera, Float, MediumInterface, Renderer, TestMaterial, Transform,
+    geometric::GeometricPrimitive, material::TestMaterial, point3::Point3, sphere::Sphere,
+    vec3::Vec3, Camera, Float, MediumInterface, Renderer, Transform,
 };
 
 #[derive(Debug, Parser)]
@@ -66,25 +66,23 @@ fn main() {
     let material = TestMaterial::new();
     let mesh = GeometricPrimitive::new(shape, Some(material), None, &MediumInterface);
 
-    // let scene = AggregatePrimitive::new(vec![mesh]);
+    let camera = Camera::new(
+        Point3::from(settings.camera.position),
+        Vec3::from(settings.camera.look_at),
+        settings.camera.fov,
+        settings.film.width as f32 / settings.film.height as f32,
+        settings.camera.aperature,
+        settings.camera.focus_distance,
+    );
 
-    // let camera = Camera::new(
-    //     Point3::from(settings.camera.position),
-    //     Vec3::from(settings.camera.look_at),
-    //     settings.camera.fov,
-    //     settings.film.width as f32 / settings.film.height as f32,
-    //     settings.camera.aperature,
-    //     settings.camera.focus_distance,
-    // );
-
-    // let mut renderer = Renderer::new(
-    //     settings.film.width,
-    //     settings.film.height,
-    //     Point3::from(settings.film.background),
-    //     settings.render.max_sample_count,
-    //     settings.render.max_depth,
-    //     &camera,
-    //     scene,
-    // );
-    // renderer.render();
+    let mut renderer = Renderer::new(
+        settings.film.width,
+        settings.film.height,
+        Point3::from(settings.film.background),
+        settings.render.max_sample_count,
+        settings.render.max_depth,
+        &camera,
+        mesh,
+    );
+    renderer.render();
 }

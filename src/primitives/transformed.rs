@@ -1,11 +1,10 @@
 use std::sync::Arc;
 
 use crate::{
-    base::primitive::Primitive,
+    base::{material::Material, primitive::Primitive},
     geometries::{bounds3::Bounds3, ray::Ray},
-    interaction::SurfaceInteraction,
+    interactions::surface::SurfaceInteraction,
     light::AreaLight,
-    material::Material,
     transform::{AnimatedTransform, Transform},
 };
 
@@ -26,7 +25,7 @@ impl<'a> TransformedPrimitive<'a> {
     }
 }
 
-impl<'a> Primitive<'a> for Arc<TransformedPrimitive<'a>> {
+impl<'a> Primitive<'a> for TransformedPrimitive<'a> {
     fn world_bound(&self) -> Bounds3 {
         self.primitive_to_world
             .motion_bounds(&self.primitive.world_bound())
@@ -62,7 +61,7 @@ impl<'a> Primitive<'a> for Arc<TransformedPrimitive<'a>> {
             .intersect_test(&interpolated_world_to_primitive.transform_ray(r))
     }
 
-    fn area_light(&self) -> Option<Arc<AreaLight>> {
+    fn get_area_light(&self) -> Option<Arc<AreaLight>> {
         None
     }
 
@@ -70,7 +69,7 @@ impl<'a> Primitive<'a> for Arc<TransformedPrimitive<'a>> {
         None
     }
 
-    fn compute_scattering_function(&self, interaction: &mut SurfaceInteraction) {
+    fn compute_scattering_functions(&self, interaction: &mut SurfaceInteraction) {
         panic!("TransformedPrimitive::compute_scattering_function should not be called")
     }
 }

@@ -4,11 +4,12 @@ use rand::{rngs::StdRng, Rng, SeedableRng};
 use rayon::prelude::*;
 
 use crate::{
+    base::primitive::Primitive,
     camera::Camera,
     film::Film,
+    geometric::GeometricPrimitive,
     geometries::{point3::Point3, ray::Ray},
-    interaction::SurfaceInteraction,
-    primitive::{AggregatePrimitive, Primitive},
+    interactions::surface::SurfaceInteraction,
     utils::math::Float,
 };
 
@@ -19,7 +20,7 @@ pub struct Renderer<'a> {
     max_sample_count: u32,
     max_depth: u32,
     camera: &'a Camera,
-    scene: Arc<AggregatePrimitive<'a>>,
+    scene: Arc<GeometricPrimitive<'a>>,
     film: Film,
 }
 
@@ -31,7 +32,7 @@ impl<'a> Renderer<'a> {
         max_sample_count: u32,
         max_depth: u32,
         camera: &'a Camera,
-        scene: Arc<AggregatePrimitive<'a>>,
+        scene: Arc<GeometricPrimitive<'a>>,
     ) -> Self {
         println!("Width: {}", width);
         println!("Height: {}", height);
