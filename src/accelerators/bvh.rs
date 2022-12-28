@@ -89,7 +89,6 @@ impl<'a> BVH<'a> {
         }
         let offset = &mut 0;
         bvh.flatten(&root, offset);
-        println!("{:?}", bvh.nodes);
 
         Box::new(bvh)
     }
@@ -339,7 +338,6 @@ impl<'a> Primitive<'a> for BVH<'a> {
             return false;
         }
 
-        let mut hit = false;
         let inverted_direction = Vec3::new(
             1.0 / ray.direction.x,
             1.0 / ray.direction.y,
@@ -366,7 +364,7 @@ impl<'a> Primitive<'a> for BVH<'a> {
                     // Intersect ray with primitives in leaf BVH node.
                     for i in 0..node.num_primitives {
                         if self.primitives[node.primitives_offset + i].intersect_test(ray) {
-                            hit = true;
+                            return true;
                         }
                     }
                     if to_visited_offset == 0 {
@@ -394,7 +392,7 @@ impl<'a> Primitive<'a> for BVH<'a> {
             }
         }
 
-        hit
+        false
     }
 
     fn get_area_light(&self) -> Option<Arc<AreaLight>> {
