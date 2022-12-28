@@ -19,13 +19,20 @@ mod texture;
 mod transform;
 mod utils;
 
-pub use accelerators::*;
-pub use base::*;
-pub use camera::*;
-pub use geometries::*;
+pub use accelerators::bvh::BVH;
+pub use base::material::TestMaterial;
+pub use camera::Camera;
+pub use geometries::{
+    bounds2::Bounds2, bounds3::Bounds3, interval::Interval, mat4::Mat4, normal::Normal,
+    point2::Point2, point3::Point3, quaternion::Quaternion, ray::Ray, vec2::Vec2, vec3::Vec3,
+};
 pub use medium::*;
-pub use primitives::*;
-pub use renderer::*;
-pub use shapes::*;
-pub use transform::*;
+pub use primitives::{geometric::GeometricPrimitive, transformed::TransformedPrimitive};
+pub use renderer::Renderer;
+pub use shapes::{
+    cone::Cone, curve::Curve, cylinder::Cylinder, disk::Disk, hyperboloid::Hyperboloid,
+    paraboloid::Paraboloid, sphere::Sphere, triangle::Triangle,
+};
+pub use transform::Transform;
 pub use utils::math::*;
+pub use utils::parser;

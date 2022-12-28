@@ -4,7 +4,7 @@ use rand::{rngs::StdRng, Rng, SeedableRng};
 use rayon::prelude::*;
 
 use crate::{
-    aggregate::Aggregate,
+    base::aggregate::Aggregate,
     camera::Camera,
     film::Film,
     geometries::{point3::Point3, ray::Ray},

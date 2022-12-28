@@ -1,65 +1,9 @@
-use std::{fs, process, sync::Arc};
+use std::sync::Arc;
 
-use clap::Parser;
-use serde::Deserialize;
-
-use pat::{
-    bvh::BVH, geometric::GeometricPrimitive, material::TestMaterial, point3::Point3,
-    sphere::Sphere, vec3::Vec3, Camera, Float, MediumInterface, Renderer, Transform,
-};
-
-#[derive(Debug, Parser)]
-struct Args {
-    scene: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct SceneSettings {
-    render: RenderSettings,
-    film: FilmSettings,
-    camera: CameraSettings,
-}
-
-#[derive(Debug, Deserialize)]
-struct RenderSettings {
-    max_sample_count: u32,
-    max_depth: u32,
-}
-
-#[derive(Debug, Deserialize)]
-struct FilmSettings {
-    width: u32,
-    height: u32,
-    background: [Float; 3],
-}
-
-#[derive(Debug, Deserialize)]
-struct CameraSettings {
-    position: [Float; 3],
-    look_at: [Float; 3],
-    fov: Float,
-    aperature: Float,
-    focus_distance: Float,
-}
+use pat::*;
 
 fn main() {
-    let args = Args::parse();
-
-    let contents = match fs::read_to_string(&args.scene) {
-        Ok(v) => v,
-        Err(_) => {
-            eprintln!("Failed to read file: {}", args.scene);
-            process::exit(1);
-        }
-    };
-
-    let settings: SceneSettings = match toml::from_str(&contents) {
-        Ok(v) => v,
-        Err(_) => {
-            eprintln!("Failed to parse TOML file:\n{}", contents);
-            process::exit(1);
-        }
-    };
+    let settings = parser::parse();
 
     let center_transform = Transform::default_shared();
     let offset_transform = Arc::new(Transform::translate(&Vec3::new(1.5, 0.0, 0.0)));
