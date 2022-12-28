@@ -49,7 +49,7 @@ impl<'a> Cylinder<'a> {
     }
 }
 
-impl<'a> Shape<'a> for Cylinder<'a> {
+impl<'a> Shape for Cylinder<'a> {
     fn object_bound(&self) -> Bounds3 {
         Bounds3::new(
             &Point3::new(-self.radius, -self.radius, self.z_min),
@@ -65,7 +65,7 @@ impl<'a> Shape<'a> for Cylinder<'a> {
         &self,
         r: &Ray,
         t_hit: &mut Float,
-        interaction: &mut SurfaceInteraction<'a>,
+        interaction: &mut SurfaceInteraction,
         _include_alpha: bool,
     ) -> bool {
         // Transform ray to object space.

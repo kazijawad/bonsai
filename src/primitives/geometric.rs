@@ -1,7 +1,11 @@
 use std::sync::Arc;
 
 use crate::{
-    base::{material::Material, primitive::Primitive, shape::Shape},
+    base::{
+        material::{Material, TransportMode},
+        primitive::Primitive,
+        shape::Shape,
+    },
     geometries::{bounds3::Bounds3, ray::Ray},
     interactions::surface::SurfaceInteraction,
     light::AreaLight,
@@ -10,7 +14,7 @@ use crate::{
 };
 
 pub struct GeometricPrimitive<'a> {
-    pub shape: Arc<dyn Shape<'a> + 'a>,
+    pub shape: Arc<dyn Shape + 'a>,
     pub material: Option<Arc<dyn Material + 'a>>,
     pub area_light: Option<Arc<AreaLight>>,
     pub medium_interface: &'a MediumInterface,
@@ -18,7 +22,7 @@ pub struct GeometricPrimitive<'a> {
 
 impl<'a> GeometricPrimitive<'a> {
     pub fn new(
-        shape: Arc<dyn Shape<'a> + 'a>,
+        shape: Arc<dyn Shape + 'a>,
         material: Option<Arc<dyn Material + 'a>>,
         area_light: Option<Arc<AreaLight>>,
         medium_interface: &'a MediumInterface,
@@ -37,13 +41,12 @@ impl<'a> Primitive<'a> for GeometricPrimitive<'a> {
         self.shape.world_bound()
     }
 
-    fn intersect(&self, ray: &mut Ray, interaction: &mut SurfaceInteraction<'a>) -> bool {
+    fn intersect(&self, ray: &mut Ray, interaction: &mut SurfaceInteraction) -> bool {
         let mut t_hit: Float = 0.0;
         if !self.shape.intersect(ray, &mut t_hit, interaction, true) {
             return false;
         }
         ray.t_max = t_hit;
-        // interaction.primitive = Some(self);
         // TODO: Initialize medium interface after shape intersection.
         true
     }
@@ -60,7 +63,12 @@ impl<'a> Primitive<'a> for GeometricPrimitive<'a> {
         self.material.clone()
     }
 
-    fn compute_scattering_functions(&self, interaction: &mut SurfaceInteraction) {
+    fn compute_scattering_functions(
+        &self,
+        interaction: &mut SurfaceInteraction,
+        transport_mode: TransportMode,
+        allow_multiple_lobes: bool,
+    ) {
         todo!()
     }
 }

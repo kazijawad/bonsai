@@ -78,7 +78,7 @@ impl<'a> Hyperboloid<'a> {
     }
 }
 
-impl<'a> Shape<'a> for Hyperboloid<'a> {
+impl<'a> Shape for Hyperboloid<'a> {
     fn object_bound(&self) -> Bounds3 {
         Bounds3::new(
             &Point3::new(-self.radius_max, -self.radius_max, self.z_min),
@@ -94,7 +94,7 @@ impl<'a> Shape<'a> for Hyperboloid<'a> {
         &self,
         r: &Ray,
         t_hit: &mut Float,
-        interaction: &mut SurfaceInteraction<'a>,
+        interaction: &mut SurfaceInteraction,
         _include_alpha: bool,
     ) -> bool {
         // Transform ray to object space.

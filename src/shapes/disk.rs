@@ -46,7 +46,7 @@ impl<'a> Disk<'a> {
     }
 }
 
-impl<'a> Shape<'a> for Disk<'a> {
+impl<'a> Shape for Disk<'a> {
     fn object_bound(&self) -> Bounds3 {
         Bounds3::new(
             &Point3::new(-self.radius, -self.radius, self.height),
@@ -62,7 +62,7 @@ impl<'a> Shape<'a> for Disk<'a> {
         &self,
         r: &Ray,
         t_hit: &mut Float,
-        interaction: &mut SurfaceInteraction<'a>,
+        interaction: &mut SurfaceInteraction,
         _include_alpha: bool,
     ) -> bool {
         // Transform ray to object space.

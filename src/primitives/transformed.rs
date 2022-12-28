@@ -1,7 +1,10 @@
 use std::sync::Arc;
 
 use crate::{
-    base::{material::Material, primitive::Primitive},
+    base::{
+        material::{Material, TransportMode},
+        primitive::Primitive,
+    },
     geometries::{bounds3::Bounds3, ray::Ray},
     interactions::surface::SurfaceInteraction,
     light::AreaLight,
@@ -31,7 +34,7 @@ impl<'a> Primitive<'a> for TransformedPrimitive<'a> {
             .motion_bounds(&self.primitive.world_bound())
     }
 
-    fn intersect(&self, r: &mut Ray, interaction: &mut SurfaceInteraction<'a>) -> bool {
+    fn intersect(&self, r: &mut Ray, interaction: &mut SurfaceInteraction) -> bool {
         let mut interpolated_primitive_to_world = Transform::default();
 
         // Compute ray after transformation applied by primitive_to_world.
@@ -69,7 +72,12 @@ impl<'a> Primitive<'a> for TransformedPrimitive<'a> {
         None
     }
 
-    fn compute_scattering_functions(&self, interaction: &mut SurfaceInteraction) {
+    fn compute_scattering_functions(
+        &self,
+        interaction: &mut SurfaceInteraction,
+        transport_mode: TransportMode,
+        allow_multiple_lobes: bool,
+    ) {
         panic!("TransformedPrimitive::compute_scattering_function should not be called")
     }
 }

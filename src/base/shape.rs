@@ -5,7 +5,7 @@ use crate::{
     utils::math::Float,
 };
 
-pub trait Shape<'a>: Send + Sync {
+pub trait Shape: Send + Sync {
     fn object_bound(&self) -> Bounds3;
     fn world_bound(&self) -> Bounds3;
 
@@ -13,7 +13,7 @@ pub trait Shape<'a>: Send + Sync {
         &self,
         ray: &Ray,
         t_hit: &mut Float,
-        interaction: &mut SurfaceInteraction<'a>,
+        interaction: &mut SurfaceInteraction,
         include_alpha: bool,
     ) -> bool;
     fn intersect_test(&self, ray: &Ray, include_alpha: bool) -> bool;

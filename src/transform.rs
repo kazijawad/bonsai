@@ -259,10 +259,7 @@ impl Transform {
         ret
     }
 
-    pub fn transform_surface_interaction<'a>(
-        &self,
-        si: &SurfaceInteraction<'a>,
-    ) -> SurfaceInteraction<'a> {
+    pub fn transform_surface_interaction(&self, si: &SurfaceInteraction) -> SurfaceInteraction {
         // Transform point and point error in surface interaction.
         let mut point_error = Vec3::default();
         let point =
@@ -309,7 +306,6 @@ impl Transform {
             dndu,
             dndv,
             shading,
-            primitive: None,
             bsdf,
             bssrdf,
             dpdx,

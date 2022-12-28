@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     base::{material::TransportMode, primitive::Primitive},
     bssrdf::BSSRDF,
@@ -19,7 +21,7 @@ pub struct Shading {
 }
 
 #[derive(Clone)]
-pub struct SurfaceInteraction<'a> {
+pub struct SurfaceInteraction {
     pub point: Point3,
     pub point_error: Vec3,
     pub normal: Normal,
@@ -32,7 +34,6 @@ pub struct SurfaceInteraction<'a> {
     pub dndu: Normal,
     pub dndv: Normal,
     pub shading: Shading,
-    pub primitive: Option<&'a dyn Primitive<'a>>,
     pub bsdf: Option<BSDF>,
     pub bssrdf: Option<BSSRDF>,
     pub dpdx: Vec3,
@@ -44,7 +45,7 @@ pub struct SurfaceInteraction<'a> {
     pub face_index: usize,
 }
 
-impl<'a> SurfaceInteraction<'a> {
+impl SurfaceInteraction {
     pub fn new(
         point: Point3,
         point_error: Vec3,
@@ -84,7 +85,6 @@ impl<'a> SurfaceInteraction<'a> {
                 dndu,
                 dndv,
             },
-            primitive: None,
             bsdf: None,
             bssrdf: None,
             dpdx: Vec3::default(),
@@ -121,13 +121,14 @@ impl<'a> SurfaceInteraction<'a> {
     }
 
     pub fn compute_scattering_functions(
-        &self,
+        &mut self,
+        primitive: Arc<dyn Primitive>,
         ray: &RayDifferential,
-        allow_multiple_lobes: bool,
         mode: TransportMode,
+        allow_multiple_lobes: bool,
     ) {
         self.compute_differentials(ray);
-        todo!()
+        primitive.compute_scattering_functions(self, mode, allow_multiple_lobes);
     }
 
     pub fn compute_differentials(&self, ray: &RayDifferential) {
@@ -139,7 +140,7 @@ impl<'a> SurfaceInteraction<'a> {
     }
 }
 
-impl<'a> Default for SurfaceInteraction<'a> {
+impl Default for SurfaceInteraction {
     fn default() -> Self {
         Self {
             point: Point3::default(),
@@ -160,7 +161,6 @@ impl<'a> Default for SurfaceInteraction<'a> {
                 dndu: Normal::default(),
                 dndv: Normal::default(),
             },
-            primitive: None,
             bsdf: None,
             bssrdf: None,
             dpdx: Vec3::default(),

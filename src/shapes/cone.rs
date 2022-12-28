@@ -46,7 +46,7 @@ impl<'a> Cone<'a> {
     }
 }
 
-impl<'a> Shape<'a> for Cone<'a> {
+impl<'a> Shape for Cone<'a> {
     fn object_bound(&self) -> Bounds3 {
         Bounds3::new(
             &Point3::new(-self.radius, -self.radius, 0.0),
@@ -62,7 +62,7 @@ impl<'a> Shape<'a> for Cone<'a> {
         &self,
         r: &Ray,
         t_hit: &mut Float,
-        interaction: &mut SurfaceInteraction<'a>,
+        interaction: &mut SurfaceInteraction,
         _include_alpha: bool,
     ) -> bool {
         // Transform ray to object space.

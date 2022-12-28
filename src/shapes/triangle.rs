@@ -105,7 +105,7 @@ impl<'a> Triangle<'a> {
     }
 }
 
-impl<'a> Shape<'a> for Triangle<'a> {
+impl<'a> Shape for Triangle<'a> {
     fn object_bound(&self) -> Bounds3 {
         let p0 = self
             .world_to_object
@@ -132,7 +132,7 @@ impl<'a> Shape<'a> for Triangle<'a> {
         &self,
         ray: &Ray,
         t_hit: &mut Float,
-        interaction: &mut SurfaceInteraction<'a>,
+        interaction: &mut SurfaceInteraction,
         include_alpha: bool,
     ) -> bool {
         // Get triangle vertices.

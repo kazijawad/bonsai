@@ -1,7 +1,10 @@
 use std::sync::Arc;
 
 use crate::{
-    base::{material::Material, primitive::Primitive},
+    base::{
+        material::{Material, TransportMode},
+        primitive::Primitive,
+    },
     interactions::surface::SurfaceInteraction,
     light::AreaLight,
 };
@@ -15,7 +18,12 @@ pub trait Aggregate<'a>: Primitive<'a> + Send + Sync {
         panic!("Aggregate::get_material should not be called")
     }
 
-    fn compute_scattering_functions(&self, interaction: &mut SurfaceInteraction) {
+    fn compute_scattering_functions(
+        &self,
+        interaction: &mut SurfaceInteraction,
+        transport_mode: TransportMode,
+        allow_multiple_lobes: bool,
+    ) {
         panic!("Aggregate::compute_scattering_function should not be called")
     }
 }
