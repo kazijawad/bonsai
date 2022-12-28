@@ -24,9 +24,9 @@ pub struct TriangleMesh {
     shadow_alpha_mask: Option<Arc<dyn Texture<Float>>>,
 }
 
-pub struct Triangle<'a> {
-    object_to_world: &'a Transform,
-    world_to_object: &'a Transform,
+pub struct Triangle {
+    object_to_world: Arc<Transform>,
+    world_to_object: Arc<Transform>,
     reverse_orientation: bool,
     transform_swaps_handedness: bool,
     mesh: Arc<TriangleMesh>,
@@ -79,10 +79,10 @@ impl TriangleMesh {
     }
 }
 
-impl<'a> Triangle<'a> {
+impl Triangle {
     pub fn new(
-        object_to_world: &'a Transform,
-        world_to_object: &'a Transform,
+        object_to_world: Arc<Transform>,
+        world_to_object: Arc<Transform>,
         reverse_orientation: bool,
         mesh: Arc<TriangleMesh>,
         triangle_index: usize,
@@ -105,7 +105,7 @@ impl<'a> Triangle<'a> {
     }
 }
 
-impl<'a> Shape for Triangle<'a> {
+impl Shape for Triangle {
     fn object_bound(&self) -> Bounds3 {
         let p0 = self
             .world_to_object

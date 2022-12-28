@@ -13,9 +13,9 @@ use crate::{
     },
 };
 
-pub struct Cone<'a> {
-    object_to_world: &'a Transform,
-    world_to_object: &'a Transform,
+pub struct Cone {
+    object_to_world: Arc<Transform>,
+    world_to_object: Arc<Transform>,
     reverse_orientation: bool,
     transform_swaps_handedness: bool,
     height: Float,
@@ -23,10 +23,10 @@ pub struct Cone<'a> {
     phi_max: Float,
 }
 
-impl<'a> Cone<'a> {
+impl Cone {
     pub fn new(
-        object_to_world: &'a Transform,
-        world_to_object: &'a Transform,
+        object_to_world: Arc<Transform>,
+        world_to_object: Arc<Transform>,
         reverse_orientation: bool,
         height: Float,
         radius: Float,
@@ -46,7 +46,7 @@ impl<'a> Cone<'a> {
     }
 }
 
-impl<'a> Shape for Cone<'a> {
+impl Shape for Cone {
     fn object_bound(&self) -> Bounds3 {
         Bounds3::new(
             &Point3::new(-self.radius, -self.radius, 0.0),

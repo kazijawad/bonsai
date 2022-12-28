@@ -1,13 +1,12 @@
-use std::{sync::Arc, time::Instant};
+use std::time::Instant;
 
 use rand::{rngs::StdRng, Rng, SeedableRng};
 use rayon::prelude::*;
 
 use crate::{
-    base::primitive::Primitive,
+    aggregate::Aggregate,
     camera::Camera,
     film::Film,
-    geometric::GeometricPrimitive,
     geometries::{point3::Point3, ray::Ray},
     interactions::surface::SurfaceInteraction,
     utils::math::Float,
@@ -19,8 +18,8 @@ pub struct Renderer<'a> {
     background: Point3,
     max_sample_count: u32,
     max_depth: u32,
-    camera: &'a Camera,
-    scene: Arc<GeometricPrimitive<'a>>,
+    camera: Camera,
+    scene: Box<dyn Aggregate<'a>>,
     film: Film,
 }
 
@@ -31,8 +30,8 @@ impl<'a> Renderer<'a> {
         background: Point3,
         max_sample_count: u32,
         max_depth: u32,
-        camera: &'a Camera,
-        scene: Arc<GeometricPrimitive<'a>>,
+        camera: Camera,
+        scene: Box<dyn Aggregate<'a>>,
     ) -> Self {
         println!("Width: {}", width);
         println!("Height: {}", height);
@@ -46,7 +45,7 @@ impl<'a> Renderer<'a> {
             max_sample_count,
             max_depth,
             camera,
-            scene: scene.clone(),
+            scene,
             film: Film::new(width, height, max_sample_count),
         }
     }

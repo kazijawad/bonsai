@@ -2,6 +2,7 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 
+mod accelerators;
 mod base;
 mod bssrdf;
 mod camera;
@@ -18,6 +19,7 @@ mod texture;
 mod transform;
 mod utils;
 
+pub use accelerators::*;
 pub use base::*;
 pub use camera::*;
 pub use geometries::*;

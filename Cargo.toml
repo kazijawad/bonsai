@@ -13,6 +13,7 @@ float-as-double = []
 cfg-if = "0.1"
 clap = { version = "4.0.29", features = ["derive"] }
 image = "0.24.5"
+itertools = "0.10.5"
 rand = "0.8.5"
 rayon = "1.6.0"
 toml = "0.5.9"

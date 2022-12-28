@@ -13,9 +13,9 @@ use crate::{
     },
 };
 
-pub struct Paraboloid<'a> {
-    object_to_world: &'a Transform,
-    world_to_object: &'a Transform,
+pub struct Paraboloid {
+    object_to_world: Arc<Transform>,
+    world_to_object: Arc<Transform>,
     reverse_orientation: bool,
     transform_swaps_handedness: bool,
     radius: Float,
@@ -24,10 +24,10 @@ pub struct Paraboloid<'a> {
     phi_max: Float,
 }
 
-impl<'a> Paraboloid<'a> {
+impl Paraboloid {
     pub fn new(
-        object_to_world: &'a Transform,
-        world_to_object: &'a Transform,
+        object_to_world: Arc<Transform>,
+        world_to_object: Arc<Transform>,
         reverse_orientation: bool,
         radius: Float,
         z0: Float,
@@ -49,7 +49,7 @@ impl<'a> Paraboloid<'a> {
     }
 }
 
-impl<'a> Shape for Paraboloid<'a> {
+impl Shape for Paraboloid {
     fn object_bound(&self) -> Bounds3 {
         Bounds3::new(
             &Point3::new(-self.radius, -self.radius, self.z_min),

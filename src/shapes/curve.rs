@@ -26,9 +26,9 @@ pub struct CurveCommon {
     inverse_sine_normal_angle: Option<Float>,
 }
 
-pub struct Curve<'a> {
-    object_to_world: &'a Transform,
-    world_to_object: &'a Transform,
+pub struct Curve {
+    object_to_world: Arc<Transform>,
+    world_to_object: Arc<Transform>,
     reverse_orientation: bool,
     transform_swaps_handedness: bool,
     common: Arc<CurveCommon>,
@@ -65,10 +65,10 @@ impl CurveCommon {
     }
 }
 
-impl<'a> Curve<'a> {
+impl Curve {
     pub fn new(
-        object_to_world: &'a Transform,
-        world_to_object: &'a Transform,
+        object_to_world: Arc<Transform>,
+        world_to_object: Arc<Transform>,
         reverse_orientation: bool,
         common: Arc<CurveCommon>,
         u_min: Float,
@@ -357,7 +357,7 @@ impl<'a> Curve<'a> {
     }
 }
 
-impl<'a> Shape for Curve<'a> {
+impl Shape for Curve {
     fn object_bound(&self) -> Bounds3 {
         let cp = [
             Curve::blossom_bezier(

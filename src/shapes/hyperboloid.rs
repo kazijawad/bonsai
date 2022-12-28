@@ -13,9 +13,9 @@ use crate::{
     },
 };
 
-pub struct Hyperboloid<'a> {
-    object_to_world: &'a Transform,
-    world_to_object: &'a Transform,
+pub struct Hyperboloid {
+    object_to_world: Arc<Transform>,
+    world_to_object: Arc<Transform>,
     reverse_orientation: bool,
     transform_swaps_handedness: bool,
     p1: Point3,
@@ -28,10 +28,10 @@ pub struct Hyperboloid<'a> {
     ch: Float,
 }
 
-impl<'a> Hyperboloid<'a> {
+impl Hyperboloid {
     pub fn new(
-        object_to_world: &'a Transform,
-        world_to_object: &'a Transform,
+        object_to_world: Arc<Transform>,
+        world_to_object: Arc<Transform>,
         reverse_orientation: bool,
         mut p1: Point3,
         mut p2: Point3,
@@ -78,7 +78,7 @@ impl<'a> Hyperboloid<'a> {
     }
 }
 
-impl<'a> Shape for Hyperboloid<'a> {
+impl Shape for Hyperboloid {
     fn object_bound(&self) -> Bounds3 {
         Bounds3::new(
             &Point3::new(-self.radius_max, -self.radius_max, self.z_min),

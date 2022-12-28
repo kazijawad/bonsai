@@ -10,9 +10,9 @@ use crate::{
     utils::math::{Float, PI},
 };
 
-pub struct Disk<'a> {
-    object_to_world: &'a Transform,
-    world_to_object: &'a Transform,
+pub struct Disk {
+    object_to_world: Arc<Transform>,
+    world_to_object: Arc<Transform>,
     reverse_orientation: bool,
     transform_swaps_handedness: bool,
     height: Float,
@@ -21,10 +21,10 @@ pub struct Disk<'a> {
     phi_max: Float,
 }
 
-impl<'a> Disk<'a> {
+impl Disk {
     pub fn new(
-        object_to_world: &'a Transform,
-        world_to_object: &'a Transform,
+        object_to_world: Arc<Transform>,
+        world_to_object: Arc<Transform>,
         reverse_orientation: bool,
         height: Float,
         radius: Float,
@@ -46,7 +46,7 @@ impl<'a> Disk<'a> {
     }
 }
 
-impl<'a> Shape for Disk<'a> {
+impl Shape for Disk {
     fn object_bound(&self) -> Bounds3 {
         Bounds3::new(
             &Point3::new(-self.radius, -self.radius, self.height),
