@@ -15,6 +15,7 @@ mod primitives;
 mod reflection;
 mod renderer;
 mod shapes;
+mod spectra;
 mod texture;
 mod transform;
 mod utils;
