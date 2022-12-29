@@ -3,7 +3,10 @@ use std::{fs, process};
 use clap::Parser;
 use serde::Deserialize;
 
-use crate::utils::math::Float;
+use crate::{
+    base::{material::MaterialType, primitive::PrimitiveType, shape::ShapeType},
+    utils::math::Float,
+};
 
 #[derive(Debug, Parser)]
 struct Args {
@@ -15,6 +18,9 @@ pub struct SceneSettings {
     pub render: RenderSettings,
     pub film: FilmSettings,
     pub camera: CameraSettings,
+    pub materials: Vec<MaterialSettings>,
+    pub shapes: Vec<ShapeSettings>,
+    pub primitives: Vec<PrimitiveSettings>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -39,6 +45,36 @@ pub struct CameraSettings {
     pub focus_distance: Float,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct MaterialSettings {
+    pub name: MaterialType,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ShapeSettings {
+    pub name: ShapeType,
+    pub reverse_orientation: Option<bool>,
+    pub translate: Option<[Float; 3]>,
+    pub rotate: Option<[Float; 3]>,
+    pub scale: Option<[Float; 3]>,
+    pub properties: Option<PropertySettings>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PrimitiveSettings {
+    pub name: PrimitiveType,
+    pub shape: usize,
+    pub material: usize,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PropertySettings {
+    pub radius: Option<Float>,
+    pub z_min: Option<Float>,
+    pub z_max: Option<Float>,
+    pub phi_max: Option<Float>,
+}
+
 pub fn parse() -> SceneSettings {
     let args = Args::parse();
 
@@ -52,8 +88,8 @@ pub fn parse() -> SceneSettings {
 
     match toml::from_str(&contents) {
         Ok(v) => v,
-        Err(_) => {
-            eprintln!("Failed to parse TOML file:\n{}", contents);
+        Err(e) => {
+            eprintln!("Failed to parse TOML file: {}\n{}", e, contents);
             process::exit(1);
         }
     }

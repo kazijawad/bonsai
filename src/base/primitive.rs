@@ -1,11 +1,19 @@
 use std::sync::Arc;
 
+use serde::Deserialize;
+
 use crate::{
     base::material::{Material, TransportMode},
     geometries::{bounds3::Bounds3, ray::Ray},
     interactions::surface::SurfaceInteraction,
     light::AreaLight,
 };
+
+#[derive(Debug, Deserialize)]
+pub enum PrimitiveType {
+    Geometric,
+    Transformed,
+}
 
 pub trait Primitive<'a>: Send + Sync {
     fn world_bound(&self) -> Bounds3;

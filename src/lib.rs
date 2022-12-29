@@ -35,5 +35,4 @@ pub use shapes::{
     paraboloid::Paraboloid, sphere::Sphere, triangle::Triangle,
 };
 pub use transform::Transform;
-pub use utils::math::*;
-pub use utils::parser;
+pub use utils::{math::*, parser, scene::*};

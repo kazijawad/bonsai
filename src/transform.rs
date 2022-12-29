@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, ops, ptr, sync::Arc};
+use std::{cmp::Ordering, ops, ptr};
 
 use crate::{
     geometries::{
@@ -50,14 +50,6 @@ struct DerivativeTerm {
 impl Transform {
     pub fn new(m: Mat4, m_inverse: Mat4) -> Self {
         Self { m, m_inverse }
-    }
-
-    pub fn new_shared(m: Mat4, m_inverse: Mat4) -> Arc<Self> {
-        Arc::new(Self::new(m, m_inverse))
-    }
-
-    pub fn default_shared() -> Arc<Self> {
-        Arc::new(Self::default())
     }
 
     pub fn transform_point(&self, p: &Point3) -> Point3 {

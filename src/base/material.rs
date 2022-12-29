@@ -1,8 +1,16 @@
 use std::sync::Arc;
 
+use serde::Deserialize;
+
+#[derive(Debug)]
 pub enum TransportMode {
     Radiance,
     Importance,
+}
+
+#[derive(Debug, Deserialize)]
+pub enum MaterialType {
+    Test,
 }
 
 pub trait Material: Send + Sync {}
