@@ -59,12 +59,12 @@ pub fn create_primitives<'a>(
                 let (radius, z_min, z_max, phi_max) = if let Some(props) = &shape.properties {
                     (
                         props.radius.unwrap_or(1.0),
-                        props.z_min.unwrap_or(0.0),
+                        props.z_min.unwrap_or(-1.0),
                         props.z_max.unwrap_or(1.0),
                         props.phi_max.unwrap_or(360.0),
                     )
                 } else {
-                    (1.0, 0.0, 1.0, 360.0)
+                    (1.0, -1.0, 1.0, 360.0)
                 };
 
                 shapes.push(Sphere::new(
