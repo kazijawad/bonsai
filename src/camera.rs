@@ -1,6 +1,6 @@
 use crate::{
     geometries::{point3::Point3, ray::Ray, vec3::Vec3},
-    utils::math::Float,
+    utils::{math::Float, parser::SceneSettings},
 };
 
 pub struct Camera {
@@ -62,6 +62,19 @@ impl Camera {
             Float::INFINITY,
             0.0,
             None,
+        )
+    }
+}
+
+impl From<&SceneSettings> for Camera {
+    fn from(s: &SceneSettings) -> Self {
+        Self::new(
+            Point3::from(s.camera.position),
+            Vec3::from(s.camera.look_at),
+            s.camera.fov,
+            s.film.width as f32 / s.film.height as f32,
+            s.camera.aperature,
+            s.camera.focus_distance,
         )
     }
 }

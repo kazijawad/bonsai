@@ -3,8 +3,15 @@ use std::sync::Arc;
 use pat::*;
 
 fn main() {
+    // Parse render options and scene description into settings struct.
     let settings = parser::parse();
 
+    // Initialize rendering information.
+    let camera = Camera::from(&settings);
+    let mut renderer = Renderer::from(&settings);
+    let mut film = Film::from(&settings);
+
+    // Generate scene information.
     let center_transform = Transform::default_shared();
     let offset_transform = Arc::new(Transform::translate(&Vec3::new(1.5, 0.0, 0.0)));
 
@@ -44,25 +51,11 @@ fn main() {
         &MediumInterface,
     );
 
-    let bvh = BVH::new(vec![center_mesh.clone(), offset_mesh.clone()], 4);
+    let scene = BVH::new(vec![center_mesh.clone(), offset_mesh.clone()], 4);
 
-    let camera = Camera::new(
-        Point3::from(settings.camera.position),
-        Vec3::from(settings.camera.look_at),
-        settings.camera.fov,
-        settings.film.width as f32 / settings.film.height as f32,
-        settings.camera.aperature,
-        settings.camera.focus_distance,
-    );
+    // Render scene.
+    renderer.render(&(scene as Box<dyn Aggregate>), &camera);
 
-    let mut renderer = Renderer::new(
-        settings.film.width,
-        settings.film.height,
-        Point3::from(settings.film.background),
-        settings.render.max_sample_count,
-        settings.render.max_depth,
-        camera,
-        bvh,
-    );
-    renderer.render();
+    // Write out image.
+    film.write_image(renderer.samples);
 }

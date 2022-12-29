@@ -20,8 +20,9 @@ mod transform;
 mod utils;
 
 pub use accelerators::bvh::BVH;
-pub use base::material::TestMaterial;
+pub use base::{aggregate::Aggregate, material::TestMaterial};
 pub use camera::Camera;
+pub use film::Film;
 pub use geometries::{
     bounds2::Bounds2, bounds3::Bounds3, interval::Interval, mat4::Mat4, normal::Normal,
     point2::Point2, point3::Point3, quaternion::Quaternion, ray::Ray, vec2::Vec2, vec3::Vec3,

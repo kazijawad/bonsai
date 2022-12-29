@@ -2,7 +2,7 @@ use std::fs;
 
 use image::{imageops, ImageBuffer, Rgb, RgbImage};
 
-use crate::geometries::point3::Point3;
+use crate::{geometries::point3::Point3, parser::SceneSettings};
 
 pub struct Film {
     width: u32,
@@ -23,27 +23,9 @@ impl Film {
         }
     }
 
-    pub fn add_sample(&mut self, x: u32, y: u32, sample: Point3) {
-        assert!(
-            self.samples.capacity() == ((self.width * self.height) as usize),
-            "Invalid sample amount"
-        );
+    pub fn write_image(&mut self, samples: Vec<Vec<Point3>>) {
+        self.add_samples(samples);
 
-        self.samples.push(sample);
-
-        let color = self.get_srgb_color(&sample);
-        self.buffer.put_pixel(x, y, Rgb(color));
-    }
-
-    pub fn add_samples(&mut self, samples: Vec<Vec<Point3>>) {
-        for (y, row) in samples.iter().enumerate() {
-            for (x, color) in row.iter().enumerate() {
-                self.add_sample(x as u32, y as u32, *color);
-            }
-        }
-    }
-
-    pub fn write_image(&mut self) {
         // TODO: Find better way to handle this.
         self.buffer = imageops::rotate180(&self.buffer);
 
@@ -57,7 +39,27 @@ impl Film {
         println!("Image Location: dist/output.png");
     }
 
-    pub fn get_srgb_color(&self, sample: &Point3) -> [u8; 3] {
+    fn add_samples(&mut self, samples: Vec<Vec<Point3>>) {
+        for (y, row) in samples.iter().enumerate() {
+            for (x, color) in row.iter().enumerate() {
+                self.add_sample(x as u32, y as u32, *color);
+            }
+        }
+    }
+
+    fn add_sample(&mut self, x: u32, y: u32, sample: Point3) {
+        assert!(
+            self.samples.capacity() == ((self.width * self.height) as usize),
+            "Invalid sample amount"
+        );
+
+        self.samples.push(sample);
+
+        let color = self.get_srgb_color(&sample);
+        self.buffer.put_pixel(x, y, Rgb(color));
+    }
+
+    fn get_srgb_color(&self, sample: &Point3) -> [u8; 3] {
         let mut r = sample.x;
         let mut g = sample.y;
         let mut b = sample.z;
@@ -73,5 +75,11 @@ impl Film {
             (256.0 * g.max(0.0).min(1.0)) as u8,
             (256.0 * b.max(0.0).min(1.0)) as u8,
         ]
+    }
+}
+
+impl From<&SceneSettings> for Film {
+    fn from(s: &SceneSettings) -> Self {
+        Self::new(s.film.width, s.film.height, s.render.max_sample_count)
     }
 }
