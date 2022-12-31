@@ -1,9 +1,20 @@
-use std::ops;
+use std::{fmt::Debug, ops};
 
 use crate::utils::math::Float;
 
+pub enum SpectrumType {
+    Reflectance,
+    Illuminant,
+}
+
+pub type XYZ = [Float; 3];
+pub type RGB = [Float; 3];
+
 pub trait CoefficientSpectrum:
-    Clone
+    Debug
+    + Clone
+    + Copy
+    + PartialEq
     + Send
     + Sync
     + Sized
@@ -36,7 +47,7 @@ pub trait CoefficientSpectrum:
 
     fn exp(&self) -> Self;
 
-    fn clamp(&self, low: Float, high: Float) -> Self;
+    fn clamp(&self, min: Float, max: Float) -> Self;
 
     fn max_component_value(&self) -> Float;
 

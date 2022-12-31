@@ -3,13 +3,13 @@ use std::ops;
 use crate::{base::spectrum::CoefficientSpectrum, utils::math::Float};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-struct RGBSpectrum([Float; 3]);
+pub struct RGBSpectrum([Float; 3]);
 
 impl CoefficientSpectrum for RGBSpectrum {
     const NUM_SAMPLES: usize = 3;
 
     fn new(v: Float) -> Self {
-        Self([v, v, v])
+        Self([v; Self::NUM_SAMPLES])
     }
 
     fn lerp(t: Float, a: &Self, b: &Self) -> Self {
@@ -34,11 +34,11 @@ impl CoefficientSpectrum for RGBSpectrum {
         result
     }
 
-    fn clamp(&self, low: Float, high: Float) -> Self {
+    fn clamp(&self, min: Float, max: Float) -> Self {
         let result = Self([
-            self[0].clamp(low, high),
-            self[1].clamp(low, high),
-            self[2].clamp(low, high),
+            self[0].clamp(min, max),
+            self[1].clamp(min, max),
+            self[2].clamp(min, max),
         ]);
         debug_assert!(!result.is_nan());
         result
@@ -69,7 +69,7 @@ impl CoefficientSpectrum for RGBSpectrum {
 
 impl Default for RGBSpectrum {
     fn default() -> Self {
-        Self([0.0, 0.0, 0.0])
+        Self([0.0; Self::NUM_SAMPLES])
     }
 }
 
@@ -86,6 +86,7 @@ impl ops::Add for RGBSpectrum {
 
 impl ops::AddAssign for RGBSpectrum {
     fn add_assign(&mut self, rhs: Self) {
+        debug_assert!(!self.is_nan() && !rhs.is_nan());
         self[0] += rhs[0];
         self[1] += rhs[1];
         self[2] += rhs[2];
