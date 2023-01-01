@@ -48,6 +48,11 @@ impl CoefficientSpectrum for RGBSpectrum {
         self[0].max(self[1]).max(self[2])
     }
 
+    fn y(&self) -> Float {
+        const W: [Float; 3] = [0.212671, 0.715160, 0.072169];
+        W[0] * self[0] + W[1] * self[1] + W[2] * self[2]
+    }
+
     fn is_black(&self) -> bool {
         for i in 0..Self::NUM_SAMPLES {
             if self[i] == 0.0 {
@@ -64,6 +69,10 @@ impl CoefficientSpectrum for RGBSpectrum {
             }
         }
         false
+    }
+
+    fn is_initialized(&self) -> bool {
+        true
     }
 }
 

@@ -10,6 +10,11 @@ const CIE_SAMPLES: usize = 471;
 const RGB_SPECTRAL_SAMPLES: usize = 32;
 const CIE_Y_INTEGRAL: Float = 106.856895;
 
+static mut X: SampledSpectrum = SampledSpectrum([0.0; SPECTRAL_SAMPLES]);
+static mut Y: SampledSpectrum = SampledSpectrum([0.0; SPECTRAL_SAMPLES]);
+static mut Z: SampledSpectrum = SampledSpectrum([0.0; SPECTRAL_SAMPLES]);
+static mut INITIALIZED_XYZ: bool = false;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SampledSpectrum([Float; SPECTRAL_SAMPLES]);
 
@@ -64,6 +69,18 @@ impl CoefficientSpectrum for SampledSpectrum {
         self.0.iter().fold(Float::INFINITY, |a, &b| a.min(b))
     }
 
+    fn y(&self) -> Float {
+        debug_assert!(self.is_initialized());
+        let mut y = 0.0;
+        for i in 0..Self::NUM_SAMPLES {
+            unsafe {
+                y += Y[i] * self[i];
+            }
+        }
+        y * ((SAMPLED_LAMBDA_END - SAMPLED_LAMBDA_START) as f32)
+            / (CIE_Y_INTEGRAL * (Self::NUM_SAMPLES as f32))
+    }
+
     fn is_black(&self) -> bool {
         for i in 0..Self::NUM_SAMPLES {
             if self[i] == 0.0 {
@@ -80,6 +97,10 @@ impl CoefficientSpectrum for SampledSpectrum {
             }
         }
         false
+    }
+
+    fn is_initialized(&self) -> bool {
+        unsafe { INITIALIZED_XYZ }
     }
 }
 
