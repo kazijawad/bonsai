@@ -91,7 +91,7 @@ impl SDVertex {
         }
     }
 
-    pub fn one_ring(&self, points: &mut Vec<Point3>) {
+    pub fn one_ring(&self, points: &mut [Point3]) {
         let start_face = self.start_face.as_ref().unwrap();
         let mut face = self.start_face.as_ref().unwrap();
 

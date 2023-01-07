@@ -54,9 +54,9 @@ pub fn next_up(mut v: Float) -> Float {
     Float::from_bits(ui)
 }
 
-pub fn find_interval<F>(size: u32, f: F) -> u32
+pub fn find_interval<F>(size: usize, f: F) -> usize
 where
-    F: Fn(u32) -> bool,
+    F: Fn(usize) -> bool,
 {
     let mut first = 0;
     let mut len = size;
@@ -70,7 +70,7 @@ where
             len = half;
         }
     }
-    (first - 1).clamp(0 as u32, size - 2)
+    (first - 1).clamp(0, size - 2)
 }
 
 pub fn quadratic(a: Float, b: Float, c: Float, t0: &mut Float, t1: &mut Float) -> bool {

@@ -21,7 +21,11 @@ mod transform;
 mod utils;
 
 pub use accelerators::bvh::BVH;
-pub use base::{aggregate::Aggregate, material::TestMaterial};
+pub use base::{
+    aggregate::Aggregate,
+    material::TestMaterial,
+    spectrum::{CoefficientSpectrum, Spectrum},
+};
 pub use camera::Camera;
 pub use film::Film;
 pub use geometries::{

@@ -1,6 +1,12 @@
 use std::ops;
 
-use crate::{base::spectrum::CoefficientSpectrum, utils::math::Float};
+use crate::{
+    base::spectrum::{
+        rgb_to_xyz, xyz_to_rgb, CoefficientSpectrum, SpectrumType, CIE_LAMBDA, CIE_X, CIE_Y,
+        CIE_Y_INTEGRAL, CIE_Z, NUM_CIE_SAMPLES, RGB, XYZ,
+    },
+    utils::math::Float,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct RGBSpectrum([Float; 3]);
@@ -10,6 +16,55 @@ impl CoefficientSpectrum for RGBSpectrum {
 
     fn new(v: Float) -> Self {
         Self([v; Self::NUM_SAMPLES])
+    }
+
+    fn from_sampled(lambda: &mut [Float], values: &mut [Float], n: usize) -> Self {
+        // Sort samples if unordered, and use sorted for returned spectrum.
+        if !Self::is_samples_sorted(lambda, n) {
+            let mut lambda_segment: Vec<Float> = vec![];
+            for i in (lambda[0] as usize)..(lambda[n] as usize) {
+                lambda_segment.push(i as Float);
+            }
+
+            let mut values_segment: Vec<Float> = vec![];
+            for i in (values[0] as usize)..(values[n] as usize) {
+                values_segment.push(i as Float);
+            }
+
+            Self::sort_samples(&mut lambda_segment, &mut values_segment, n);
+            return Self::from_sampled(&mut lambda_segment, &mut values_segment, n);
+        }
+
+        let mut xyz: XYZ = [0.0; 3];
+        for i in 0..NUM_CIE_SAMPLES {
+            let value = Self::interpolate_samples(lambda, values, n, CIE_LAMBDA[i]);
+            xyz[0] += value * CIE_X[i];
+            xyz[1] += value * CIE_Y[i];
+            xyz[2] += value * CIE_Z[i];
+        }
+
+        let scale = (CIE_LAMBDA[NUM_CIE_SAMPLES - 1] - CIE_LAMBDA[0])
+            / (CIE_Y_INTEGRAL * (NUM_CIE_SAMPLES as Float));
+        xyz[0] *= scale;
+        xyz[1] *= scale;
+        xyz[2] *= scale;
+
+        Self::from_xyz(&xyz, SpectrumType::Reflectance)
+    }
+
+    fn from_xyz(xyz: &XYZ, spectrum_type: SpectrumType) -> Self {
+        let mut spectrum = Self::default();
+        xyz_to_rgb(xyz, &mut spectrum.0);
+        spectrum
+    }
+
+    fn from_rgb(rgb: &RGB, spectrum_type: SpectrumType) -> Self {
+        let mut spectrum = Self::default();
+        spectrum[0] = rgb[0];
+        spectrum[1] = rgb[1];
+        spectrum[2] = rgb[2];
+        debug_assert!(!spectrum.is_nan());
+        spectrum
     }
 
     fn lerp(t: Float, a: &Self, b: &Self) -> Self {
@@ -51,6 +106,16 @@ impl CoefficientSpectrum for RGBSpectrum {
     fn y(&self) -> Float {
         const W: [Float; 3] = [0.212671, 0.715160, 0.072169];
         W[0] * self[0] + W[1] * self[1] + W[2] * self[2]
+    }
+
+    fn to_xyz(&self, xyz: &mut XYZ) {
+        rgb_to_xyz(&self.0, xyz)
+    }
+
+    fn to_rgb(&self, rgb: &mut RGB) {
+        rgb[0] = self[0];
+        rgb[1] = self[1];
+        rgb[2] = self[2];
     }
 
     fn is_black(&self) -> bool {

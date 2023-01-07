@@ -5,6 +5,7 @@ fn main() {
     let settings = parser::parse();
 
     // Initialize rendering information.
+    Spectrum::init();
     let camera = Camera::from(&settings);
     let mut renderer = Renderer::from(&settings);
     let mut film = Film::from(&settings);

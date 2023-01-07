@@ -95,7 +95,7 @@ impl<'a> BVH<'a> {
 
     fn recursive_build(
         &self,
-        primitive_info: &mut Vec<BVHPrimitiveInfo>,
+        primitive_info: &mut [BVHPrimitiveInfo],
         start: usize,
         end: usize,
         total_nodes: &mut u32,
