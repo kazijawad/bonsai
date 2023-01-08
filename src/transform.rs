@@ -1760,13 +1760,13 @@ impl AnimatedTransform {
     }
 
     pub fn transform_ray_differential(&self, r: &RayDifferential) -> RayDifferential {
-        if !self.is_animated || r.time <= self.start_time {
+        if !self.is_animated || r.ray.time <= self.start_time {
             self.start_transform.transform_ray_differential(r)
-        } else if r.time >= self.end_time {
+        } else if r.ray.time >= self.end_time {
             self.end_transform.transform_ray_differential(r)
         } else {
             let mut t = Transform::default();
-            self.interpolate(r.time, &mut t);
+            self.interpolate(r.ray.time, &mut t);
             t.transform_ray_differential(r)
         }
     }

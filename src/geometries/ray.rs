@@ -15,11 +15,7 @@ pub struct Ray {
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct RayDifferential {
-    pub origin: Point3,
-    pub direction: Vec3,
-    pub t_max: Float,
-    pub time: Float,
-    pub medium: Option<Medium>,
+    pub ray: Ray,
     pub rx_origin: Point3,
     pub ry_origin: Point3,
     pub rx_direction: Vec3,
@@ -62,11 +58,7 @@ impl RayDifferential {
         medium: Option<Medium>,
     ) -> Self {
         Self {
-            origin: origin.clone(),
-            direction: direction.clone(),
-            t_max,
-            time,
-            medium,
+            ray: Ray::new(origin, direction, t_max, time, medium),
             rx_origin: Point3::default(),
             ry_origin: Point3::default(),
             rx_direction: Vec3::default(),
@@ -76,18 +68,18 @@ impl RayDifferential {
     }
 
     pub fn at(&self, t: Float) -> Point3 {
-        self.origin + self.direction * t
+        self.ray.origin + self.ray.direction * t
     }
 
     pub fn scale_differentials(&mut self, s: Float) {
-        self.rx_origin = self.origin + (self.rx_origin - self.origin) * s;
-        self.ry_origin = self.origin + (self.ry_origin - self.origin) * s;
-        self.rx_direction = self.direction + (self.rx_direction - self.direction) * s;
-        self.ry_direction = self.direction + (self.ry_direction - self.direction) * s;
+        self.rx_origin = self.ray.origin + (self.rx_origin - self.ray.origin) * s;
+        self.ry_origin = self.ray.origin + (self.ry_origin - self.ray.origin) * s;
+        self.rx_direction = self.ray.direction + (self.rx_direction - self.ray.direction) * s;
+        self.ry_direction = self.ray.direction + (self.ry_direction - self.ray.direction) * s;
     }
 
     pub fn is_nan(&self) -> bool {
-        self.origin.is_nan() || self.direction.is_nan() || self.t_max.is_nan()
+        self.ray.origin.is_nan() || self.ray.direction.is_nan() || self.ray.t_max.is_nan()
     }
 }
 
@@ -106,11 +98,7 @@ impl Default for Ray {
 impl Default for RayDifferential {
     fn default() -> Self {
         Self {
-            origin: Point3::default(),
-            direction: Vec3::default(),
-            t_max: Float::INFINITY,
-            time: 0.0,
-            medium: None,
+            ray: Ray::default(),
             rx_origin: Point3::default(),
             ry_origin: Point3::default(),
             rx_direction: Vec3::default(),
@@ -125,11 +113,11 @@ impl Default for RayDifferential {
 impl From<RayDifferential> for Ray {
     fn from(r: RayDifferential) -> Self {
         Self {
-            origin: r.origin,
-            direction: r.direction,
-            t_max: r.t_max,
-            time: r.time,
-            medium: r.medium,
+            origin: r.ray.origin,
+            direction: r.ray.direction,
+            t_max: r.ray.t_max,
+            time: r.ray.time,
+            medium: r.ray.medium,
         }
     }
 }
@@ -137,11 +125,7 @@ impl From<RayDifferential> for Ray {
 impl From<Ray> for RayDifferential {
     fn from(r: Ray) -> Self {
         Self {
-            origin: r.origin,
-            direction: r.direction,
-            t_max: r.t_max,
-            time: r.time,
-            medium: r.medium,
+            ray: r,
             rx_origin: Point3::default(),
             ry_origin: Point3::default(),
             rx_direction: Vec3::default(),
