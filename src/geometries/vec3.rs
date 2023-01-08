@@ -2,7 +2,7 @@ use std::ops;
 
 use crate::{
     geometries::{normal::Normal, point3::Point3},
-    utils::math::Float,
+    utils::math::{Float, PI},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -20,12 +20,40 @@ impl Vec3 {
 
     pub fn coordinate_system(v1: &Self, v2: &mut Self, v3: &mut Self) {
         let new_v2 = if v1.x.abs() > v1.y.abs() {
-            Vec3::new(-v1.z, 0.0, v1.x) / (v1.x * v1.x + v1.z * v1.z).sqrt()
+            Self::new(-v1.z, 0.0, v1.x) / (v1.x * v1.x + v1.z * v1.z).sqrt()
         } else {
-            Vec3::new(0.0, v1.z, -v1.y) / (v1.y * v1.y + v1.z * v1.z).sqrt()
+            Self::new(0.0, v1.z, -v1.y) / (v1.y * v1.y + v1.z * v1.z).sqrt()
         };
         v2.clone_from(&new_v2);
         v3.clone_from(&v1.cross(&v2));
+    }
+
+    pub fn spherical_direction(sin_theta: Float, cos_theta: Float, phi: Float) -> Self {
+        Self::new(sin_theta * phi.cos(), sin_theta * phi.sin(), cos_theta)
+    }
+
+    pub fn spherical_direction_from_basis(
+        sin_theta: Float,
+        cos_theta: Float,
+        phi: Float,
+        x: &Self,
+        y: &Self,
+        z: &Self,
+    ) -> Self {
+        sin_theta * phi.cos() * x + sin_theta * phi.sin() * y + cos_theta * z
+    }
+
+    pub fn spherical_theta(v: &Self) -> Float {
+        v.z.clamp(-1.0, 1.0).acos()
+    }
+
+    pub fn spherical_phi(v: &Self) -> Float {
+        let p = v.y.atan2(v.x);
+        if p < 0.0 {
+            p + 2.0 * PI
+        } else {
+            p
+        }
     }
 
     pub fn length_squared(&self) -> Float {
