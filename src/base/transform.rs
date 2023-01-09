@@ -57,6 +57,33 @@ impl Transform {
             * Transform::translate(&Vec3::new(0.0, 0.0, -z_near))
     }
 
+    pub fn perspective(fov: Float, near: Float, far: Float) -> Self {
+        // Perform projective divide for perspective projection.
+        let mat = Mat4::new(
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            far / (far - near),
+            -far * near / (far - near),
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+        );
+        let inverse_mat = mat.inverse();
+
+        // Scale canonical perspective view to specified field of view.
+        let inverse_tan_angle = 1.0 / (fov.to_radians() / 2.0).tan();
+        Self::scale(inverse_tan_angle, inverse_tan_angle, 1.0) * Self::new(mat, inverse_mat)
+    }
+
     pub fn transform_point(&self, p: &Point3) -> Point3 {
         let x = p.x;
         let y = p.y;
