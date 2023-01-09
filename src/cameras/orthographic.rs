@@ -83,8 +83,8 @@ impl<'a> CameraSystem for OrthographicCamera<'a> {
                 self.projective_camera.lens_radius * sample.lens_point.concentric_disk_sample();
 
             // Compute point on plane of focus.
-            let focus_time = self.projective_camera.focal_distance / ray.direction.z;
-            let focus_point = ray.at(focus_time);
+            let focus_t = self.projective_camera.focal_distance / ray.direction.z;
+            let focus_point = ray.at(focus_t);
 
             // Update ray for effect of lens.
             ray.origin = Point3::new(lens_point.x, lens_point.y, 0.0);
@@ -128,8 +128,8 @@ impl<'a> CameraSystem for OrthographicCamera<'a> {
                 self.projective_camera.lens_radius * sample.lens_point.concentric_disk_sample();
 
             // Compute point on plane of focus.
-            let focus_time = self.projective_camera.focal_distance / r.ray.direction.z;
-            let focus_point = r.ray.at(focus_time);
+            let focus_t = self.projective_camera.focal_distance / r.ray.direction.z;
+            let focus_point = r.ray.at(focus_t);
 
             // Update ray for effect of lens.
             r.ray.origin = Point3::new(lens_point.x, lens_point.y, 0.0);
@@ -141,15 +141,13 @@ impl<'a> CameraSystem for OrthographicCamera<'a> {
             // Sample point on lens.
             let lens_point =
                 self.projective_camera.lens_radius * sample.lens_point.concentric_disk_sample();
-            let focus_time = self.projective_camera.focal_distance / r.ray.direction.z;
+            let focus_t = self.projective_camera.focal_distance / r.ray.direction.z;
 
-            let focus_point =
-                camera_point + self.dx_camera + (focus_time * Vec3::new(0.0, 0.0, 1.0));
+            let focus_point = camera_point + self.dx_camera + (focus_t * Vec3::new(0.0, 0.0, 1.0));
             r.rx_origin = Point3::new(lens_point.x, lens_point.y, 0.0);
             r.rx_direction = (focus_point - r.rx_origin).normalize();
 
-            let focus_point =
-                camera_point + self.dy_camera + (focus_time * Vec3::new(0.0, 0.0, 1.0));
+            let focus_point = camera_point + self.dy_camera + (focus_t * Vec3::new(0.0, 0.0, 1.0));
             r.ry_origin = Point3::new(lens_point.x, lens_point.y, 0.0);
             r.ry_direction = (focus_point - r.ry_origin).normalize();
         } else {

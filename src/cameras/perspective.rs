@@ -107,8 +107,8 @@ impl<'a> CameraSystem for PerspectiveCamera<'a> {
                 self.projective_camera.lens_radius * sample.lens_point.concentric_disk_sample();
 
             // Compute point on plane of focus.
-            let focus_time = self.projective_camera.focal_distance / ray.direction.z;
-            let focus_point = ray.at(focus_time);
+            let focus_t = self.projective_camera.focal_distance / ray.direction.z;
+            let focus_point = ray.at(focus_t);
 
             // Update ray for effect of lens.
             ray.origin = Point3::new(lens_point.x, lens_point.y, 0.0);
@@ -152,8 +152,8 @@ impl<'a> CameraSystem for PerspectiveCamera<'a> {
                 self.projective_camera.lens_radius * sample.lens_point.concentric_disk_sample();
 
             // Compute point on plane of focus.
-            let focus_time = self.projective_camera.focal_distance / r.ray.direction.z;
-            let focus_point = r.ray.at(focus_time);
+            let focus_t = self.projective_camera.focal_distance / r.ray.direction.z;
+            let focus_point = r.ray.at(focus_t);
 
             // Update ray for effect of lens.
             r.ray.origin = Point3::new(lens_point.x, lens_point.y, 0.0);
@@ -167,14 +167,14 @@ impl<'a> CameraSystem for PerspectiveCamera<'a> {
                 self.projective_camera.lens_radius * sample.lens_point.concentric_disk_sample();
 
             let dx = Vec3::from(camera_point + self.dx_camera).normalize();
-            let focus_time = self.projective_camera.focal_distance / dx.z;
-            let focus_point = Point3::default() + (focus_time * dx);
+            let focus_t = self.projective_camera.focal_distance / dx.z;
+            let focus_point = Point3::default() + (focus_t * dx);
             r.rx_origin = Point3::new(lens_point.x, lens_point.y, 0.0);
             r.rx_direction = (focus_point - r.rx_origin).normalize();
 
             let dy = Vec3::from(camera_point + self.dy_camera).normalize();
-            let focus_time = self.projective_camera.focal_distance / dy.z;
-            let focus_point = Point3::default() + (focus_time * dy);
+            let focus_t = self.projective_camera.focal_distance / dy.z;
+            let focus_point = Point3::default() + (focus_t * dy);
             r.ry_origin = Point3::new(lens_point.x, lens_point.y, 0.0);
             r.ry_direction = (focus_point - r.ry_origin).normalize();
         } else {
