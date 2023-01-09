@@ -4,11 +4,11 @@ use crate::{
     base::{
         material::{Material, TransportMode},
         primitive::Primitive,
+        transform::{AnimatedTransform, Transform},
     },
     geometries::{bounds3::Bounds3, ray::Ray},
     interactions::surface::SurfaceInteraction,
     light::AreaLight,
-    transform::{AnimatedTransform, Transform},
 };
 
 pub struct TransformedPrimitive<'a> {

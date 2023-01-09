@@ -52,6 +52,11 @@ impl Transform {
         Self { m, m_inverse }
     }
 
+    pub fn orthographic(z_near: Float, z_far: Float) -> Self {
+        Transform::scale(1.0, 1.0, 1.0 / (z_far - z_near))
+            * Transform::translate(&Vec3::new(0.0, 0.0, -z_near))
+    }
+
     pub fn transform_point(&self, p: &Point3) -> Point3 {
         let x = p.x;
         let y = p.y;
@@ -1861,6 +1866,10 @@ impl AnimatedTransform {
         }
 
         bounds
+    }
+
+    pub fn has_scale(&self) -> bool {
+        self.start_transform.has_scale() || self.end_transform.has_scale()
     }
 }
 

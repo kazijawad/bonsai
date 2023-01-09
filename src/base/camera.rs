@@ -1,19 +1,14 @@
 use crate::{
+    base::{film::Film, transform::AnimatedTransform},
     geometries::{
         point2::Point2,
         ray::{Ray, RayDifferential},
     },
+    medium::Medium,
     utils::math::Float,
 };
 
-#[derive(Debug, Clone, Copy)]
-pub struct CameraSample {
-    film_point: Point2,
-    lens_point: Point2,
-    time: Float,
-}
-
-pub trait Camera: Send + Sync {
+pub trait CameraSystem: Send + Sync {
     fn generate_ray(&self, sample: &CameraSample, ray: &mut Ray) -> Float;
 
     fn generate_ray_differential(&self, sample: &CameraSample, r: &mut RayDifferential) -> Float {
@@ -61,5 +56,38 @@ pub trait Camera: Send + Sync {
 
         r.has_differentials = true;
         weight
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct CameraSample {
+    pub film_point: Point2,
+    pub lens_point: Point2,
+    pub time: Float,
+}
+
+pub struct Camera<'a> {
+    pub camera_to_world: AnimatedTransform,
+    pub shutter_open: Float,
+    pub shutter_close: Float,
+    pub film: &'a Film,
+    pub medium: &'a Medium,
+}
+
+impl<'a> Camera<'a> {
+    pub fn new(
+        camera_to_world: &AnimatedTransform,
+        shutter_open: Float,
+        shutter_close: Float,
+        film: &'a Film,
+        medium: &'a Medium,
+    ) -> Self {
+        Self {
+            camera_to_world: camera_to_world.clone(),
+            shutter_open,
+            shutter_close,
+            film,
+            medium,
+        }
     }
 }

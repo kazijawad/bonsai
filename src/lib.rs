@@ -6,6 +6,7 @@ mod accelerators;
 mod base;
 mod bssrdf;
 mod camera;
+mod cameras;
 mod film;
 mod geometries;
 mod interactions;
@@ -17,7 +18,6 @@ mod renderer;
 mod shapes;
 mod spectra;
 mod texture;
-mod transform;
 mod utils;
 
 pub use accelerators::bvh::BVH;
@@ -25,6 +25,7 @@ pub use base::{
     aggregate::Aggregate,
     material::TestMaterial,
     spectrum::{CoefficientSpectrum, Spectrum},
+    transform::Transform,
 };
 pub use camera::Camera;
 pub use film::Film;
@@ -39,5 +40,4 @@ pub use shapes::{
     cone::Cone, curve::Curve, cylinder::Cylinder, disk::Disk, hyperboloid::Hyperboloid,
     paraboloid::Paraboloid, sphere::Sphere, triangle::Triangle,
 };
-pub use transform::Transform;
 pub use utils::{api::*, math::*, parser};

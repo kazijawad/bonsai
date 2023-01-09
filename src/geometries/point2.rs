@@ -2,7 +2,7 @@ use std::ops;
 
 use crate::{
     geometries::{point3::Point3, vec2::Vec2},
-    utils::math::Float,
+    utils::math::{Float, PI},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -51,6 +51,29 @@ impl Point2 {
 
     pub fn max(&self, p: &Self) -> Self {
         Self::new(self.x.max(p.x), self.y.max(p.y))
+    }
+
+    pub fn concentric_disk_sample(&self) -> Self {
+        // Map uniform random numbers to [-1, 1].
+        let offset = 2.0 * self - Vec2::new(1.0, 1.0);
+
+        // Handle degeneracy at the origin.
+        if offset.x == 0.0 && offset.y == 0.0 {
+            return Self::new(0.0, 0.0);
+        }
+
+        // Apply concentric mapping to point.
+        let theta;
+        let radius;
+        if offset.x.abs() > offset.y.abs() {
+            radius = offset.x;
+            theta = (PI / 4.0) * (offset.y / offset.x);
+        } else {
+            radius = offset.y;
+            theta = (PI / 2.0) * (offset.x / offset.y);
+        }
+
+        radius * Point2::new(theta.cos(), theta.sin())
     }
 }
 

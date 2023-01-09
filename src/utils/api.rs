@@ -5,12 +5,12 @@ use crate::{
         material::{Material, MaterialType, TestMaterial},
         primitive::{Primitive, PrimitiveType},
         shape::{Shape, ShapeType},
+        transform::Transform,
     },
     geometries::vec3::Vec3,
     medium::MediumInterface,
     primitives::geometric::GeometricPrimitive,
     shapes::sphere::Sphere,
-    transform::Transform,
     utils::parser::SceneSettings,
 };
 

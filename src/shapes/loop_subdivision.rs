@@ -6,9 +6,8 @@ use std::{
 };
 
 use crate::{
-    base::shape::Shape,
+    base::{shape::Shape, transform::Transform},
     geometries::{normal::Normal, point3::Point3, vec3::Vec3},
-    transform::Transform,
     utils::math::{Float, PI},
 };
 
