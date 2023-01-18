@@ -60,11 +60,15 @@ impl<'a> PerspectiveCamera<'a> {
                 .transform_point(&Point3::default());
 
         // Compute image plane bounds at z = 1.
-        // let resolution = film.full_resolution;
-        // let mut point_min = projective_camera.raster_to_camera.transform_point(&Point3::default());
-        // let mut point_max = projective_camera.raster_to_camera.transform_point(&Point3::new(resolution.x, resolution.y, 0.0));
-        // point_min /= point_min.z;
-        // point_max /= point_max.z;
+        let resolution = film.full_resolution;
+        let mut point_min = projective_camera
+            .raster_to_camera
+            .transform_point(&Point3::default());
+        let mut point_max = projective_camera
+            .raster_to_camera
+            .transform_point(&Point3::new(resolution.x, resolution.y, 0.0));
+        point_min /= point_min.z;
+        point_max /= point_max.z;
 
         Self {
             projective_camera: ProjectiveCamera::new(
