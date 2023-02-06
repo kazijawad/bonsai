@@ -34,14 +34,14 @@ fn main() {
     let primitive = GeometricPrimitive::new(&sphere, &material);
     let scene = BVH::new(vec![&primitive], 4);
 
-    let camera = Camera::new(
-        Point3::new(0.0, 0.0, 3.0),
-        Vec3::default(),
-        45.0,
-        (width as Float) / (height as Float),
-        0.0,
-        10.0,
+    let camera_transform = Transform::look_at(
+        &Point3::new(0.0, 0.0, 3.0),
+        &Point3::default(),
+        &Vec3::new(0.0, 1.0, 0.0),
     );
+    let camera_to_world = AnimatedTransform::new(&camera_transform, 0.0, &camera_transform, 1.0);
+
+    let camera = PerspectiveCamera::new(&camera_to_world, 0.0, 1.0, 0.0, 1e6, 45.0, &film);
 
     renderer.render(&scene, &camera);
 

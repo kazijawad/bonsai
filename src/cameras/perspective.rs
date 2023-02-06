@@ -14,7 +14,7 @@ use crate::{
 };
 
 pub struct PerspectiveCamera<'a> {
-    camera_to_world: &'a AnimatedTransform,
+    camera_to_world: &'a AnimatedTransform<'a>,
     camera_to_screen: Transform,
     screen_to_raster: Transform,
     raster_to_screen: Transform,
@@ -31,7 +31,6 @@ pub struct PerspectiveCamera<'a> {
 impl<'a> PerspectiveCamera<'a> {
     pub fn new(
         camera_to_world: &'a AnimatedTransform,
-        screen_window: &Bounds2,
         shutter_open: Float,
         shutter_close: Float,
         lens_radius: Float,
@@ -40,6 +39,20 @@ impl<'a> PerspectiveCamera<'a> {
         film: &'a Film,
     ) -> Self {
         let camera_to_screen = Transform::perspective(fov, 1e-2, 1000.0);
+
+        let mut screen_window = Bounds2::default();
+        let frame = film.full_resolution.x / film.full_resolution.y;
+        if frame > 1.0 {
+            screen_window.min.x = -frame;
+            screen_window.max.x = frame;
+            screen_window.min.y = -1.0;
+            screen_window.max.y = 1.0;
+        } else {
+            screen_window.min.x = -1.0;
+            screen_window.max.x = 1.0;
+            screen_window.min.y = -1.0 / frame;
+            screen_window.max.y = 1.0 / frame;
+        }
 
         // Compute projective camera screen transformations.
         let screen_to_raster =

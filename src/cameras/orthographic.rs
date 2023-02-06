@@ -14,7 +14,7 @@ use crate::{
 };
 
 pub struct OrthographicCamera<'a> {
-    camera_to_world: &'a AnimatedTransform,
+    camera_to_world: &'a AnimatedTransform<'a>,
     camera_to_screen: Transform,
     screen_to_raster: Transform,
     raster_to_screen: Transform,

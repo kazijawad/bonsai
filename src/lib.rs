@@ -4,9 +4,7 @@
 
 mod accelerators;
 mod base;
-mod camera;
 mod cameras;
-mod film;
 mod geometries;
 mod interactions;
 mod primitives;
@@ -19,12 +17,16 @@ mod utils;
 pub use accelerators::bvh::BVH;
 pub use base::{
     aggregate::Aggregate,
+    camera::Camera,
+    film::Film,
     material::TestMaterial,
     spectrum::{CoefficientSpectrum, Spectrum},
-    transform::Transform,
+    transform::{AnimatedTransform, Transform},
 };
-pub use camera::Camera;
-pub use film::Film;
+pub use cameras::{
+    environment::EnvironmentCamera, orthographic::OrthographicCamera,
+    perspective::PerspectiveCamera,
+};
 pub use geometries::{
     bounds2::Bounds2, bounds3::Bounds3, interval::Interval, mat4::Mat4, normal::Normal,
     point2::Point2, point3::Point3, quaternion::Quaternion, ray::Ray, vec2::Vec2, vec3::Vec3,

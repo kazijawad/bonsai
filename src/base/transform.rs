@@ -22,9 +22,9 @@ pub struct Transform {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct AnimatedTransform {
-    start_transform: Box<Transform>,
-    end_transform: Box<Transform>,
+pub struct AnimatedTransform<'a> {
+    start_transform: &'a Transform,
+    end_transform: &'a Transform,
     start_time: Float,
     end_time: Float,
     is_animated: bool,
@@ -519,18 +519,18 @@ impl Transform {
     }
 }
 
-impl AnimatedTransform {
+impl<'a> AnimatedTransform<'a> {
     pub fn new(
-        start_transform: Transform,
+        start_transform: &'a Transform,
         start_time: Float,
-        end_transform: Transform,
+        end_transform: &'a Transform,
         end_time: Float,
     ) -> Self {
-        if ptr::eq(&start_transform, &end_transform) {
+        if ptr::eq(start_transform, end_transform) {
             return Self {
-                start_transform: Box::new(start_transform),
+                start_transform,
                 start_time,
-                end_transform: Box::new(end_transform),
+                end_transform,
                 end_time,
                 is_animated: false,
                 has_rotation: false,
@@ -1668,9 +1668,9 @@ impl AnimatedTransform {
         }
 
         Self {
-            start_transform: Box::new(start_transform),
+            start_transform,
             start_time,
-            end_transform: Box::new(end_transform),
+            end_transform,
             end_time,
             is_animated: true,
             has_rotation: false,

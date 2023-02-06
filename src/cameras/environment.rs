@@ -9,7 +9,7 @@ use crate::{
 };
 
 pub struct EnvironmentCamera<'a> {
-    camera_to_world: AnimatedTransform,
+    camera_to_world: &'a AnimatedTransform<'a>,
     shutter_open: Float,
     shutter_close: Float,
     film: &'a Film,
@@ -17,7 +17,7 @@ pub struct EnvironmentCamera<'a> {
 
 impl<'a> EnvironmentCamera<'a> {
     pub fn new(
-        camera_to_world: AnimatedTransform,
+        camera_to_world: &'a AnimatedTransform,
         shutter_open: Float,
         shutter_close: Float,
         film: &'a Film,
