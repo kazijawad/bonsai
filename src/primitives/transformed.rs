@@ -1,34 +1,28 @@
-use std::sync::Arc;
-
 use crate::{
     base::{
-        material::{Material, TransportMode},
+        material::TransportMode,
         primitive::Primitive,
         transform::{AnimatedTransform, Transform},
     },
     geometries::{bounds3::Bounds3, ray::Ray},
     interactions::surface::SurfaceInteraction,
-    light::AreaLight,
 };
 
 pub struct TransformedPrimitive<'a> {
-    primitive: Arc<dyn Primitive<'a> + 'a>,
+    primitive: &'a dyn Primitive,
     primitive_to_world: &'a AnimatedTransform,
 }
 
 impl<'a> TransformedPrimitive<'a> {
-    pub fn new(
-        primitive: Arc<dyn Primitive<'a> + 'a>,
-        primitive_to_world: &'a AnimatedTransform,
-    ) -> Arc<Self> {
-        Arc::new(Self {
-            primitive: primitive.clone(),
+    pub fn new(primitive: &'a dyn Primitive, primitive_to_world: &'a AnimatedTransform) -> Self {
+        Self {
+            primitive,
             primitive_to_world,
-        })
+        }
     }
 }
 
-impl<'a> Primitive<'a> for TransformedPrimitive<'a> {
+impl<'a> Primitive for TransformedPrimitive<'a> {
     fn world_bound(&self) -> Bounds3 {
         self.primitive_to_world
             .motion_bounds(&self.primitive.world_bound())
@@ -62,14 +56,6 @@ impl<'a> Primitive<'a> for TransformedPrimitive<'a> {
         let interpolated_world_to_primitive = interpolated_primitive_to_world.inverse();
         self.primitive
             .intersect_test(&interpolated_world_to_primitive.transform_ray(r))
-    }
-
-    fn get_area_light(&self) -> Option<Arc<AreaLight>> {
-        None
-    }
-
-    fn get_material(&self) -> Option<Arc<dyn Material + 'a>> {
-        None
     }
 
     fn compute_scattering_functions(

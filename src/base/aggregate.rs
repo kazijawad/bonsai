@@ -1,3 +1,3 @@
 use crate::base::primitive::Primitive;
 
-pub trait Aggregate<'a>: Primitive<'a> + Send + Sync {}
+pub trait Aggregate: Primitive + Send + Sync {}

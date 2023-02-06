@@ -1,23 +1,9 @@
-use serde::Deserialize;
-
 use crate::{
     base::interaction::Interaction,
     geometries::{bounds3::Bounds3, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3},
     interactions::surface::SurfaceInteraction,
     utils::math::Float,
 };
-
-#[derive(Debug, Deserialize)]
-pub enum ShapeType {
-    Cone,
-    Curve,
-    Cylinder,
-    Disk,
-    Hyperboloid,
-    Paraboloid,
-    Sphere,
-    Triangle,
-}
 
 pub trait Shape: Send + Sync {
     fn object_bound(&self) -> Bounds3;

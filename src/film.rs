@@ -2,7 +2,7 @@ use std::fs;
 
 use image::{imageops, ImageBuffer, Rgb, RgbImage};
 
-use crate::{geometries::point3::Point3, parser::SceneSettings};
+use crate::geometries::point3::Point3;
 
 pub struct Film {
     width: u32,
@@ -75,11 +75,5 @@ impl Film {
             (256.0 * g.max(0.0).min(1.0)) as u8,
             (256.0 * b.max(0.0).min(1.0)) as u8,
         ]
-    }
-}
-
-impl From<&SceneSettings> for Film {
-    fn from(s: &SceneSettings) -> Self {
-        Self::new(s.film.width, s.film.height, s.render.max_sample_count)
     }
 }

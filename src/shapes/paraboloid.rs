@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     base::{interaction::Interaction, shape::Shape, transform::Transform},
     geometries::{
@@ -12,9 +10,9 @@ use crate::{
     },
 };
 
-pub struct Paraboloid {
-    object_to_world: Arc<Transform>,
-    world_to_object: Arc<Transform>,
+pub struct Paraboloid<'a> {
+    object_to_world: &'a Transform,
+    world_to_object: &'a Transform,
     reverse_orientation: bool,
     transform_swaps_handedness: bool,
     radius: Float,
@@ -23,19 +21,19 @@ pub struct Paraboloid {
     phi_max: Float,
 }
 
-impl Paraboloid {
+impl<'a> Paraboloid<'a> {
     pub fn new(
-        object_to_world: Arc<Transform>,
-        world_to_object: Arc<Transform>,
+        object_to_world: &'a Transform,
+        world_to_object: &'a Transform,
         reverse_orientation: bool,
         radius: Float,
         z0: Float,
         z1: Float,
         phi_max: Float,
-    ) -> Arc<Self> {
+    ) -> Self {
         let transform_swaps_handedness = object_to_world.swaps_handedness();
 
-        Arc::new(Self {
+        Self {
             object_to_world,
             world_to_object,
             reverse_orientation,
@@ -44,11 +42,11 @@ impl Paraboloid {
             z_min: z0.min(z1),
             z_max: z1.max(z0),
             phi_max: phi_max.clamp(0.0, 360.0).to_radians(),
-        })
+        }
     }
 }
 
-impl Shape for Paraboloid {
+impl<'a> Shape for Paraboloid<'a> {
     fn object_bound(&self) -> Bounds3 {
         Bounds3::new(
             &Point3::new(-self.radius, -self.radius, self.z_min),

@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     base::{interaction::Interaction, shape::Shape, transform::Transform},
     geometries::{
@@ -25,12 +23,12 @@ pub struct CurveCommon {
     inverse_sine_normal_angle: Option<Float>,
 }
 
-pub struct Curve {
-    object_to_world: Arc<Transform>,
-    world_to_object: Arc<Transform>,
+pub struct Curve<'a> {
+    object_to_world: &'a Transform,
+    world_to_object: &'a Transform,
     reverse_orientation: bool,
     transform_swaps_handedness: bool,
-    common: Arc<CurveCommon>,
+    common: &'a CurveCommon,
     u_min: Float,
     u_max: Float,
 }
@@ -41,7 +39,7 @@ impl CurveCommon {
         control_points: [Point3; 4],
         width: [Float; 2],
         normals: Option<[Normal; 2]>,
-    ) -> Arc<Self> {
+    ) -> Self {
         let mut curve_common = Self {
             curve_type,
             control_points,
@@ -60,16 +58,16 @@ impl CurveCommon {
                 Some(1.0 / curve_common.normal_angle.unwrap().sin());
         }
 
-        Arc::new(curve_common)
+        curve_common
     }
 }
 
-impl Curve {
+impl<'a> Curve<'a> {
     pub fn new(
-        object_to_world: Arc<Transform>,
-        world_to_object: Arc<Transform>,
+        object_to_world: &'a Transform,
+        world_to_object: &'a Transform,
         reverse_orientation: bool,
-        common: Arc<CurveCommon>,
+        common: &'a CurveCommon,
         u_min: Float,
         u_max: Float,
     ) -> Self {
@@ -356,7 +354,7 @@ impl Curve {
     }
 }
 
-impl Shape for Curve {
+impl<'a> Shape for Curve<'a> {
     fn object_bound(&self) -> Bounds3 {
         let cp = [
             Curve::blossom_bezier(

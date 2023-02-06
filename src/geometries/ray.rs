@@ -1,6 +1,5 @@
 use crate::{
     geometries::{point3::Point3, vec3::Vec3},
-    medium::Medium,
     utils::math::Float,
 };
 
@@ -10,7 +9,6 @@ pub struct Ray {
     pub direction: Vec3,
     pub t_max: Float,
     pub time: Float,
-    pub medium: Option<Medium>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -24,19 +22,12 @@ pub struct RayDifferential {
 }
 
 impl Ray {
-    pub fn new(
-        origin: &Point3,
-        direction: &Vec3,
-        t_max: Float,
-        time: Float,
-        medium: Option<Medium>,
-    ) -> Self {
+    pub fn new(origin: &Point3, direction: &Vec3, t_max: Float, time: Float) -> Self {
         Self {
             origin: origin.clone(),
             direction: direction.clone(),
             t_max,
             time,
-            medium,
         }
     }
 
@@ -50,15 +41,9 @@ impl Ray {
 }
 
 impl RayDifferential {
-    pub fn new(
-        origin: &Point3,
-        direction: &Vec3,
-        t_max: Float,
-        time: Float,
-        medium: Option<Medium>,
-    ) -> Self {
+    pub fn new(origin: &Point3, direction: &Vec3, t_max: Float, time: Float) -> Self {
         Self {
-            ray: Ray::new(origin, direction, t_max, time, medium),
+            ray: Ray::new(origin, direction, t_max, time),
             rx_origin: Point3::default(),
             ry_origin: Point3::default(),
             rx_direction: Vec3::default(),
@@ -90,7 +75,6 @@ impl Default for Ray {
             direction: Vec3::default(),
             t_max: Float::INFINITY,
             time: 0.0,
-            medium: None,
         }
     }
 }
@@ -111,13 +95,12 @@ impl Default for RayDifferential {
 // TYPE CONVERSION
 
 impl From<RayDifferential> for Ray {
-    fn from(r: RayDifferential) -> Self {
+    fn from(diff: RayDifferential) -> Self {
         Self {
-            origin: r.ray.origin,
-            direction: r.ray.direction,
-            t_max: r.ray.t_max,
-            time: r.ray.time,
-            medium: r.ray.medium,
+            origin: diff.ray.origin,
+            direction: diff.ray.direction,
+            t_max: diff.ray.t_max,
+            time: diff.ray.time,
         }
     }
 }

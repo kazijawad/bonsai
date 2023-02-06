@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     base::{interaction::Interaction, shape::Shape, transform::Transform},
     geometries::{
@@ -12,9 +10,9 @@ use crate::{
     },
 };
 
-pub struct Cone {
-    object_to_world: Arc<Transform>,
-    world_to_object: Arc<Transform>,
+pub struct Cone<'a> {
+    object_to_world: &'a Transform,
+    world_to_object: &'a Transform,
     reverse_orientation: bool,
     transform_swaps_handedness: bool,
     height: Float,
@@ -22,18 +20,18 @@ pub struct Cone {
     phi_max: Float,
 }
 
-impl Cone {
+impl<'a> Cone<'a> {
     pub fn new(
-        object_to_world: Arc<Transform>,
-        world_to_object: Arc<Transform>,
+        object_to_world: &'a Transform,
+        world_to_object: &'a Transform,
         reverse_orientation: bool,
         height: Float,
         radius: Float,
         phi_max: Float,
-    ) -> Arc<Self> {
+    ) -> Self {
         let transform_swaps_handedness = object_to_world.swaps_handedness();
 
-        Arc::new(Self {
+        Self {
             object_to_world,
             world_to_object,
             reverse_orientation,
@@ -41,11 +39,11 @@ impl Cone {
             height,
             radius,
             phi_max: phi_max.clamp(0.0, 360.0).to_radians(),
-        })
+        }
     }
 }
 
-impl Shape for Cone {
+impl<'a> Shape for Cone<'a> {
     fn object_bound(&self) -> Bounds3 {
         Bounds3::new(
             &Point3::new(-self.radius, -self.radius, 0.0),

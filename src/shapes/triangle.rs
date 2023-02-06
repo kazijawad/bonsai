@@ -1,4 +1,4 @@
-use std::{mem, sync::Arc};
+use std::mem;
 
 use crate::{
     base::{interaction::Interaction, shape::Shape, transform::Transform},
@@ -10,7 +10,7 @@ use crate::{
     utils::math::{gamma, Float},
 };
 
-pub struct TriangleMesh {
+pub struct TriangleMesh<'a> {
     num_triangles: u32,
     num_vertices: u32,
     vertex_indices: Vec<u32>,
@@ -19,21 +19,21 @@ pub struct TriangleMesh {
     normals: Vec<Normal>,
     tangents: Vec<Vec3>,
     uvs: Vec<Point2>,
-    alpha_mask: Option<Arc<dyn Texture<Float>>>,
-    shadow_alpha_mask: Option<Arc<dyn Texture<Float>>>,
+    alpha_mask: Option<&'a dyn Texture<Float>>,
+    shadow_alpha_mask: Option<&'a dyn Texture<Float>>,
 }
 
-pub struct Triangle {
-    object_to_world: Arc<Transform>,
-    world_to_object: Arc<Transform>,
+pub struct Triangle<'a> {
+    object_to_world: &'a Transform,
+    world_to_object: &'a Transform,
     reverse_orientation: bool,
     transform_swaps_handedness: bool,
-    mesh: Arc<TriangleMesh>,
+    mesh: &'a TriangleMesh<'a>,
     vertex_index: usize,
     face_index: usize,
 }
 
-impl TriangleMesh {
+impl<'a> TriangleMesh<'a> {
     pub fn new(
         object_to_world: &Transform,
         num_triangles: u32,
@@ -44,9 +44,9 @@ impl TriangleMesh {
         uvs: Vec<Point2>,
         tangents: Vec<Vec3>,
         face_indices: Vec<u32>,
-        alpha_mask: Option<Arc<dyn Texture<Float>>>,
-        shadow_alpha_mask: Option<Arc<dyn Texture<Float>>>,
-    ) -> Arc<Self> {
+        alpha_mask: Option<&'a dyn Texture<Float>>,
+        shadow_alpha_mask: Option<&'a dyn Texture<Float>>,
+    ) -> Self {
         // Convert mesh vertices to world space.
         let mut world_positions = Vec::with_capacity(positions.len());
         for i in 0..positions.len() {
@@ -63,7 +63,7 @@ impl TriangleMesh {
             world_tangents[i] = object_to_world.transform_vec(&tangents[i]);
         }
 
-        Arc::new(Self {
+        Self {
             num_triangles,
             num_vertices,
             vertex_indices,
@@ -74,21 +74,21 @@ impl TriangleMesh {
             face_indices,
             alpha_mask: alpha_mask.clone(),
             shadow_alpha_mask: shadow_alpha_mask.clone(),
-        })
+        }
     }
 }
 
-impl Triangle {
+impl<'a> Triangle<'a> {
     pub fn new(
-        object_to_world: Arc<Transform>,
-        world_to_object: Arc<Transform>,
+        object_to_world: &'a Transform,
+        world_to_object: &'a Transform,
         reverse_orientation: bool,
-        mesh: Arc<TriangleMesh>,
+        mesh: &'a TriangleMesh,
         triangle_index: usize,
-    ) -> Arc<Self> {
+    ) -> Self {
         let transform_swaps_handedness = object_to_world.swaps_handedness();
 
-        Arc::new(Self {
+        Self {
             object_to_world,
             world_to_object,
             reverse_orientation,
@@ -96,7 +96,7 @@ impl Triangle {
             mesh: mesh.clone(),
             vertex_index: mesh.vertex_indices[3 * triangle_index] as usize,
             face_index: mesh.face_indices.len(),
-        })
+        }
     }
 
     fn get_uvs(&self, uvs: &mut [Point2; 3]) {
@@ -104,7 +104,7 @@ impl Triangle {
     }
 }
 
-impl Shape for Triangle {
+impl<'a> Shape for Triangle<'a> {
     fn object_bound(&self) -> Bounds3 {
         let p0 = self
             .world_to_object

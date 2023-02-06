@@ -8,7 +8,7 @@ use crate::{
     camera::Camera,
     geometries::{point3::Point3, ray::Ray},
     interactions::surface::SurfaceInteraction,
-    utils::{math::Float, parser::SceneSettings},
+    utils::math::Float,
 };
 
 pub struct Renderer {
@@ -43,11 +43,11 @@ impl Renderer {
         }
     }
 
-    pub fn render(&mut self, scene: &Box<dyn Aggregate>, camera: &Camera) {
+    pub fn render(&mut self, scene: &dyn Aggregate, camera: &Camera) {
         self.sample(scene, camera);
     }
 
-    fn sample(&mut self, scene: &Box<dyn Aggregate>, camera: &Camera) {
+    fn sample(&mut self, scene: &dyn Aggregate, camera: &Camera) {
         let render_time = Instant::now();
 
         let samples: Vec<_> = (0..self.height)
@@ -72,7 +72,7 @@ impl Renderer {
 
     fn get_color(
         &self,
-        scene: &Box<dyn Aggregate>,
+        scene: &dyn Aggregate,
         camera: &Camera,
         x: u32,
         y: u32,
@@ -88,7 +88,7 @@ impl Renderer {
         self.trace_ray(scene, ray, self.max_depth)
     }
 
-    fn trace_ray(&self, scene: &Box<dyn Aggregate>, mut ray: Ray, depth: u32) -> Point3 {
+    fn trace_ray(&self, scene: &dyn Aggregate, mut ray: Ray, depth: u32) -> Point3 {
         if depth <= 0 {
             return Point3::default();
         }
@@ -99,17 +99,5 @@ impl Renderer {
         } else {
             self.background
         }
-    }
-}
-
-impl From<&SceneSettings> for Renderer {
-    fn from(s: &SceneSettings) -> Self {
-        Self::new(
-            s.film.width,
-            s.film.height,
-            Point3::from(s.film.background),
-            s.render.max_sample_count,
-            s.render.max_depth,
-        )
     }
 }

@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     base::{interaction::Interaction, shape::Shape, transform::Transform},
     geometries::{
@@ -12,9 +10,9 @@ use crate::{
     },
 };
 
-pub struct Cylinder {
-    object_to_world: Arc<Transform>,
-    world_to_object: Arc<Transform>,
+pub struct Cylinder<'a> {
+    object_to_world: &'a Transform,
+    world_to_object: &'a Transform,
     reverse_orientation: bool,
     transform_swaps_handedness: bool,
     radius: Float,
@@ -23,19 +21,19 @@ pub struct Cylinder {
     phi_max: Float,
 }
 
-impl Cylinder {
+impl<'a> Cylinder<'a> {
     pub fn new(
-        object_to_world: Arc<Transform>,
-        world_to_object: Arc<Transform>,
+        object_to_world: &'a Transform,
+        world_to_object: &'a Transform,
         reverse_orientation: bool,
         radius: Float,
         z_min: Float,
         z_max: Float,
         phi_max: Float,
-    ) -> Arc<Self> {
+    ) -> Self {
         let transform_swaps_handedness = object_to_world.swaps_handedness();
 
-        Arc::new(Self {
+        Self {
             object_to_world,
             world_to_object,
             reverse_orientation,
@@ -44,11 +42,11 @@ impl Cylinder {
             z_min: z_min.min(z_max),
             z_max: z_min.max(z_max),
             phi_max: phi_max.clamp(0.0, 360.0).to_radians(),
-        })
+        }
     }
 }
 
-impl Shape for Cylinder {
+impl<'a> Shape for Cylinder<'a> {
     fn object_bound(&self) -> Bounds3 {
         Bounds3::new(
             &Point3::new(-self.radius, -self.radius, self.z_min),

@@ -248,7 +248,7 @@ impl Transform {
             t_max -= dt;
         }
 
-        Ray::new(&origin, &direction, t_max, r.time, r.medium)
+        Ray::new(&origin, &direction, t_max, r.time)
     }
 
     pub fn transform_ray_with_error(
@@ -265,12 +265,12 @@ impl Transform {
             let dt = direction.abs().dot(&origin_error) / length_squared;
             origin += direction * dt;
         }
-        Ray::new(&origin, &direction, t_max, r.time, r.medium)
+        Ray::new(&origin, &direction, t_max, r.time)
     }
 
     pub fn transform_ray_differential(&self, r: &RayDifferential) -> RayDifferential {
         let tr = self.transform_ray(&Ray::from(r.clone()));
-        let mut ret = RayDifferential::new(&tr.origin, &tr.direction, tr.t_max, tr.time, tr.medium);
+        let mut ret = RayDifferential::new(&tr.origin, &tr.direction, tr.t_max, tr.time);
         ret.has_differentials = r.has_differentials;
         ret.rx_origin = self.transform_point(&r.rx_origin);
         ret.ry_origin = self.transform_point(&r.ry_origin);
@@ -301,7 +301,6 @@ impl Transform {
         let normal = self.transform_normal(&si.normal).normalize();
         let negative_direction = self.transform_vec(&si.negative_direction).normalize();
         let time = si.time;
-        let medium_interface = si.medium_interface;
         let uv = si.uv;
         let dpdu = self.transform_vec(&si.dpdu);
         let dpdv = self.transform_vec(&si.dpdv);
@@ -321,8 +320,6 @@ impl Transform {
         let dvdy = si.dvdy;
         let dpdx = self.transform_vec(&si.dpdx);
         let dpdy = self.transform_vec(&si.dpdy);
-        let bsdf = si.bsdf.clone();
-        let bssrdf = si.bssrdf.clone();
         let face_index = si.face_index;
 
         SurfaceInteraction {
@@ -331,15 +328,12 @@ impl Transform {
             normal,
             negative_direction,
             time,
-            medium_interface,
             uv,
             dpdu,
             dpdv,
             dndu,
             dndv,
             shading,
-            bsdf,
-            bssrdf,
             dpdx,
             dpdy,
             dudx,

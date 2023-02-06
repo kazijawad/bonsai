@@ -1,20 +1,15 @@
-use std::{mem, sync::Arc};
+use std::mem;
 
 use itertools::partition;
 
 use crate::{
-    base::{
-        aggregate::Aggregate,
-        material::{Material, TransportMode},
-        primitive::Primitive,
-    },
+    base::{aggregate::Aggregate, material::TransportMode, primitive::Primitive},
     geometries::{bounds3::Bounds3, point3::Point3, ray::Ray, vec3::Vec3},
     interactions::surface::SurfaceInteraction,
-    light::AreaLight,
 };
 
 pub struct BVH<'a> {
-    primitives: Vec<Arc<dyn Primitive<'a>>>,
+    primitives: Vec<&'a dyn Primitive>,
     max_primitives_in_node: u32,
     nodes: Vec<LinearBVHNode>,
 }
@@ -54,14 +49,14 @@ struct BucketInfo {
 }
 
 impl<'a> BVH<'a> {
-    pub fn new(primitives: Vec<Arc<dyn Primitive<'a>>>, max_primitives_in_node: u32) -> Box<Self> {
+    pub fn new(primitives: Vec<&'a dyn Primitive>, max_primitives_in_node: u32) -> Self {
         let mut bvh = Self {
             primitives,
             max_primitives_in_node: max_primitives_in_node.min(255),
             nodes: vec![],
         };
         if bvh.primitives.is_empty() {
-            return Box::new(bvh);
+            return bvh;
         }
 
         // Initialize primitive into array from primitives.
@@ -72,7 +67,7 @@ impl<'a> BVH<'a> {
 
         // Build BVH tree for primitives.
         let mut total_nodes = 0;
-        let mut ordered_primitives: Vec<Arc<dyn Primitive<'a>>> =
+        let mut ordered_primitives: Vec<&'a dyn Primitive> =
             Vec::with_capacity(bvh.primitives.len());
         let root = bvh.recursive_build(
             &mut primitive_info,
@@ -90,7 +85,7 @@ impl<'a> BVH<'a> {
         let offset = &mut 0;
         bvh.flatten(&root, offset);
 
-        Box::new(bvh)
+        bvh
     }
 
     fn recursive_build(
@@ -99,7 +94,7 @@ impl<'a> BVH<'a> {
         start: usize,
         end: usize,
         total_nodes: &mut u32,
-        ordered_primitives: &mut Vec<Arc<dyn Primitive<'a>>>,
+        ordered_primitives: &mut Vec<&'a dyn Primitive>,
     ) -> BVHBuildNode {
         let mut node = BVHBuildNode::default();
         *total_nodes += 1;
@@ -116,7 +111,7 @@ impl<'a> BVH<'a> {
             let first_primitive_offset = ordered_primitives.len();
             for i in start..end {
                 let primitive_index = primitive_info[i].primitive_index;
-                ordered_primitives.push(self.primitives[primitive_index].clone());
+                ordered_primitives.push(self.primitives[primitive_index]);
             }
             node.init_leaf(first_primitive_offset, num_primitives, &bounds);
             return node;
@@ -135,7 +130,7 @@ impl<'a> BVH<'a> {
                 let first_primitive_offset = ordered_primitives.len();
                 for i in start..end {
                     let primitive_index = primitive_info[i].primitive_index;
-                    ordered_primitives.push(self.primitives[primitive_index].clone());
+                    ordered_primitives.push(self.primitives[primitive_index]);
                 }
                 node.init_leaf(first_primitive_offset, num_primitives, &bounds);
                 return node;
@@ -215,7 +210,7 @@ impl<'a> BVH<'a> {
                         let first_primitive_offset = ordered_primitives.len();
                         for i in start..end {
                             let primitive_index = primitive_info[i].primitive_index;
-                            ordered_primitives.push(self.primitives[primitive_index].clone());
+                            ordered_primitives.push(self.primitives[primitive_index]);
                         }
                         node.init_leaf(first_primitive_offset, num_primitives, &bounds);
                         return node;
@@ -261,7 +256,7 @@ impl<'a> BVH<'a> {
     }
 }
 
-impl<'a> Primitive<'a> for BVH<'a> {
+impl<'a> Primitive for BVH<'a> {
     fn world_bound(&self) -> Bounds3 {
         if !self.nodes.is_empty() {
             self.nodes[0].bounds
@@ -395,14 +390,6 @@ impl<'a> Primitive<'a> for BVH<'a> {
         false
     }
 
-    fn get_area_light(&self) -> Option<Arc<AreaLight>> {
-        panic!("Aggregate::get_area_light should not be called")
-    }
-
-    fn get_material(&self) -> Option<Arc<dyn Material>> {
-        panic!("Aggregate::get_material should not be called")
-    }
-
     fn compute_scattering_functions(
         &self,
         interaction: &mut SurfaceInteraction,
@@ -413,7 +400,7 @@ impl<'a> Primitive<'a> for BVH<'a> {
     }
 }
 
-impl<'a> Aggregate<'a> for BVH<'a> {}
+impl<'a> Aggregate for BVH<'a> {}
 
 impl BVHPrimitiveInfo {
     pub fn new(primitive_index: usize, bounds: Bounds3) -> Self {

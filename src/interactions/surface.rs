@@ -1,13 +1,8 @@
-use std::sync::Arc;
-
 use crate::{
     base::{material::TransportMode, primitive::Primitive},
-    bssrdf::BSSRDF,
     geometries::{
         normal::Normal, point2::Point2, point3::Point3, ray::RayDifferential, vec3::Vec3,
     },
-    medium::MediumInterface,
-    reflection::BSDF,
     utils::math::Float,
 };
 
@@ -27,15 +22,12 @@ pub struct SurfaceInteraction {
     pub normal: Normal,
     pub negative_direction: Vec3,
     pub time: Float,
-    pub medium_interface: MediumInterface,
     pub uv: Point2,
     pub dpdu: Vec3,
     pub dpdv: Vec3,
     pub dndu: Normal,
     pub dndv: Normal,
     pub shading: Shading,
-    pub bsdf: Option<BSDF>,
-    pub bssrdf: Option<BSSRDF>,
     pub dpdx: Vec3,
     pub dpdy: Vec3,
     pub dudx: Float,
@@ -71,7 +63,6 @@ impl SurfaceInteraction {
             normal,
             negative_direction,
             time,
-            medium_interface: MediumInterface,
             uv,
             dpdu,
             dpdv,
@@ -85,8 +76,6 @@ impl SurfaceInteraction {
                 dndu,
                 dndv,
             },
-            bsdf: None,
-            bssrdf: None,
             dpdx: Vec3::default(),
             dpdy: Vec3::default(),
             dudx: 0.0,
@@ -122,7 +111,7 @@ impl SurfaceInteraction {
 
     pub fn compute_scattering_functions(
         &mut self,
-        primitive: Arc<dyn Primitive>,
+        primitive: &dyn Primitive,
         ray: &RayDifferential,
         mode: TransportMode,
         allow_multiple_lobes: bool,
@@ -148,7 +137,6 @@ impl Default for SurfaceInteraction {
             normal: Normal::default(),
             negative_direction: Vec3::default(),
             time: 0.0,
-            medium_interface: MediumInterface,
             uv: Point2::default(),
             dpdu: Vec3::default(),
             dpdv: Vec3::default(),
@@ -161,8 +149,6 @@ impl Default for SurfaceInteraction {
                 dndu: Normal::default(),
                 dndv: Normal::default(),
             },
-            bsdf: None,
-            bssrdf: None,
             dpdx: Vec3::default(),
             dpdy: Vec3::default(),
             dudx: 0.0,

@@ -3,7 +3,6 @@ pub mod curve;
 pub mod cylinder;
 pub mod disk;
 pub mod hyperboloid;
-pub mod loop_subdivision;
 pub mod paraboloid;
 pub mod sphere;
 pub mod triangle;

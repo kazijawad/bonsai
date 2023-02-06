@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     base::{interaction::Interaction, shape::Shape, transform::Transform},
     geometries::{
@@ -9,9 +7,9 @@ use crate::{
     utils::math::{Float, PI},
 };
 
-pub struct Disk {
-    object_to_world: Arc<Transform>,
-    world_to_object: Arc<Transform>,
+pub struct Disk<'a> {
+    object_to_world: &'a Transform,
+    world_to_object: &'a Transform,
     reverse_orientation: bool,
     transform_swaps_handedness: bool,
     height: Float,
@@ -20,19 +18,19 @@ pub struct Disk {
     phi_max: Float,
 }
 
-impl Disk {
+impl<'a> Disk<'a> {
     pub fn new(
-        object_to_world: Arc<Transform>,
-        world_to_object: Arc<Transform>,
+        object_to_world: &'a Transform,
+        world_to_object: &'a Transform,
         reverse_orientation: bool,
         height: Float,
         radius: Float,
         inner_radius: Float,
         phi_max: Float,
-    ) -> Arc<Self> {
+    ) -> Self {
         let transform_swaps_handedness = object_to_world.swaps_handedness();
 
-        Arc::new(Self {
+        Self {
             object_to_world,
             world_to_object,
             reverse_orientation,
@@ -41,11 +39,11 @@ impl Disk {
             radius,
             inner_radius,
             phi_max: phi_max.clamp(0.0, 360.0).to_radians(),
-        })
+        }
     }
 }
 
-impl Shape for Disk {
+impl<'a> Shape for Disk<'a> {
     fn object_bound(&self) -> Bounds3 {
         Bounds3::new(
             &Point3::new(-self.radius, -self.radius, self.height),
