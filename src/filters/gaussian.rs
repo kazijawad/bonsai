@@ -46,12 +46,12 @@ impl Filter for GaussianFilter {
         self.gaussian(point.x, self.exp_x) * self.gaussian(point.y, self.exp_y)
     }
 
-    fn radius(&self) -> &Vec2 {
-        &self.radius
+    fn radius(&self) -> Vec2 {
+        self.radius
     }
 
-    fn inverse_radius(&self) -> &Vec2 {
-        &self.inverse_radius
+    fn inverse_radius(&self) -> Vec2 {
+        self.inverse_radius
     }
 }
 

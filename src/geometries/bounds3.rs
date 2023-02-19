@@ -1,4 +1,4 @@
-use std::{mem, ops};
+use std::{mem, ops::Index};
 
 use crate::{
     geometries::{point3::Point3, ray::Ray, vec3::Vec3},
@@ -108,7 +108,7 @@ impl Bounds3 {
         self.distance_squared(p).sqrt()
     }
 
-    pub fn corner(&self, index: u32) -> Point3 {
+    pub fn corner(&self, index: usize) -> Point3 {
         debug_assert!(index < 8);
 
         let mut ret = Point3::default();
@@ -218,7 +218,7 @@ impl Bounds3 {
         &self,
         ray: &Ray,
         inverted_direction: &Vec3,
-        is_negative_direction: [u32; 3],
+        is_negative_direction: [usize; 3],
     ) -> bool {
         // Check for ray intersection against x and y slabs.
         let mut t_min = (self[is_negative_direction[0]].x - ray.origin.x) * inverted_direction.x;
@@ -271,20 +271,16 @@ impl Default for Bounds3 {
     }
 }
 
-// TYPE CONVERSION
-
 impl From<Point3> for Bounds3 {
     fn from(p: Point3) -> Self {
         Self { min: p, max: p }
     }
 }
 
-// INDEXING
-
-impl ops::Index<u32> for Bounds3 {
+impl Index<usize> for Bounds3 {
     type Output = Point3;
 
-    fn index(&self, index: u32) -> &Self::Output {
+    fn index(&self, index: usize) -> &Self::Output {
         debug_assert!(index == 0 || index == 1);
         if index == 0 {
             &self.min

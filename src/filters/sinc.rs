@@ -57,11 +57,11 @@ impl Filter for LanczosSincFilter {
         self.windowed_sinc(point.x, self.radius.x) * self.windowed_sinc(point.y, self.radius.y)
     }
 
-    fn radius(&self) -> &Vec2 {
-        &self.radius
+    fn radius(&self) -> Vec2 {
+        self.radius
     }
 
-    fn inverse_radius(&self) -> &Vec2 {
-        &self.inverse_radius
+    fn inverse_radius(&self) -> Vec2 {
+        self.inverse_radius
     }
 }

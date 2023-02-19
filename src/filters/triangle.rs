@@ -34,11 +34,11 @@ impl Filter for TriangleFilter {
         (self.radius.x - point.x.abs()).max(0.0) * (self.radius.y - point.y.abs()).max(0.0)
     }
 
-    fn radius(&self) -> &Vec2 {
-        &self.radius
+    fn radius(&self) -> Vec2 {
+        self.radius
     }
 
-    fn inverse_radius(&self) -> &Vec2 {
-        &self.inverse_radius
+    fn inverse_radius(&self) -> Vec2 {
+        self.inverse_radius
     }
 }

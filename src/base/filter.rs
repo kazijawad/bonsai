@@ -6,6 +6,6 @@ use crate::{
 pub trait Filter: Send + Sync {
     fn evaluate(&self, point: &Point2) -> Float;
 
-    fn radius(&self) -> &Vec2;
-    fn inverse_radius(&self) -> &Vec2;
+    fn radius(&self) -> Vec2;
+    fn inverse_radius(&self) -> Vec2;
 }

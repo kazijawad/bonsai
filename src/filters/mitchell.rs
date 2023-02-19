@@ -59,11 +59,11 @@ impl Filter for MitchellFilter {
             * self.mitchell(point.y * self.inverse_radius.y)
     }
 
-    fn radius(&self) -> &Vec2 {
-        &self.radius
+    fn radius(&self) -> Vec2 {
+        self.radius
     }
 
-    fn inverse_radius(&self) -> &Vec2 {
-        &self.inverse_radius
+    fn inverse_radius(&self) -> Vec2 {
+        self.inverse_radius
     }
 }

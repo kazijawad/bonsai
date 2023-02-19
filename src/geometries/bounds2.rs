@@ -1,4 +1,4 @@
-use std::ops;
+use std::ops::Index;
 
 use crate::{
     geometries::{point2::Point2, vec2::Vec2},
@@ -110,6 +110,24 @@ impl Bounds2 {
         };
         (center, radius)
     }
+
+    pub fn traverse<F>(&self, mut f: F)
+    where
+        F: FnMut(Point2),
+    {
+        let mut point = self.min;
+        loop {
+            f(point);
+            point.x += 1.0;
+            if point.x > self.max.x {
+                point.x = self.min.x;
+                point.y += 1.0;
+            }
+            if point.y > self.max.y {
+                break;
+            }
+        }
+    }
 }
 
 impl Default for Bounds2 {
@@ -121,21 +139,17 @@ impl Default for Bounds2 {
     }
 }
 
-// TYPE CONVERSION
-
 impl From<Point2> for Bounds2 {
     fn from(p: Point2) -> Self {
         Self { min: p, max: p }
     }
 }
 
-// INDEXING
-
-impl ops::Index<u32> for Bounds2 {
+impl Index<usize> for Bounds2 {
     type Output = Point2;
 
-    fn index(&self, index: u32) -> &Self::Output {
-        debug_assert!(index == 0 || index == 1);
+    fn index(&self, index: usize) -> &Self::Output {
+        debug_assert!(index < 2);
         if index == 0 {
             &self.min
         } else {

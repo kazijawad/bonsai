@@ -277,9 +277,9 @@ impl<'a> Primitive for BVH<'a> {
             1.0 / ray.direction.z,
         );
         let is_negative_direction = [
-            (inverted_direction.x < 0.0) as u32,
-            (inverted_direction.y < 0.0) as u32,
-            (inverted_direction.z < 0.0) as u32,
+            (inverted_direction.x < 0.0) as usize,
+            (inverted_direction.y < 0.0) as usize,
+            (inverted_direction.z < 0.0) as usize,
         ];
 
         // Follow ray through BVH nodes to find primitive intersections.
@@ -339,9 +339,9 @@ impl<'a> Primitive for BVH<'a> {
             1.0 / ray.direction.z,
         );
         let is_negative_direction = [
-            (inverted_direction.x < 0.0) as u32,
-            (inverted_direction.y < 0.0) as u32,
-            (inverted_direction.z < 0.0) as u32,
+            (inverted_direction.x < 0.0) as usize,
+            (inverted_direction.y < 0.0) as usize,
+            (inverted_direction.z < 0.0) as usize,
         ];
 
         // Follow ray through BVH nodes to find primitive intersections.
