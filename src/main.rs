@@ -8,6 +8,10 @@ fn main() {
 
     Spectrum::init();
 
+    let filter = GaussianFilter::create(&GaussianFilterDescriptior::default());
+
+    let film = Film::create(&FilmDescriptor::default(), Box::new(filter));
+
     let mut renderer = Renderer::new(
         width,
         height,
@@ -15,7 +19,6 @@ fn main() {
         sample_count,
         bounce_count,
     );
-    let mut film = Film::new(width, height, sample_count);
 
     let object_to_world = Transform::default();
     let world_to_object = object_to_world.inverse();
@@ -44,6 +47,4 @@ fn main() {
     let camera = PerspectiveCamera::new(&camera_to_world, 0.0, 1.0, 0.0, 1e6, 45.0, &film);
 
     renderer.render(&scene, &camera);
-
-    film.write_image(renderer.samples);
 }

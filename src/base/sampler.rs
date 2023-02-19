@@ -1,17 +1,17 @@
+use rand::prelude::*;
+
 use crate::{base::camera::CameraSample, geometries::point2::Point2, utils::math::Float};
 
-pub trait Sampler: Clone {
-    fn seed(seed: i32, sampler: Self) -> Self;
+pub trait Sampler {
+    fn start_pixel(&mut self, pixel: &Point2);
 
-    fn start_pixel(&self, pixel: &Point2);
+    fn get_float(&mut self) -> Float;
+    fn get_point(&mut self) -> Point2;
 
-    fn get_1d(&self) -> Float;
-    fn get_2d(&self) -> Point2;
-
-    fn get_camera_sample(&self, raster_point: &Point2) -> CameraSample {
-        let film_point = raster_point + &self.get_2d();
-        let time = self.get_1d();
-        let lens_point = self.get_2d();
+    fn get_camera_sample(&mut self, raster_point: &Point2) -> CameraSample {
+        let film_point = raster_point + &self.get_point();
+        let time = self.get_float();
+        let lens_point = self.get_point();
         CameraSample {
             film_point,
             lens_point,
@@ -19,23 +19,25 @@ pub trait Sampler: Clone {
         }
     }
 
-    fn request_1d_slice(&self, n: u32);
-    fn request_2d_slice(&self, n: u32);
+    fn request_float_batch(&mut self, n: usize);
+    fn request_point_batch(&mut self, n: usize);
 
-    fn round_count(&self, n: u32) -> u32 {
+    fn round_count(&self, n: usize) -> usize {
         n
     }
 
-    fn get_1d_slice(&self, n: u32) -> [Float];
-    fn get_2d_slice(&self, n: u32) -> [Point2];
+    fn get_float_batch(&mut self, n: usize) -> Vec<Float>;
+    fn get_point_batch(&mut self, n: usize) -> Vec<Point2>;
 
-    fn start_next_sample(&self) -> bool;
+    fn start_next_sample(&mut self) -> bool;
+    fn set_sample_number(&mut self, sample_number: usize) -> bool;
 
-    fn set_sample_number(&self, sample_number: u64) -> bool;
-}
-
-pub trait GlobalSampler: Sampler {
-    fn get_index_for_sample(&self, sample_number: u64) -> u64;
-
-    fn sample_dimension(&self, index: u64, dimension: i32) -> Float;
+    fn shuffle<T>(sample: &mut [T], count: usize, num_dims: usize, rng: &mut ThreadRng) {
+        for i in 0..count {
+            let other = i + rng.gen_range(0..(count - i));
+            for j in 0..num_dims {
+                sample.swap(num_dims * i + j, num_dims * other + j);
+            }
+        }
+    }
 }

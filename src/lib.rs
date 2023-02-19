@@ -5,10 +5,12 @@
 mod accelerators;
 mod base;
 mod cameras;
+mod filters;
 mod geometries;
 mod interactions;
 mod primitives;
 mod renderer;
+mod samplers;
 mod shapes;
 mod spectra;
 mod texture;
@@ -18,7 +20,8 @@ pub use accelerators::bvh::BVH;
 pub use base::{
     aggregate::Aggregate,
     camera::Camera,
-    film::Film,
+    film::{Film, FilmDescriptor},
+    filter::Filter,
     material::TestMaterial,
     spectrum::{CoefficientSpectrum, Spectrum},
     transform::{AnimatedTransform, Transform},
@@ -26,6 +29,13 @@ pub use base::{
 pub use cameras::{
     environment::EnvironmentCamera, orthographic::OrthographicCamera,
     perspective::PerspectiveCamera,
+};
+pub use filters::{
+    gaussian::{GaussianFilter, GaussianFilterDescriptior},
+    mitchell::{MitchellFilter, MitchellFilterDescriptior},
+    r#box::{BoxFilter, BoxFilterDescriptior},
+    sinc::{LanczosSincFilter, LanczosSincFilterDescriptior},
+    triangle::{TriangleFilter, TriangleFilterDescriptior},
 };
 pub use geometries::{
     bounds2::Bounds2, bounds3::Bounds3, interval::Interval, mat4::Mat4, normal::Normal,
