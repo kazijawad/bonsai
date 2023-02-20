@@ -1,7 +1,9 @@
 pub mod aggregate;
+pub mod bxdf;
 pub mod camera;
 pub mod film;
 pub mod filter;
+pub mod fresnel;
 pub mod interaction;
 pub mod material;
 pub mod primitive;

@@ -4,6 +4,7 @@
 
 mod accelerators;
 mod base;
+mod bxdfs;
 mod cameras;
 mod filters;
 mod geometries;
