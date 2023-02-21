@@ -2,9 +2,9 @@ use crate::{
     base::spectrum::{CoefficientSpectrum, Spectrum},
     geometries::{point2::Point2, vec3::Vec3},
     utils::{
-        bxdf::abs_cos_theta,
+        bxdf::{abs_cos_theta, same_hemisphere},
         math::{Float, PI},
-        sampling::{uniform_hemisphere_pdf, uniform_sample_hemisphere},
+        sampling::{cosine_sample_hemisphere, uniform_hemisphere_pdf, uniform_sample_hemisphere},
     },
 };
 
@@ -28,7 +28,15 @@ pub trait BxDF: Send + Sync {
         sample: &Point2,
         pdf: &mut Float,
         sampled_type: Option<BxDFType>,
-    ) -> Spectrum;
+    ) -> Spectrum {
+        // Cosine-sample the hemisphere, flipping the direction if necessary.
+        *wi = cosine_sample_hemisphere(sample);
+        if wo.z < 0.0 {
+            wi.z *= -1.0;
+        }
+        *pdf = self.pdf(wo, wi);
+        self.distribution(wo, wi)
+    }
 
     fn hemispherical_directional_reflectance(
         &self,
@@ -75,7 +83,13 @@ pub trait BxDF: Send + Sync {
         reflection_factor / (PI * num_samples as Float)
     }
 
-    fn pdf(&self, wo: &Vec3, wi: &Vec3) -> Float;
+    fn pdf(&self, wo: &Vec3, wi: &Vec3) -> Float {
+        if same_hemisphere(wo, wi) {
+            abs_cos_theta(wi) * (1.0 / PI)
+        } else {
+            0.0
+        }
+    }
 
     fn matches_flags(&self, t: BxDFType) -> bool;
 }

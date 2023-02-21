@@ -91,6 +91,10 @@ pub fn refract(wi: &Vec3, n: &Normal, eta: Float, wt: &mut Vec3) -> bool {
     true
 }
 
+pub fn same_hemisphere(w: &Vec3, wp: &Vec3) -> bool {
+    w.z * wp.z > 0.0
+}
+
 pub fn fresnel_dielectric(cos_theta_i: Float, mut eta_i: Float, mut eta_t: Float) -> Float {
     let cos_theta_i = cos_theta_i.clamp(-1.0, 1.0);
 
