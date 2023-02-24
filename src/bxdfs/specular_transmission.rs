@@ -14,7 +14,7 @@ use crate::{
 
 pub struct SpecularTransmission {
     bxdf_type: BxDFType,
-    transmission_factor: Spectrum,
+    t: Spectrum,
     fresnel: FresnelDielectric,
     eta_a: Float,
     eta_b: Float,
@@ -22,15 +22,10 @@ pub struct SpecularTransmission {
 }
 
 impl SpecularTransmission {
-    pub fn new(
-        transmission_factor: &Spectrum,
-        eta_a: Float,
-        eta_b: Float,
-        mode: TransportMode,
-    ) -> Self {
+    pub fn new(t: &Spectrum, eta_a: Float, eta_b: Float, mode: TransportMode) -> Self {
         Self {
             bxdf_type: BSDF_TRANSMISSION | BSDF_SPECULAR,
-            transmission_factor: transmission_factor.clone(),
+            t: t.clone(),
             fresnel: FresnelDielectric::new(eta_a, eta_b),
             eta_a,
             eta_b,
@@ -50,7 +45,7 @@ impl BxDF for SpecularTransmission {
         wi: &mut Vec3,
         sample: &Point2,
         pdf: &mut Float,
-        sampled_type: Option<BxDFType>,
+        sampled_type: &mut Option<BxDFType>,
     ) -> Spectrum {
         // Determine which eta is incident or transmitted.
         let entering = cos_theta(wo) > 0.0;
@@ -68,8 +63,7 @@ impl BxDF for SpecularTransmission {
         }
 
         *pdf = 1.0;
-        let mut factor =
-            self.transmission_factor * (Spectrum::new(1.0) - self.fresnel.evaluate(cos_theta(&wi)));
+        let mut factor = self.t * (Spectrum::new(1.0) - self.fresnel.evaluate(cos_theta(&wi)));
 
         // Account for non-symmetry with transmission to different medium.
         if let TransportMode::Radiance = self.mode {

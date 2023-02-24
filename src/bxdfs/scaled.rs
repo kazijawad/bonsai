@@ -34,7 +34,7 @@ impl BxDF for ScaledBxDF {
         wi: &mut Vec3,
         sample: &Point2,
         pdf: &mut Float,
-        sampled_type: Option<BxDFType>,
+        sampled_type: &mut Option<BxDFType>,
     ) -> Spectrum {
         self.scale
             * self

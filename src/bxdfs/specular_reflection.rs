@@ -13,15 +13,15 @@ use crate::{
 
 pub struct SpecularReflection<'a> {
     bxdf_type: BxDFType,
-    reflection_factor: Spectrum,
+    r: Spectrum,
     fresnel: &'a dyn Fresnel,
 }
 
 impl<'a> SpecularReflection<'a> {
-    pub fn new(reflection_factor: &Spectrum, fresnel: &'a dyn Fresnel) -> Self {
+    pub fn new(r: &Spectrum, fresnel: &'a dyn Fresnel) -> Self {
         Self {
             bxdf_type: BSDF_REFLECTION | BSDF_SPECULAR,
-            reflection_factor: reflection_factor.clone(),
+            r: r.clone(),
             fresnel,
         }
     }
@@ -38,11 +38,11 @@ impl<'a> BxDF for SpecularReflection<'a> {
         wi: &mut Vec3,
         sample: &Point2,
         pdf: &mut Float,
-        sampled_type: Option<BxDFType>,
+        sampled_type: &mut Option<BxDFType>,
     ) -> Spectrum {
         *wi = Vec3::new(-wo.x, -wo.y, wo.z);
         *pdf = 1.0;
-        self.fresnel.evaluate(cos_theta(wi)) * self.reflection_factor / abs_cos_theta(wi)
+        self.fresnel.evaluate(cos_theta(wi)) * self.r / abs_cos_theta(wi)
     }
 
     fn pdf(&self, wo: &Vec3, wi: &Vec3) -> Float {

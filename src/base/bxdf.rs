@@ -27,7 +27,7 @@ pub trait BxDF: Send + Sync {
         wi: &mut Vec3,
         sample: &Point2,
         pdf: &mut Float,
-        sampled_type: Option<BxDFType>,
+        sampled_type: &mut Option<BxDFType>,
     ) -> Spectrum {
         // Cosine-sample the hemisphere, flipping the direction if necessary.
         *wi = cosine_sample_hemisphere(sample);
@@ -49,7 +49,7 @@ pub trait BxDF: Send + Sync {
         for i in 0..num_samples {
             let mut wi = Vec3::default();
             let mut pdf = 0.0;
-            let factor = self.sample_distribution(wo, &mut wi, &samples[i], &mut pdf, None);
+            let factor = self.sample_distribution(wo, &mut wi, &samples[i], &mut pdf, &mut None);
             if pdf > 0.0 {
                 reflection_factor += factor * abs_cos_theta(&wi) / pdf;
             }
@@ -73,7 +73,7 @@ pub trait BxDF: Send + Sync {
             let pdf_o = uniform_hemisphere_pdf();
             let mut pdf_i = 0.0;
 
-            let factor = self.sample_distribution(&wo, &mut wi, &u2[i], &mut pdf_i, None);
+            let factor = self.sample_distribution(&wo, &mut wi, &u2[i], &mut pdf_i, &mut None);
             if pdf_i > 0.0 {
                 reflection_factor +=
                     factor * abs_cos_theta(&wi) * abs_cos_theta(&wo) / (pdf_o * pdf_i);

@@ -9,21 +9,21 @@ use crate::{
 
 pub struct LambertianReflection {
     bxdf_type: BxDFType,
-    factor: Spectrum,
+    r: Spectrum,
 }
 
 impl LambertianReflection {
-    pub fn new(factor: &Spectrum) -> Self {
+    pub fn new(r: &Spectrum) -> Self {
         Self {
             bxdf_type: BSDF_REFLECTION | BSDF_DIFFUSE,
-            factor: factor.clone(),
+            r: r.clone(),
         }
     }
 }
 
 impl BxDF for LambertianReflection {
     fn distribution(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
-        self.factor * (1.0 / PI)
+        self.r * (1.0 / PI)
     }
 
     fn hemispherical_directional_reflectance(
@@ -32,7 +32,7 @@ impl BxDF for LambertianReflection {
         num_samples: usize,
         samples: &[Point2],
     ) -> Spectrum {
-        self.factor
+        self.r
     }
 
     fn hemispherical_hemispherical_reflectance(
@@ -41,7 +41,7 @@ impl BxDF for LambertianReflection {
         u1: &[Point2],
         u2: &[Point2],
     ) -> Spectrum {
-        self.factor
+        self.r
     }
 
     fn matches_flags(&self, t: BxDFType) -> bool {

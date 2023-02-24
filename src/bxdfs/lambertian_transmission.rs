@@ -13,21 +13,21 @@ use crate::{
 
 pub struct LambertianTransmission {
     bxdf_type: BxDFType,
-    factor: Spectrum,
+    t: Spectrum,
 }
 
 impl LambertianTransmission {
-    pub fn new(factor: &Spectrum) -> Self {
+    pub fn new(t: &Spectrum) -> Self {
         Self {
             bxdf_type: BSDF_TRANSMISSION | BSDF_DIFFUSE,
-            factor: factor.clone(),
+            t: t.clone(),
         }
     }
 }
 
 impl BxDF for LambertianTransmission {
     fn distribution(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
-        self.factor * (1.0 / PI)
+        self.t * (1.0 / PI)
     }
 
     fn sample_distribution(
@@ -36,7 +36,7 @@ impl BxDF for LambertianTransmission {
         wi: &mut Vec3,
         sample: &Point2,
         pdf: &mut Float,
-        sampled_type: Option<BxDFType>,
+        sampled_type: &mut Option<BxDFType>,
     ) -> Spectrum {
         *wi = cosine_sample_hemisphere(sample);
         if wo.z > 0.0 {
@@ -52,7 +52,7 @@ impl BxDF for LambertianTransmission {
         num_samples: usize,
         samples: &[Point2],
     ) -> Spectrum {
-        self.factor
+        self.t
     }
 
     fn hemispherical_hemispherical_reflectance(
@@ -61,7 +61,7 @@ impl BxDF for LambertianTransmission {
         u1: &[Point2],
         u2: &[Point2],
     ) -> Spectrum {
-        self.factor
+        self.t
     }
 
     fn pdf(&self, wo: &Vec3, wi: &Vec3) -> Float {
