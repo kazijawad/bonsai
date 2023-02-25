@@ -60,10 +60,6 @@ impl BxDF for OrenNayer {
         self.r * (1.0 / PI) * (self.a + self.b * max_cos * sin_alpha * tan_beta)
     }
 
-    fn get_type(&self) -> BxDFType {
-        self.bxdf_type
-    }
-
     fn matches_flags(&self, t: BxDFType) -> bool {
         (self.bxdf_type & t) == self.bxdf_type
     }

@@ -14,29 +14,29 @@ use crate::{
 const MAX_BXDFS: usize = 8;
 
 pub struct BSDF {
-    pub bxdfs: Vec<Box<dyn BxDF>>,
     pub eta: Float,
     ns: Normal,
     ng: Normal,
     ss: Vec3,
     ts: Vec3,
+    bxdfs: Vec<Box<dyn BxDF>>,
 }
 
 impl BSDF {
     pub fn new(si: &SurfaceInteraction, eta: Float) -> Self {
-        let mut bxdfs: Vec<Box<dyn BxDF>> = vec![];
-        bxdfs.reserve(MAX_BXDFS);
-
         let ns = si.shading.n;
         let ss = si.shading.dpdu.normalize();
 
+        let mut bxdfs: Vec<Box<dyn BxDF>> = vec![];
+        bxdfs.reserve(MAX_BXDFS);
+
         Self {
-            bxdfs,
             eta,
             ns,
             ng: si.n,
             ss,
             ts: Vec3::from(ns).cross(&ss),
+            bxdfs,
         }
     }
 

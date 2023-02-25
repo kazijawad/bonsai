@@ -131,10 +131,6 @@ impl BxDF for MicrofacetReflection {
         self.distribution.pdf(wo, &wh) / (4.0 * wo.dot(&wh))
     }
 
-    fn get_type(&self) -> BxDFType {
-        self.bxdf_type
-    }
-
     fn matches_flags(&self, t: BxDFType) -> bool {
         (self.bxdf_type & t) == self.bxdf_type
     }
@@ -247,10 +243,6 @@ impl BxDF for MicrofactTransmission {
         let dwh_dwi = ((eta * eta * wi.dot(&wh)) / (sqrt_denom * sqrt_denom)).abs();
 
         self.distribution.pdf(wo, &wh) * dwh_dwi
-    }
-
-    fn get_type(&self) -> BxDFType {
-        self.bxdf_type
     }
 
     fn matches_flags(&self, t: BxDFType) -> bool {

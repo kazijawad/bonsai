@@ -72,10 +72,6 @@ impl BxDF for SpecularReflection {
         0.0
     }
 
-    fn get_type(&self) -> BxDFType {
-        self.bxdf_type
-    }
-
     fn matches_flags(&self, t: BxDFType) -> bool {
         (self.bxdf_type & t) == self.bxdf_type
     }
@@ -122,10 +118,6 @@ impl BxDF for SpecularTransmission {
 
     fn pdf(&self, wo: &Vec3, wi: &Vec3) -> Float {
         0.0
-    }
-
-    fn get_type(&self) -> BxDFType {
-        self.bxdf_type
     }
 
     fn matches_flags(&self, t: BxDFType) -> bool {

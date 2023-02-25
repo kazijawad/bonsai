@@ -81,7 +81,5 @@ pub trait BxDF: Send + Sync {
         }
     }
 
-    fn get_type(&self) -> BxDFType;
-
     fn matches_flags(&self, t: BxDFType) -> bool;
 }
