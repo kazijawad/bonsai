@@ -28,22 +28,21 @@ impl<'a> Primitive for TransformedPrimitive<'a> {
             .motion_bounds(&self.primitive.world_bound())
     }
 
-    fn intersect(&self, r: &mut Ray, interaction: &mut SurfaceInteraction) -> bool {
+    fn intersect(&self, r: &mut Ray, si: &mut SurfaceInteraction) -> bool {
         let mut interpolated_primitive_to_world = Transform::default();
 
         // Compute ray after transformation applied by primitive_to_world.
         self.primitive_to_world
             .interpolate(r.time, &mut interpolated_primitive_to_world);
         let mut ray = interpolated_primitive_to_world.inverse().transform_ray(r);
-        if !self.primitive.intersect(&mut ray, interaction) {
+        if !self.primitive.intersect(&mut ray, si) {
             return false;
         }
         r.t_max = ray.t_max;
 
         // Transform instance's intersection data to world space.
         if !interpolated_primitive_to_world.is_identity() {
-            *interaction =
-                interpolated_primitive_to_world.transform_surface_interaction(&interaction.clone());
+            *si = interpolated_primitive_to_world.transform_surface_interaction(&si);
         }
 
         true

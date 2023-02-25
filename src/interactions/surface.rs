@@ -1,26 +1,24 @@
 use crate::{
-    base::{material::TransportMode, primitive::Primitive},
+    base::{bsdf::BSDF, material::TransportMode, primitive::Primitive},
     geometries::{
         normal::Normal, point2::Point2, point3::Point3, ray::RayDifferential, vec3::Vec3,
     },
     utils::math::Float,
 };
 
-#[derive(Clone)]
 pub struct Shading {
-    pub normal: Normal,
+    pub n: Normal,
     pub dpdu: Vec3,
     pub dpdv: Vec3,
     pub dndu: Normal,
     pub dndv: Normal,
 }
 
-#[derive(Clone)]
 pub struct SurfaceInteraction {
-    pub point: Point3,
-    pub point_error: Vec3,
-    pub normal: Normal,
-    pub negative_direction: Vec3,
+    pub p: Point3,
+    pub p_error: Vec3,
+    pub n: Normal,
+    pub wo: Vec3,
     pub time: Float,
     pub uv: Point2,
     pub dpdu: Vec3,
@@ -28,6 +26,7 @@ pub struct SurfaceInteraction {
     pub dndu: Normal,
     pub dndv: Normal,
     pub shading: Shading,
+    pub bsdf: Option<BSDF>,
     pub dpdx: Vec3,
     pub dpdy: Vec3,
     pub dudx: Float,
@@ -52,16 +51,16 @@ impl SurfaceInteraction {
         reverse_orientation: bool,
         transform_swaps_handedness: bool,
     ) -> Self {
-        let mut normal = Normal::from(dpdu.cross(&dpdv).normalize());
+        let mut n = Normal::from(dpdu.cross(&dpdv).normalize());
         if reverse_orientation ^ transform_swaps_handedness {
-            normal *= -1.0;
+            n *= -1.0;
         }
 
         Self {
-            point,
-            point_error,
-            normal,
-            negative_direction,
+            p: point,
+            p_error: point_error,
+            n,
+            wo: negative_direction,
             time,
             uv,
             dpdu,
@@ -70,12 +69,13 @@ impl SurfaceInteraction {
             dndv,
             // Initialize shading geometry from true geometry.
             shading: Shading {
-                normal,
+                n,
                 dpdu,
                 dpdv,
                 dndu,
                 dndv,
             },
+            bsdf: None,
             dpdx: Vec3::default(),
             dpdy: Vec3::default(),
             dudx: 0.0,
@@ -95,11 +95,11 @@ impl SurfaceInteraction {
         orientation_is_authoritative: bool,
     ) {
         // Compute shading normal.
-        self.shading.normal = Normal::from(dpdus.cross(dpdvs)).normalize();
+        self.shading.n = Normal::from(dpdus.cross(dpdvs)).normalize();
         if orientation_is_authoritative {
-            self.normal = self.normal.face_forward(&self.shading.normal);
+            self.n = self.n.face_forward(&self.shading.n);
         } else {
-            self.shading.normal = self.shading.normal.face_forward(&self.normal);
+            self.shading.n = self.shading.n.face_forward(&self.n);
         }
 
         // Initialize shading partial derivatives.
@@ -132,10 +132,10 @@ impl SurfaceInteraction {
 impl Default for SurfaceInteraction {
     fn default() -> Self {
         Self {
-            point: Point3::default(),
-            point_error: Vec3::default(),
-            normal: Normal::default(),
-            negative_direction: Vec3::default(),
+            p: Point3::default(),
+            p_error: Vec3::default(),
+            n: Normal::default(),
+            wo: Vec3::default(),
             time: 0.0,
             uv: Point2::default(),
             dpdu: Vec3::default(),
@@ -143,12 +143,13 @@ impl Default for SurfaceInteraction {
             dndu: Normal::default(),
             dndv: Normal::default(),
             shading: Shading {
-                normal: Normal::default(),
+                n: Normal::default(),
                 dpdu: Vec3::default(),
                 dpdv: Vec3::default(),
                 dndu: Normal::default(),
                 dndv: Normal::default(),
             },
+            bsdf: None,
             dpdx: Vec3::default(),
             dpdy: Vec3::default(),
             dudx: 0.0,

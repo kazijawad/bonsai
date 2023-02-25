@@ -9,6 +9,7 @@ mod cameras;
 mod filters;
 mod geometries;
 mod interactions;
+mod materials;
 mod primitives;
 mod renderer;
 mod samplers;
@@ -23,7 +24,6 @@ pub use base::{
     camera::Camera,
     film::{Film, FilmDescriptor},
     filter::Filter,
-    material::TestMaterial,
     spectrum::{CoefficientSpectrum, Spectrum},
     transform::{AnimatedTransform, Transform},
 };

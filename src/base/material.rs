@@ -1,17 +1,19 @@
-#[derive(Debug)]
+use crate::{interactions::surface::SurfaceInteraction, texture::Texture, utils::math::Float};
+
 pub enum TransportMode {
     Radiance,
     Importance,
 }
 
-pub trait Material: Send + Sync {}
+pub trait Material: Send + Sync {
+    fn compute_scattering_functions(
+        &self,
+        si: &mut SurfaceInteraction,
+        mode: TransportMode,
+        allow_multiple_lobes: bool,
+    );
 
-pub struct TestMaterial;
-
-impl TestMaterial {
-    pub fn new() -> Self {
-        Self
+    fn bump(&self, d: &dyn Texture<Float>, si: &mut SurfaceInteraction) {
+        todo!()
     }
 }
-
-impl Material for TestMaterial {}

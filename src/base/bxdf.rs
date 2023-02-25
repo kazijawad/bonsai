@@ -10,12 +10,12 @@ use crate::{
 
 pub type BxDFType = i32;
 
-pub const BSDF_REFLECTION: i32 = 1 << 0;
-pub const BSDF_TRANSMISSION: i32 = 1 << 1;
-pub const BSDF_DIFFUSE: i32 = 1 << 2;
-pub const BSDF_GLOSSY: i32 = 1 << 3;
-pub const BSDF_SPECULAR: i32 = 1 << 4;
-pub const BSDF_ALL: i32 =
+pub const BSDF_REFLECTION: BxDFType = 1 << 0;
+pub const BSDF_TRANSMISSION: BxDFType = 1 << 1;
+pub const BSDF_DIFFUSE: BxDFType = 1 << 2;
+pub const BSDF_GLOSSY: BxDFType = 1 << 3;
+pub const BSDF_SPECULAR: BxDFType = 1 << 4;
+pub const BSDF_ALL: BxDFType =
     BSDF_DIFFUSE | BSDF_GLOSSY | BSDF_SPECULAR | BSDF_REFLECTION | BSDF_TRANSMISSION;
 
 pub trait BxDF: Send + Sync {
@@ -38,12 +38,7 @@ pub trait BxDF: Send + Sync {
         self.f(wo, wi)
     }
 
-    fn hemispherical_directional_reflectance(
-        &self,
-        wo: &Vec3,
-        num_samples: usize,
-        samples: &[Point2],
-    ) -> Spectrum {
+    fn rho_hd(&self, wo: &Vec3, num_samples: usize, samples: &[Point2]) -> Spectrum {
         let mut reflection_factor = Spectrum::new(0.0);
 
         for i in 0..num_samples {
@@ -58,12 +53,7 @@ pub trait BxDF: Send + Sync {
         reflection_factor / Spectrum::new(num_samples as Float)
     }
 
-    fn hemispherical_hemispherical_reflectance(
-        &self,
-        num_samples: usize,
-        u1: &[Point2],
-        u2: &[Point2],
-    ) -> Spectrum {
+    fn rho_hh(&self, num_samples: usize, u1: &[Point2], u2: &[Point2]) -> Spectrum {
         let mut reflection_factor = Spectrum::new(0.0);
 
         for i in 0..num_samples {
@@ -90,6 +80,8 @@ pub trait BxDF: Send + Sync {
             0.0
         }
     }
+
+    fn get_type(&self) -> BxDFType;
 
     fn matches_flags(&self, t: BxDFType) -> bool;
 }

@@ -22,25 +22,19 @@ pub struct FresnelSpecular {
     mode: TransportMode,
 }
 
-pub struct FresnelBlend<'a> {
+pub struct FresnelBlend {
     bxdf_type: BxDFType,
     rd: Spectrum,
     rs: Spectrum,
-    distribution: &'a dyn MicrofacetDistribution,
+    distribution: Box<dyn MicrofacetDistribution>,
 }
 
 impl FresnelSpecular {
-    pub fn new(
-        r: &Spectrum,
-        t: &Spectrum,
-        eta_a: Float,
-        eta_b: Float,
-        mode: TransportMode,
-    ) -> Self {
+    pub fn new(r: Spectrum, t: Spectrum, eta_a: Float, eta_b: Float, mode: TransportMode) -> Self {
         Self {
             bxdf_type: BSDF_REFLECTION | BSDF_TRANSMISSION | BSDF_SPECULAR,
-            r: r.clone(),
-            t: t.clone(),
+            r,
+            t,
             eta_a,
             eta_b,
             mode,
@@ -48,12 +42,12 @@ impl FresnelSpecular {
     }
 }
 
-impl<'a> FresnelBlend<'a> {
-    pub fn new(rd: &Spectrum, rs: &Spectrum, distribution: &'a dyn MicrofacetDistribution) -> Self {
+impl FresnelBlend {
+    pub fn new(rd: Spectrum, rs: Spectrum, distribution: Box<dyn MicrofacetDistribution>) -> Self {
         Self {
             bxdf_type: BSDF_REFLECTION | BSDF_GLOSSY,
-            rd: rd.clone(),
-            rs: rs.clone(),
+            rd,
+            rs,
             distribution,
         }
     }
@@ -127,12 +121,16 @@ impl BxDF for FresnelSpecular {
         0.0
     }
 
+    fn get_type(&self) -> BxDFType {
+        self.bxdf_type
+    }
+
     fn matches_flags(&self, t: BxDFType) -> bool {
         (self.bxdf_type & t) == self.bxdf_type
     }
 }
 
-impl<'a> BxDF for FresnelBlend<'a> {
+impl BxDF for FresnelBlend {
     fn f(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
         let pow5 = |v: Float| -> Float { (v * v) * (v * v) * v };
 
@@ -198,6 +196,10 @@ impl<'a> BxDF for FresnelBlend<'a> {
         let wh_pdf = self.distribution.pdf(wo, &wh);
 
         0.5 * (abs_cos_theta(wi) * (1.0 / PI) + wh_pdf / (4.0 * wo.dot(&wh)))
+    }
+
+    fn get_type(&self) -> BxDFType {
+        self.bxdf_type
     }
 
     fn matches_flags(&self, t: BxDFType) -> bool {

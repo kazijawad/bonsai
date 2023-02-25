@@ -22,19 +22,19 @@ pub struct LambertianTransmission {
 }
 
 impl LambertianReflection {
-    pub fn new(r: &Spectrum) -> Self {
+    pub fn new(r: Spectrum) -> Self {
         Self {
             bxdf_type: BSDF_REFLECTION | BSDF_DIFFUSE,
-            r: r.clone(),
+            r,
         }
     }
 }
 
 impl LambertianTransmission {
-    pub fn new(t: &Spectrum) -> Self {
+    pub fn new(t: Spectrum) -> Self {
         Self {
             bxdf_type: BSDF_TRANSMISSION | BSDF_DIFFUSE,
-            t: t.clone(),
+            t,
         }
     }
 }
@@ -44,22 +44,16 @@ impl BxDF for LambertianReflection {
         self.r * (1.0 / PI)
     }
 
-    fn hemispherical_directional_reflectance(
-        &self,
-        wo: &Vec3,
-        num_samples: usize,
-        samples: &[Point2],
-    ) -> Spectrum {
+    fn rho_hd(&self, wo: &Vec3, num_samples: usize, samples: &[Point2]) -> Spectrum {
         self.r
     }
 
-    fn hemispherical_hemispherical_reflectance(
-        &self,
-        num_samples: usize,
-        u1: &[Point2],
-        u2: &[Point2],
-    ) -> Spectrum {
+    fn rho_hh(&self, num_samples: usize, u1: &[Point2], u2: &[Point2]) -> Spectrum {
         self.r
+    }
+
+    fn get_type(&self) -> BxDFType {
+        self.bxdf_type
     }
 
     fn matches_flags(&self, t: BxDFType) -> bool {
@@ -88,21 +82,11 @@ impl BxDF for LambertianTransmission {
         self.f(wo, wi)
     }
 
-    fn hemispherical_directional_reflectance(
-        &self,
-        wo: &Vec3,
-        num_samples: usize,
-        samples: &[Point2],
-    ) -> Spectrum {
+    fn rho_hd(&self, wo: &Vec3, num_samples: usize, samples: &[Point2]) -> Spectrum {
         self.t
     }
 
-    fn hemispherical_hemispherical_reflectance(
-        &self,
-        num_samples: usize,
-        u1: &[Point2],
-        u2: &[Point2],
-    ) -> Spectrum {
+    fn rho_hh(&self, num_samples: usize, u1: &[Point2], u2: &[Point2]) -> Spectrum {
         self.t
     }
 
@@ -112,6 +96,10 @@ impl BxDF for LambertianTransmission {
         } else {
             0.0
         }
+    }
+
+    fn get_type(&self) -> BxDFType {
+        self.bxdf_type
     }
 
     fn matches_flags(&self, t: BxDFType) -> bool {

@@ -12,10 +12,10 @@ use crate::{
     },
 };
 
-pub struct SpecularReflection<'a> {
+pub struct SpecularReflection {
     bxdf_type: BxDFType,
     r: Spectrum,
-    fresnel: &'a dyn Fresnel,
+    fresnel: Box<dyn Fresnel>,
 }
 
 pub struct SpecularTransmission {
@@ -27,21 +27,21 @@ pub struct SpecularTransmission {
     mode: TransportMode,
 }
 
-impl<'a> SpecularReflection<'a> {
-    pub fn new(r: &Spectrum, fresnel: &'a dyn Fresnel) -> Self {
+impl SpecularReflection {
+    pub fn new(r: Spectrum, fresnel: Box<dyn Fresnel>) -> Self {
         Self {
             bxdf_type: BSDF_REFLECTION | BSDF_SPECULAR,
-            r: r.clone(),
+            r,
             fresnel,
         }
     }
 }
 
 impl SpecularTransmission {
-    pub fn new(t: &Spectrum, eta_a: Float, eta_b: Float, mode: TransportMode) -> Self {
+    pub fn new(t: Spectrum, eta_a: Float, eta_b: Float, mode: TransportMode) -> Self {
         Self {
             bxdf_type: BSDF_TRANSMISSION | BSDF_SPECULAR,
-            t: t.clone(),
+            t,
             fresnel: FresnelDielectric::new(eta_a, eta_b),
             eta_a,
             eta_b,
@@ -50,7 +50,7 @@ impl SpecularTransmission {
     }
 }
 
-impl<'a> BxDF for SpecularReflection<'a> {
+impl BxDF for SpecularReflection {
     fn f(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
         Spectrum::new(0.0)
     }
@@ -70,6 +70,10 @@ impl<'a> BxDF for SpecularReflection<'a> {
 
     fn pdf(&self, wo: &Vec3, wi: &Vec3) -> Float {
         0.0
+    }
+
+    fn get_type(&self) -> BxDFType {
+        self.bxdf_type
     }
 
     fn matches_flags(&self, t: BxDFType) -> bool {
@@ -118,6 +122,10 @@ impl BxDF for SpecularTransmission {
 
     fn pdf(&self, wo: &Vec3, wi: &Vec3) -> Float {
         0.0
+    }
+
+    fn get_type(&self) -> BxDFType {
+        self.bxdf_type
     }
 
     fn matches_flags(&self, t: BxDFType) -> bool {

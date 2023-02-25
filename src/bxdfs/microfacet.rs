@@ -13,49 +13,49 @@ use crate::{
     },
 };
 
-pub struct MicrofacetReflection<'a> {
+pub struct MicrofacetReflection {
     bxdf_type: BxDFType,
     r: Spectrum,
-    distribution: &'a dyn MicrofacetDistribution,
-    fresnel: &'a dyn Fresnel,
+    distribution: Box<dyn MicrofacetDistribution>,
+    fresnel: Box<dyn Fresnel>,
 }
 
-pub struct MicrofactTransmission<'a> {
+pub struct MicrofactTransmission {
     bxdf_type: BxDFType,
     t: Spectrum,
-    distribution: &'a dyn MicrofacetDistribution,
+    distribution: Box<dyn MicrofacetDistribution>,
     eta_a: Float,
     eta_b: Float,
     fresnel: FresnelDielectric,
     mode: TransportMode,
 }
 
-impl<'a> MicrofacetReflection<'a> {
+impl MicrofacetReflection {
     pub fn new(
-        r: &Spectrum,
-        distribution: &'a dyn MicrofacetDistribution,
-        fresnel: &'a dyn Fresnel,
+        r: Spectrum,
+        distribution: Box<dyn MicrofacetDistribution>,
+        fresnel: Box<dyn Fresnel>,
     ) -> Self {
         Self {
             bxdf_type: BSDF_REFLECTION | BSDF_GLOSSY,
-            r: r.clone(),
+            r,
             distribution,
             fresnel,
         }
     }
 }
 
-impl<'a> MicrofactTransmission<'a> {
+impl MicrofactTransmission {
     pub fn new(
-        t: &Spectrum,
-        distribution: &'a dyn MicrofacetDistribution,
+        t: Spectrum,
+        distribution: Box<dyn MicrofacetDistribution>,
         eta_a: Float,
         eta_b: Float,
         mode: TransportMode,
     ) -> Self {
         Self {
             bxdf_type: BSDF_TRANSMISSION | BSDF_GLOSSY,
-            t: t.clone(),
+            t,
             distribution,
             eta_a,
             eta_b,
@@ -65,7 +65,7 @@ impl<'a> MicrofactTransmission<'a> {
     }
 }
 
-impl<'a> BxDF for MicrofacetReflection<'a> {
+impl BxDF for MicrofacetReflection {
     fn f(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
         let cos_theta_o = abs_cos_theta(wo);
         let cos_theta_i = abs_cos_theta(wi);
@@ -131,12 +131,16 @@ impl<'a> BxDF for MicrofacetReflection<'a> {
         self.distribution.pdf(wo, &wh) / (4.0 * wo.dot(&wh))
     }
 
+    fn get_type(&self) -> BxDFType {
+        self.bxdf_type
+    }
+
     fn matches_flags(&self, t: BxDFType) -> bool {
         (self.bxdf_type & t) == self.bxdf_type
     }
 }
 
-impl<'a> BxDF for MicrofactTransmission<'a> {
+impl BxDF for MicrofactTransmission {
     fn f(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
         if same_hemisphere(wo, wi) {
             return Spectrum::default();
@@ -243,6 +247,10 @@ impl<'a> BxDF for MicrofactTransmission<'a> {
         let dwh_dwi = ((eta * eta * wi.dot(&wh)) / (sqrt_denom * sqrt_denom)).abs();
 
         self.distribution.pdf(wo, &wh) * dwh_dwi
+    }
+
+    fn get_type(&self) -> BxDFType {
+        self.bxdf_type
     }
 
     fn matches_flags(&self, t: BxDFType) -> bool {

@@ -25,9 +25,9 @@ impl<'a> Primitive for GeometricPrimitive<'a> {
         self.shape.world_bound()
     }
 
-    fn intersect(&self, ray: &mut Ray, interaction: &mut SurfaceInteraction) -> bool {
+    fn intersect(&self, ray: &mut Ray, si: &mut SurfaceInteraction) -> bool {
         let mut t_hit: Float = 0.0;
-        if !self.shape.intersect(ray, &mut t_hit, interaction, true) {
+        if !self.shape.intersect(ray, &mut t_hit, si, true) {
             return false;
         }
         ray.t_max = t_hit;
@@ -40,10 +40,11 @@ impl<'a> Primitive for GeometricPrimitive<'a> {
 
     fn compute_scattering_functions(
         &self,
-        interaction: &mut SurfaceInteraction,
-        transport_mode: TransportMode,
+        si: &mut SurfaceInteraction,
+        mode: TransportMode,
         allow_multiple_lobes: bool,
     ) {
-        todo!()
+        self.material
+            .compute_scattering_functions(si, mode, allow_multiple_lobes);
     }
 }

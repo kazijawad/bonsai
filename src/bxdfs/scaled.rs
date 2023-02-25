@@ -8,15 +8,15 @@ use crate::{
 };
 
 pub struct ScaledBxDF {
-    pub bxdf_type: BxDFType,
+    bxdf_type: BxDFType,
     bxdf: Box<dyn BxDF>,
     scale: Spectrum,
 }
 
 impl ScaledBxDF {
-    pub fn new(bxdf_type: BxDFType, bxdf: Box<dyn BxDF>, scale: Spectrum) -> Self {
+    pub fn new(bxdf: Box<dyn BxDF>, scale: Spectrum) -> Self {
         Self {
-            bxdf_type,
+            bxdf_type: bxdf.get_type(),
             bxdf,
             scale,
         }
@@ -39,32 +39,20 @@ impl BxDF for ScaledBxDF {
         self.scale * self.bxdf.sample_f(wo, wi, sample, pdf, sampled_type)
     }
 
-    fn hemispherical_directional_reflectance(
-        &self,
-        wo: &Vec3,
-        num_samples: usize,
-        samples: &[Point2],
-    ) -> Spectrum {
-        self.scale
-            * self
-                .bxdf
-                .hemispherical_directional_reflectance(wo, num_samples, samples)
+    fn rho_hd(&self, wo: &Vec3, num_samples: usize, samples: &[Point2]) -> Spectrum {
+        self.scale * self.bxdf.rho_hd(wo, num_samples, samples)
     }
 
-    fn hemispherical_hemispherical_reflectance(
-        &self,
-        num_samples: usize,
-        samples_1: &[Point2],
-        samples_2: &[Point2],
-    ) -> Spectrum {
-        self.scale
-            * self
-                .bxdf
-                .hemispherical_hemispherical_reflectance(num_samples, samples_1, samples_2)
+    fn rho_hh(&self, num_samples: usize, u1: &[Point2], u2: &[Point2]) -> Spectrum {
+        self.scale * self.bxdf.rho_hh(num_samples, u1, u2)
     }
 
     fn pdf(&self, wo: &Vec3, wi: &Vec3) -> Float {
         self.bxdf.pdf(wo, wi)
+    }
+
+    fn get_type(&self) -> BxDFType {
+        self.bxdf_type
     }
 
     fn matches_flags(&self, t: BxDFType) -> bool {

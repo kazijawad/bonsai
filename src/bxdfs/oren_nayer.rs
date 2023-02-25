@@ -18,12 +18,12 @@ pub struct OrenNayer {
 }
 
 impl OrenNayer {
-    pub fn new(r: &Spectrum, sigma: Float) -> Self {
+    pub fn new(r: Spectrum, sigma: Float) -> Self {
         let sigma = sigma.to_radians();
         let sigma_2 = sigma * sigma;
         Self {
             bxdf_type: BSDF_REFLECTION | BSDF_DIFFUSE,
-            r: r.clone(),
+            r,
             a: 1.0 - (sigma_2 / (2.0 * (sigma_2 + 0.33))),
             b: 0.45 * sigma_2 / (sigma_2 + 0.09),
         }
@@ -58,6 +58,10 @@ impl BxDF for OrenNayer {
         };
 
         self.r * (1.0 / PI) * (self.a + self.b * max_cos * sin_alpha * tan_beta)
+    }
+
+    fn get_type(&self) -> BxDFType {
+        self.bxdf_type
     }
 
     fn matches_flags(&self, t: BxDFType) -> bool {

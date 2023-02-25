@@ -22,18 +22,14 @@ pub trait MicrofacetDistribution: Send + Sync {
     fn sample_wh(&self, wo: &Vec3, u: &Point2) -> Vec3;
 
     fn pdf(&self, wo: &Vec3, wh: &Vec3) -> Float;
-
-    fn roughness_to_alpha(&self, roughness: Float) -> Float;
 }
 
-#[derive(Debug)]
 pub struct BeckmannDistribution {
     sample_visible_area: bool,
     alpha_x: Float,
     alpha_y: Float,
 }
 
-#[derive(Debug)]
 pub struct TrowbridgeReitzDistribution {
     sample_visible_area: bool,
     alpha_x: Float,
@@ -48,6 +44,16 @@ impl BeckmannDistribution {
             alpha_y: alpha_y.max(0.001),
         }
     }
+
+    pub fn roughness_to_alpha(roughness: Float) -> Float {
+        let roughness = Float::max(roughness, 1e-3);
+        let x = roughness.ln();
+        1.62142
+            + 0.819955 * x
+            + 0.1734 * x * x
+            + 0.0171201 * x * x * x
+            + 0.000640711 * x * x * x * x
+    }
 }
 
 impl TrowbridgeReitzDistribution {
@@ -57,6 +63,16 @@ impl TrowbridgeReitzDistribution {
             alpha_x: alpha_x.max(0.001),
             alpha_y: alpha_y.max(0.001),
         }
+    }
+
+    pub fn roughness_to_alpha(roughness: Float) -> Float {
+        let roughness = Float::max(roughness, 1e-3);
+        let x = roughness.ln();
+        1.62142
+            + 0.819955 * x
+            + 0.1734 * x * x
+            + 0.0171201 * x * x * x
+            + 0.000640711 * x * x * x * x
     }
 }
 
@@ -104,16 +120,6 @@ impl MicrofacetDistribution for BeckmannDistribution {
             self.d(wh) * abs_cos_theta(wh)
         }
     }
-
-    fn roughness_to_alpha(&self, roughness: Float) -> Float {
-        let roughness = Float::max(roughness, 1e-3);
-        let x = roughness.ln();
-        1.62142
-            + 0.819955 * x
-            + 0.1734 * x * x
-            + 0.0171201 * x * x * x
-            + 0.000640711 * x * x * x * x
-    }
 }
 
 impl MicrofacetDistribution for TrowbridgeReitzDistribution {
@@ -155,15 +161,5 @@ impl MicrofacetDistribution for TrowbridgeReitzDistribution {
         } else {
             self.d(wh) * abs_cos_theta(wh)
         }
-    }
-
-    fn roughness_to_alpha(&self, roughness: Float) -> Float {
-        let roughness = Float::max(roughness, 1e-3);
-        let x = roughness.ln();
-        1.62142
-            + 0.819955 * x
-            + 0.1734 * x * x
-            + 0.0171201 * x * x * x
-            + 0.000640711 * x * x * x * x
     }
 }

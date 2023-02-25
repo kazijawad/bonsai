@@ -294,12 +294,11 @@ impl Transform {
     pub fn transform_surface_interaction(&self, si: &SurfaceInteraction) -> SurfaceInteraction {
         // Transform point and point error in surface interaction.
         let mut point_error = Vec3::default();
-        let point =
-            self.transform_point_with_point_error(&si.point, &si.point_error, &mut point_error);
+        let point = self.transform_point_with_point_error(&si.p, &si.p_error, &mut point_error);
 
         // Transform remaining members of surface interaction.
-        let normal = self.transform_normal(&si.normal).normalize();
-        let negative_direction = self.transform_vec(&si.negative_direction).normalize();
+        let n = self.transform_normal(&si.n).normalize();
+        let negative_direction = self.transform_vec(&si.wo).normalize();
         let time = si.time;
         let uv = si.uv;
         let dpdu = self.transform_vec(&si.dpdu);
@@ -307,13 +306,13 @@ impl Transform {
         let dndu = self.transform_normal(&si.dndu);
         let dndv = self.transform_normal(&si.dndv);
         let mut shading = Shading {
-            normal: self.transform_normal(&si.shading.normal).normalize(),
+            n: self.transform_normal(&si.shading.n).normalize(),
             dpdu: self.transform_vec(&si.shading.dpdu),
             dpdv: self.transform_vec(&si.shading.dpdv),
             dndu: self.transform_normal(&si.shading.dndu),
             dndv: self.transform_normal(&si.shading.dndv),
         };
-        shading.normal = shading.normal.face_forward(&normal);
+        shading.n = shading.n.face_forward(&n);
         let dudx = si.dudx;
         let dvdx = si.dvdx;
         let dudy = si.dudy;
@@ -323,10 +322,10 @@ impl Transform {
         let face_index = si.face_index;
 
         SurfaceInteraction {
-            point,
-            point_error,
-            normal,
-            negative_direction,
+            p: point,
+            p_error: point_error,
+            n,
+            wo: negative_direction,
             time,
             uv,
             dpdu,
@@ -334,6 +333,7 @@ impl Transform {
             dndu,
             dndv,
             shading,
+            bsdf: None,
             dpdx,
             dpdy,
             dudx,
