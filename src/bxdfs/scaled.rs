@@ -24,11 +24,11 @@ impl ScaledBxDF {
 }
 
 impl BxDF for ScaledBxDF {
-    fn distribution(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
-        self.scale * self.bxdf.distribution(wo, wi)
+    fn f(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
+        self.scale * self.bxdf.f(wo, wi)
     }
 
-    fn sample_distribution(
+    fn sample_f(
         &self,
         wo: &Vec3,
         wi: &mut Vec3,
@@ -36,10 +36,7 @@ impl BxDF for ScaledBxDF {
         pdf: &mut Float,
         sampled_type: &mut Option<BxDFType>,
     ) -> Spectrum {
-        self.scale
-            * self
-                .bxdf
-                .sample_distribution(wo, wi, sample, pdf, sampled_type)
+        self.scale * self.bxdf.sample_f(wo, wi, sample, pdf, sampled_type)
     }
 
     fn hemispherical_directional_reflectance(

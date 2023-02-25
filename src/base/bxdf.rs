@@ -19,9 +19,9 @@ pub const BSDF_ALL: i32 =
     BSDF_DIFFUSE | BSDF_GLOSSY | BSDF_SPECULAR | BSDF_REFLECTION | BSDF_TRANSMISSION;
 
 pub trait BxDF: Send + Sync {
-    fn distribution(&self, wo: &Vec3, wi: &Vec3) -> Spectrum;
+    fn f(&self, wo: &Vec3, wi: &Vec3) -> Spectrum;
 
-    fn sample_distribution(
+    fn sample_f(
         &self,
         wo: &Vec3,
         wi: &mut Vec3,
@@ -35,7 +35,7 @@ pub trait BxDF: Send + Sync {
             wi.z *= -1.0;
         }
         *pdf = self.pdf(wo, wi);
-        self.distribution(wo, wi)
+        self.f(wo, wi)
     }
 
     fn hemispherical_directional_reflectance(
@@ -49,7 +49,7 @@ pub trait BxDF: Send + Sync {
         for i in 0..num_samples {
             let mut wi = Vec3::default();
             let mut pdf = 0.0;
-            let factor = self.sample_distribution(wo, &mut wi, &samples[i], &mut pdf, &mut None);
+            let factor = self.sample_f(wo, &mut wi, &samples[i], &mut pdf, &mut None);
             if pdf > 0.0 {
                 reflection_factor += factor * abs_cos_theta(&wi) / pdf;
             }
@@ -73,7 +73,7 @@ pub trait BxDF: Send + Sync {
             let pdf_o = uniform_hemisphere_pdf();
             let mut pdf_i = 0.0;
 
-            let factor = self.sample_distribution(&wo, &mut wi, &u2[i], &mut pdf_i, &mut None);
+            let factor = self.sample_f(&wo, &mut wi, &u2[i], &mut pdf_i, &mut None);
             if pdf_i > 0.0 {
                 reflection_factor +=
                     factor * abs_cos_theta(&wi) * abs_cos_theta(&wo) / (pdf_o * pdf_i);

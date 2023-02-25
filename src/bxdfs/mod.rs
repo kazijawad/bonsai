@@ -1,7 +1,6 @@
 pub mod fresnel_specular;
-pub mod lambertian_reflection;
-pub mod lambertian_transmission;
+pub mod lambertian;
+pub mod microfacet;
 pub mod oren_nayer;
 pub mod scaled;
-pub mod specular_reflection;
-pub mod specular_transmission;
+pub mod specular;

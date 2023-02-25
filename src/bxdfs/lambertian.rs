@@ -1,6 +1,6 @@
 use crate::{
     base::{
-        bxdf::{BxDF, BxDFType, BSDF_DIFFUSE, BSDF_TRANSMISSION},
+        bxdf::{BxDF, BxDFType, BSDF_DIFFUSE, BSDF_REFLECTION, BSDF_TRANSMISSION},
         spectrum::Spectrum,
     },
     geometries::{point2::Point2, vec3::Vec3},
@@ -11,9 +11,23 @@ use crate::{
     },
 };
 
+pub struct LambertianReflection {
+    bxdf_type: BxDFType,
+    r: Spectrum,
+}
+
 pub struct LambertianTransmission {
     bxdf_type: BxDFType,
     t: Spectrum,
+}
+
+impl LambertianReflection {
+    pub fn new(r: &Spectrum) -> Self {
+        Self {
+            bxdf_type: BSDF_REFLECTION | BSDF_DIFFUSE,
+            r: r.clone(),
+        }
+    }
 }
 
 impl LambertianTransmission {
@@ -25,12 +39,40 @@ impl LambertianTransmission {
     }
 }
 
+impl BxDF for LambertianReflection {
+    fn f(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
+        self.r * (1.0 / PI)
+    }
+
+    fn hemispherical_directional_reflectance(
+        &self,
+        wo: &Vec3,
+        num_samples: usize,
+        samples: &[Point2],
+    ) -> Spectrum {
+        self.r
+    }
+
+    fn hemispherical_hemispherical_reflectance(
+        &self,
+        num_samples: usize,
+        u1: &[Point2],
+        u2: &[Point2],
+    ) -> Spectrum {
+        self.r
+    }
+
+    fn matches_flags(&self, t: BxDFType) -> bool {
+        (self.bxdf_type & t) == self.bxdf_type
+    }
+}
+
 impl BxDF for LambertianTransmission {
-    fn distribution(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
+    fn f(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
         self.t * (1.0 / PI)
     }
 
-    fn sample_distribution(
+    fn sample_f(
         &self,
         wo: &Vec3,
         wi: &mut Vec3,
@@ -43,7 +85,7 @@ impl BxDF for LambertianTransmission {
             wi.z *= -1.0;
         }
         *pdf = self.pdf(wo, wi);
-        self.distribution(wo, wi)
+        self.f(wo, wi)
     }
 
     fn hemispherical_directional_reflectance(

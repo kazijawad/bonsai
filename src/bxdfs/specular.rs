@@ -1,6 +1,6 @@
 use crate::{
     base::{
-        bxdf::{BxDF, BxDFType, BSDF_SPECULAR, BSDF_TRANSMISSION},
+        bxdf::{BxDF, BxDFType, BSDF_REFLECTION, BSDF_SPECULAR, BSDF_TRANSMISSION},
         fresnel::{Fresnel, FresnelDielectric},
         material::TransportMode,
         spectrum::{CoefficientSpectrum, Spectrum},
@@ -12,6 +12,12 @@ use crate::{
     },
 };
 
+pub struct SpecularReflection<'a> {
+    bxdf_type: BxDFType,
+    r: Spectrum,
+    fresnel: &'a dyn Fresnel,
+}
+
 pub struct SpecularTransmission {
     bxdf_type: BxDFType,
     t: Spectrum,
@@ -19,6 +25,16 @@ pub struct SpecularTransmission {
     eta_a: Float,
     eta_b: Float,
     mode: TransportMode,
+}
+
+impl<'a> SpecularReflection<'a> {
+    pub fn new(r: &Spectrum, fresnel: &'a dyn Fresnel) -> Self {
+        Self {
+            bxdf_type: BSDF_REFLECTION | BSDF_SPECULAR,
+            r: r.clone(),
+            fresnel,
+        }
+    }
 }
 
 impl SpecularTransmission {
@@ -34,12 +50,39 @@ impl SpecularTransmission {
     }
 }
 
-impl BxDF for SpecularTransmission {
-    fn distribution(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
+impl<'a> BxDF for SpecularReflection<'a> {
+    fn f(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
         Spectrum::new(0.0)
     }
 
-    fn sample_distribution(
+    fn sample_f(
+        &self,
+        wo: &Vec3,
+        wi: &mut Vec3,
+        sample: &Point2,
+        pdf: &mut Float,
+        sampled_type: &mut Option<BxDFType>,
+    ) -> Spectrum {
+        *wi = Vec3::new(-wo.x, -wo.y, wo.z);
+        *pdf = 1.0;
+        self.fresnel.evaluate(cos_theta(wi)) * self.r / abs_cos_theta(wi)
+    }
+
+    fn pdf(&self, wo: &Vec3, wi: &Vec3) -> Float {
+        0.0
+    }
+
+    fn matches_flags(&self, t: BxDFType) -> bool {
+        (self.bxdf_type & t) == self.bxdf_type
+    }
+}
+
+impl BxDF for SpecularTransmission {
+    fn f(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
+        Spectrum::new(0.0)
+    }
+
+    fn sample_f(
         &self,
         wo: &Vec3,
         wi: &mut Vec3,

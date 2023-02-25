@@ -40,11 +40,11 @@ impl FresnelSpecular {
 }
 
 impl BxDF for FresnelSpecular {
-    fn distribution(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
+    fn f(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
         Spectrum::default()
     }
 
-    fn sample_distribution(
+    fn sample_f(
         &self,
         wo: &Vec3,
         wi: &mut Vec3,

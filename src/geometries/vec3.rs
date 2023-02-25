@@ -56,6 +56,14 @@ impl Vec3 {
         }
     }
 
+    pub fn face_forward(&self, v: &Self) -> Self {
+        if self.dot(v) < 0.0 {
+            -self.clone()
+        } else {
+            self.clone()
+        }
+    }
+
     pub fn length_squared(&self) -> Float {
         self.x * self.x + self.y * self.y + self.z * self.z
     }

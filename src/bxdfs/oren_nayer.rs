@@ -31,7 +31,7 @@ impl OrenNayer {
 }
 
 impl BxDF for OrenNayer {
-    fn distribution(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
+    fn f(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
         let sin_theta_i = sin_theta(wi);
         let sin_theta_o = sin_theta(wo);
 
