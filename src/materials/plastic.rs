@@ -7,10 +7,10 @@ use crate::{
         material::{Material, TransportMode},
         microfacet::TrowbridgeReitzDistribution,
         spectrum::{CoefficientSpectrum, Spectrum},
+        texture::Texture,
     },
     bxdfs::{lambertian::LambertianReflection, microfacet::MicrofacetReflection},
     interactions::surface::SurfaceInteraction,
-    texture::Texture,
     utils::math::Float,
 };
 

@@ -15,7 +15,7 @@ mod renderer;
 mod samplers;
 mod shapes;
 mod spectra;
-mod texture;
+mod textures;
 mod utils;
 
 pub use accelerators::bvh::BVH;

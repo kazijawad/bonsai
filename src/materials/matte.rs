@@ -5,10 +5,10 @@ use crate::{
         bsdf::BSDF,
         material::{Material, TransportMode},
         spectrum::{CoefficientSpectrum, Spectrum},
+        texture::Texture,
     },
     bxdfs::{lambertian::LambertianReflection, oren_nayer::OrenNayer},
     interactions::surface::SurfaceInteraction,
-    texture::Texture,
     utils::math::Float,
 };
 

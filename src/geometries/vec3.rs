@@ -43,12 +43,12 @@ impl Vec3 {
         sin_theta * phi.cos() * x + sin_theta * phi.sin() * y + cos_theta * z
     }
 
-    pub fn spherical_theta(v: &Self) -> Float {
-        v.z.clamp(-1.0, 1.0).acos()
+    pub fn spherical_theta(&self) -> Float {
+        self.z.clamp(-1.0, 1.0).acos()
     }
 
-    pub fn spherical_phi(v: &Self) -> Float {
-        let p = v.y.atan2(v.x);
+    pub fn spherical_phi(&self) -> Float {
+        let p = self.y.atan2(self.x);
         if p < 0.0 {
             p + 2.0 * PI
         } else {

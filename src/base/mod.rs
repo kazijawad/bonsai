@@ -12,4 +12,5 @@ pub mod primitive;
 pub mod sampler;
 pub mod shape;
 pub mod spectrum;
+pub mod texture;
 pub mod transform;

@@ -1,12 +1,11 @@
 use std::mem;
 
 use crate::{
-    base::{interaction::Interaction, shape::Shape, transform::Transform},
+    base::{interaction::Interaction, shape::Shape, texture::Texture, transform::Transform},
     geometries::{
         bounds3::Bounds3, normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3,
     },
     interactions::surface::SurfaceInteraction,
-    texture::Texture,
     utils::math::{gamma, Float},
 };
 
