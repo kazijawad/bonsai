@@ -13,6 +13,7 @@ use crate::{
     },
 };
 
+#[derive(Clone)]
 pub struct FresnelSpecular {
     bxdf_type: BxDFType,
     r: Spectrum,
@@ -22,6 +23,7 @@ pub struct FresnelSpecular {
     mode: TransportMode,
 }
 
+#[derive(Clone)]
 pub struct FresnelBlend {
     bxdf_type: BxDFType,
     rd: Spectrum,

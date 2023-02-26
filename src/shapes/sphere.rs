@@ -208,22 +208,20 @@ impl<'a> Shape for Sphere<'a> {
         let p_error = gamma(5.0) * Vec3::from(p_hit).abs();
 
         // Initialize interaction from parametric information.
-        *interaction =
-            self.object_to_world
-                .transform_surface_interaction(&SurfaceInteraction::new(
-                    p_hit,
-                    p_error,
-                    Point2::new(u, v),
-                    -ray.direction,
-                    dpdu,
-                    dpdv,
-                    dndu,
-                    dndv,
-                    ray.time,
-                    0,
-                    self.reverse_orientation,
-                    self.transform_swaps_handedness,
-                ));
+        *interaction = SurfaceInteraction::new(
+            p_hit,
+            p_error,
+            Point2::new(u, v),
+            -ray.direction,
+            dpdu,
+            dpdv,
+            dndu,
+            dndv,
+            ray.time,
+            self.reverse_orientation,
+            self.transform_swaps_handedness,
+        )
+        .transform(self.object_to_world);
 
         // Update hit for quadric intersection.
         *t_hit = Float::from(t_shape_hit);

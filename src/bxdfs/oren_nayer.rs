@@ -10,6 +10,7 @@ use crate::{
     },
 };
 
+#[derive(Clone)]
 pub struct OrenNayer {
     bxdf_type: BxDFType,
     r: Spectrum,

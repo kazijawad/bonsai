@@ -13,6 +13,7 @@ use crate::{
 // let us preallocate the vector of BxDFs.
 const MAX_BXDFS: usize = 8;
 
+#[derive(Clone)]
 pub struct BSDF {
     pub eta: Float,
     ns: Normal,

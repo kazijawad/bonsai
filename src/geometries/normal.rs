@@ -1,6 +1,9 @@
 use std::ops;
 
-use crate::{geometries::vec3::Vec3, utils::math::Float};
+use crate::{
+    geometries::{point3::Point3, vec3::Vec3},
+    utils::math::Float,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Normal {
@@ -64,8 +67,6 @@ impl Default for Normal {
     }
 }
 
-// TYPE CONVERSION
-
 impl From<Vec3> for Normal {
     fn from(v: Vec3) -> Self {
         Self {
@@ -76,7 +77,15 @@ impl From<Vec3> for Normal {
     }
 }
 
-// ADDITION
+impl From<Point3> for Normal {
+    fn from(p: Point3) -> Self {
+        Self {
+            x: p.x,
+            y: p.y,
+            z: p.z,
+        }
+    }
+}
 
 impl ops::Add for Normal {
     type Output = Self;
@@ -110,8 +119,6 @@ impl ops::AddAssign for Normal {
     }
 }
 
-// SUBTRACTION
-
 impl ops::Sub for Normal {
     type Output = Self;
 
@@ -143,8 +150,6 @@ impl ops::SubAssign for Normal {
         self.z -= rhs.z;
     }
 }
-
-// MULTIPLICATION
 
 impl ops::Mul<Float> for Normal {
     type Output = Self;
@@ -194,8 +199,6 @@ impl ops::MulAssign<Float> for Normal {
     }
 }
 
-// DIVISION
-
 impl ops::Div<Float> for Normal {
     type Output = Self;
 
@@ -234,8 +237,6 @@ impl ops::DivAssign<Float> for Normal {
     }
 }
 
-// NEGATION
-
 impl ops::Neg for Normal {
     type Output = Self;
 
@@ -260,12 +261,10 @@ impl ops::Neg for &Normal {
     }
 }
 
-// INDEXING
-
-impl ops::Index<u32> for Normal {
+impl ops::Index<usize> for Normal {
     type Output = Float;
 
-    fn index(&self, index: u32) -> &Self::Output {
+    fn index(&self, index: usize) -> &Self::Output {
         debug_assert!(index <= 2);
         if index == 0 {
             return &self.x;

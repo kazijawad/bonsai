@@ -331,22 +331,20 @@ impl<'a> Curve<'a> {
                     ray_to_object.transform_vec(&dpdv_plane)
                 };
 
-                *interaction =
-                    self.object_to_world
-                        .transform_surface_interaction(&SurfaceInteraction::new(
-                            ray.at(*t_hit),
-                            p_error,
-                            Point2::new(u, v),
-                            -ray.direction,
-                            dpdu,
-                            dpdv,
-                            Normal::default(),
-                            Normal::default(),
-                            ray.time,
-                            0,
-                            self.reverse_orientation,
-                            self.transform_swaps_handedness,
-                        ))
+                *interaction = SurfaceInteraction::new(
+                    ray.at(*t_hit),
+                    p_error,
+                    Point2::new(u, v),
+                    -ray.direction,
+                    dpdu,
+                    dpdv,
+                    Normal::default(),
+                    Normal::default(),
+                    ray.time,
+                    self.reverse_orientation,
+                    self.transform_swaps_handedness,
+                )
+                .transform(self.object_to_world);
             }
 
             true
@@ -401,7 +399,7 @@ impl<'a> Shape for Curve<'a> {
         r: &Ray,
         t_hit: &mut Float,
         interaction: &mut SurfaceInteraction,
-        _include_alpha: bool,
+        include_alpha: bool,
     ) -> bool {
         // Transform ray to object-space.
         let mut origin_error = Vec3::default();

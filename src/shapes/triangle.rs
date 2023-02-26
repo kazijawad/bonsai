@@ -288,7 +288,6 @@ impl<'a> Shape for Triangle<'a> {
                 Normal::default(),
                 Normal::default(),
                 ray.time,
-                self.face_index,
                 self.reverse_orientation,
                 self.transform_swaps_handedness,
             );
@@ -309,7 +308,6 @@ impl<'a> Shape for Triangle<'a> {
             Normal::default(),
             Normal::default(),
             ray.time,
-            self.face_index,
             self.reverse_orientation,
             self.transform_swaps_handedness,
         );
@@ -578,7 +576,6 @@ impl<'a> Shape for Triangle<'a> {
                 Normal::default(),
                 Normal::default(),
                 ray.time,
-                self.face_index,
                 self.reverse_orientation,
                 self.transform_swaps_handedness,
             );

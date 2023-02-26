@@ -11,17 +11,16 @@ use crate::{
         ray::{Ray, RayDifferential},
         vec3::Vec3,
     },
-    interactions::surface::{Shading, SurfaceInteraction},
     utils::math::{self, Float},
 };
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct Transform {
     pub m: Mat4,
     pub m_inverse: Mat4,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct AnimatedTransform<'a> {
     start_transform: &'a Transform,
     end_transform: &'a Transform,
@@ -39,7 +38,7 @@ pub struct AnimatedTransform<'a> {
     c5: Option<Vec<DerivativeTerm>>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 struct DerivativeTerm {
     kc: Float,
     kx: Float,
@@ -47,7 +46,7 @@ struct DerivativeTerm {
     kz: Float,
 }
 
-impl Transform {
+impl<'a> Transform {
     pub fn new(m: Mat4, m_inverse: Mat4) -> Self {
         Self { m, m_inverse }
     }
@@ -289,59 +288,6 @@ impl Transform {
         ret = ret.union_point(&self.transform_point(&Point3::new(b.max.x, b.min.y, b.max.z)));
         ret = ret.union_point(&self.transform_point(&Point3::new(b.max.x, b.max.y, b.max.z)));
         ret
-    }
-
-    pub fn transform_surface_interaction(&self, si: &SurfaceInteraction) -> SurfaceInteraction {
-        // Transform point and point error in surface interaction.
-        let mut point_error = Vec3::default();
-        let point = self.transform_point_with_point_error(&si.p, &si.p_error, &mut point_error);
-
-        // Transform remaining members of surface interaction.
-        let n = self.transform_normal(&si.n).normalize();
-        let negative_direction = self.transform_vec(&si.wo).normalize();
-        let time = si.time;
-        let uv = si.uv;
-        let dpdu = self.transform_vec(&si.dpdu);
-        let dpdv = self.transform_vec(&si.dpdv);
-        let dndu = self.transform_normal(&si.dndu);
-        let dndv = self.transform_normal(&si.dndv);
-        let mut shading = Shading {
-            n: self.transform_normal(&si.shading.n).normalize(),
-            dpdu: self.transform_vec(&si.shading.dpdu),
-            dpdv: self.transform_vec(&si.shading.dpdv),
-            dndu: self.transform_normal(&si.shading.dndu),
-            dndv: self.transform_normal(&si.shading.dndv),
-        };
-        shading.n = shading.n.face_forward(&n);
-        let dudx = si.dudx;
-        let dvdx = si.dvdx;
-        let dudy = si.dudy;
-        let dvdy = si.dvdy;
-        let dpdx = self.transform_vec(&si.dpdx);
-        let dpdy = self.transform_vec(&si.dpdy);
-        let face_index = si.face_index;
-
-        SurfaceInteraction {
-            p: point,
-            p_error: point_error,
-            n,
-            wo: negative_direction,
-            time,
-            uv,
-            dpdu,
-            dpdv,
-            dndu,
-            dndv,
-            shading,
-            bsdf: None,
-            dpdx,
-            dpdy,
-            dudx,
-            dvdx,
-            dudy,
-            dvdy,
-            face_index,
-        }
     }
 
     pub fn translate(delta: &Vec3) -> Self {

@@ -92,8 +92,6 @@ impl Default for RayDifferential {
     }
 }
 
-// TYPE CONVERSION
-
 impl From<RayDifferential> for Ray {
     fn from(diff: RayDifferential) -> Self {
         Self {

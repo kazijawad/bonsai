@@ -9,7 +9,6 @@ use crate::{
         camera::{Camera, CameraSample},
     },
     geometries::{point2::Point2, point3::Point3, ray::Ray},
-    interactions::surface::SurfaceInteraction,
     utils::math::Float,
 };
 
@@ -92,16 +91,11 @@ impl Renderer {
         self.trace_ray(scene, ray, self.max_depth)
     }
 
-    fn trace_ray(&self, scene: &dyn Aggregate, mut ray: Ray, depth: u32) -> Point3 {
+    fn trace_ray(&self, scene: &dyn Aggregate, ray: Ray, depth: u32) -> Point3 {
         if depth <= 0 {
             return Point3::default();
         }
 
-        let mut interaction = SurfaceInteraction::default();
-        if scene.intersect(&mut ray, &mut interaction) {
-            Point3::new(1.0, 0.0, 0.0)
-        } else {
-            self.background
-        }
+        self.background
     }
 }

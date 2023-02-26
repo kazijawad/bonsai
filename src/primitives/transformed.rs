@@ -42,7 +42,7 @@ impl<'a> Primitive for TransformedPrimitive<'a> {
 
         // Transform instance's intersection data to world space.
         if !interpolated_primitive_to_world.is_identity() {
-            *si = interpolated_primitive_to_world.transform_surface_interaction(&si);
+            *si = si.transform(&interpolated_primitive_to_world);
         }
 
         true

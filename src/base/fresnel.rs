@@ -1,3 +1,5 @@
+use dyn_clone::DynClone;
+
 use crate::{
     base::spectrum::{CoefficientSpectrum, Spectrum},
     utils::{
@@ -6,21 +8,26 @@ use crate::{
     },
 };
 
-pub trait Fresnel: Send + Sync {
+pub trait Fresnel: Send + Sync + DynClone {
     fn evaluate(&self, cos_theta_i: Float) -> Spectrum;
 }
 
+dyn_clone::clone_trait_object!(Fresnel);
+
+#[derive(Clone)]
 pub struct FresnelConductor {
     eta_i: Spectrum,
     eta_t: Spectrum,
     k: Spectrum,
 }
 
+#[derive(Clone)]
 pub struct FresnelDielectric {
     eta_i: Float,
     eta_t: Float,
 }
 
+#[derive(Clone)]
 pub struct FresnelNoOp;
 
 impl FresnelConductor {

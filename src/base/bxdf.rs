@@ -1,3 +1,5 @@
+use dyn_clone::DynClone;
+
 use crate::{
     base::spectrum::{CoefficientSpectrum, Spectrum},
     geometries::{point2::Point2, vec3::Vec3},
@@ -18,7 +20,7 @@ pub const BSDF_SPECULAR: BxDFType = 1 << 4;
 pub const BSDF_ALL: BxDFType =
     BSDF_DIFFUSE | BSDF_GLOSSY | BSDF_SPECULAR | BSDF_REFLECTION | BSDF_TRANSMISSION;
 
-pub trait BxDF: Send + Sync {
+pub trait BxDF: Send + Sync + DynClone {
     fn f(&self, wo: &Vec3, wi: &Vec3) -> Spectrum;
 
     fn sample_f(
@@ -83,3 +85,5 @@ pub trait BxDF: Send + Sync {
 
     fn matches_flags(&self, t: BxDFType) -> bool;
 }
+
+dyn_clone::clone_trait_object!(BxDF);
