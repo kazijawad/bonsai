@@ -11,6 +11,7 @@ cfg_if::cfg_if! {
 pub enum SpectrumType {
     Reflectance,
     Illuminant,
+    Ignore,
 }
 
 pub type XYZ = [Float; 3];

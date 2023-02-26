@@ -20,6 +20,52 @@ pub fn not_one(x: Float) -> bool {
     x < 0.999 || x > 1.001
 }
 
+pub fn is_pow_two(x: i32) -> bool {
+    (x != 0) && ((x & (x - 1)) == 0)
+}
+
+pub fn round_pow_two(x: i32) -> i32 {
+    let mut v = x;
+    v -= 1;
+    v |= v >> 1;
+    v |= v >> 2;
+    v |= v >> 4;
+    v |= v >> 8;
+    v |= v >> 16;
+    v + 1
+}
+
+pub fn inverse_gamma_correct(v: Float) -> Float {
+    if v <= 0.04045 {
+        v * 1.0 / 12.92
+    } else {
+        ((v + 0.055) * 1.0 / 1.055).powf(2.4)
+    }
+}
+
+pub fn lanczos(x: Float, tau: Float) -> Float {
+    let mut x = x.abs();
+    if x < 1e-5 {
+        return 1.0;
+    }
+    if x > 1.0 {
+        return 0.0;
+    }
+    x *= PI;
+    let s = (x * tau).sin() / (x * tau);
+    let lanczos = x.sin() / x;
+    s * lanczos
+}
+
+pub fn modulo(a: i32, b: i32) -> i32 {
+    let result = a - (a / b) * b;
+    if result < 0 {
+        result + b
+    } else {
+        result
+    }
+}
+
 pub fn gamma(n: Float) -> Float {
     n * Float::EPSILON / (1.0 - n * Float::EPSILON)
 }

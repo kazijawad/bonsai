@@ -8,6 +8,7 @@ pub mod fresnel;
 pub mod interaction;
 pub mod material;
 pub mod microfacet;
+pub mod mipmap;
 pub mod primitive;
 pub mod sampler;
 pub mod shape;
