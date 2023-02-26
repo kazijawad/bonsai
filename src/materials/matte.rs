@@ -15,20 +15,11 @@ use crate::{
 pub struct MatteMaterial {
     kd: Arc<dyn Texture<Spectrum>>,
     sigma: Arc<dyn Texture<Float>>,
-    bump_map: Option<Arc<dyn Texture<Float>>>,
 }
 
 impl MatteMaterial {
-    pub fn new(
-        kd: Arc<dyn Texture<Spectrum>>,
-        sigma: Arc<dyn Texture<Float>>,
-        bump_map: Option<Arc<dyn Texture<Float>>>,
-    ) -> Self {
-        Self {
-            kd,
-            sigma,
-            bump_map,
-        }
+    pub fn new(kd: Arc<dyn Texture<Spectrum>>, sigma: Arc<dyn Texture<Float>>) -> Self {
+        Self { kd, sigma }
     }
 }
 
@@ -39,10 +30,6 @@ impl Material for MatteMaterial {
         mode: TransportMode,
         allow_multiple_lobes: bool,
     ) {
-        if let Some(bump_map) = self.bump_map.as_ref() {
-            self.bump(bump_map.as_ref(), si);
-        }
-
         let mut bsdf = BSDF::new(&si, 1.0);
         let r = self.kd.evaluate(si).clamp(0.0, Float::INFINITY);
         let sigma = self.sigma.evaluate(si).clamp(0.0, 90.0);

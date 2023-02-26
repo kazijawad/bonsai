@@ -18,7 +18,6 @@ pub struct PlasticMaterial {
     kd: Arc<dyn Texture<Spectrum>>,
     ks: Arc<dyn Texture<Spectrum>>,
     roughness: Arc<dyn Texture<Float>>,
-    bump_map: Option<Arc<dyn Texture<Float>>>,
     remap_roughness: bool,
 }
 
@@ -27,14 +26,12 @@ impl PlasticMaterial {
         kd: Arc<dyn Texture<Spectrum>>,
         ks: Arc<dyn Texture<Spectrum>>,
         roughness: Arc<dyn Texture<Float>>,
-        bump_map: Option<Arc<dyn Texture<Float>>>,
         remap_roughness: bool,
     ) -> Self {
         Self {
             kd,
             ks,
             roughness,
-            bump_map,
             remap_roughness,
         }
     }
@@ -47,10 +44,6 @@ impl Material for PlasticMaterial {
         mode: TransportMode,
         allow_multiple_lobes: bool,
     ) {
-        if let Some(bump_map) = self.bump_map.as_ref() {
-            self.bump(bump_map.as_ref(), si);
-        }
-
         let mut bsdf = BSDF::new(&si, 1.0);
 
         let kd = self.kd.evaluate(si).clamp(0.0, Float::INFINITY);

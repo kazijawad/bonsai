@@ -1,4 +1,4 @@
-use crate::{interactions::surface::SurfaceInteraction, texture::Texture, utils::math::Float};
+use crate::interactions::surface::SurfaceInteraction;
 
 pub enum TransportMode {
     Radiance,
@@ -12,8 +12,4 @@ pub trait Material: Send + Sync {
         mode: TransportMode,
         allow_multiple_lobes: bool,
     );
-
-    fn bump(&self, d: &dyn Texture<Float>, si: &mut SurfaceInteraction) {
-        todo!()
-    }
 }
