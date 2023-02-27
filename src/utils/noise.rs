@@ -1,4 +1,7 @@
-use crate::utils::math::{lerp, Float};
+use crate::{
+    geometries::{point3::Point3, vec3::Vec3},
+    utils::math::{lerp, Float},
+};
 
 const PERMUTATION_SIZE: i32 = 256;
 
@@ -64,6 +67,68 @@ pub fn noise(x: Float, y: Float, z: Float) -> Float {
     let y1 = lerp(wy, x01, x11);
 
     lerp(wz, y0, y1)
+}
+
+pub fn noise_point(p: &Point3) -> Float {
+    noise(p.x, p.y, p.z)
+}
+
+pub fn fbm(p: &Point3, dpdx: &Vec3, dpdy: &Vec3, omega: Float, octaves: i32) -> Float {
+    // Compute number of octaves for antialiased fBm.
+    let len2 = dpdx.length_squared().max(dpdy.length_squared());
+    let n = (-1.0 - 0.5 * len2.log2()).clamp(0.0, octaves as Float);
+    let n_int = n.floor() as i32;
+
+    // Compute sum of octaves of noise.
+    let mut sum = 0.0;
+    let mut lambda = 1.0;
+    let mut o = 1.0;
+    for i in 0..n_int {
+        sum += o * noise_point(&(lambda * p));
+        lambda *= 1.99;
+        o *= omega as Float;
+    }
+
+    let n_partial = n - n_int as Float;
+    sum += o * smoothstep(0.3, 0.7, n_partial) * noise_point(&(lambda * p));
+
+    sum
+}
+
+pub fn turbulence(p: &Point3, dpdx: &Vec3, dpdy: &Vec3, omega: Float, octaves: i32) -> Float {
+    // Compute number of octaves for antialiased fBm.
+    let len2 = dpdx.length_squared().max(dpdy.length_squared());
+    let n = (-1.0 - 0.5 * len2.log2()).clamp(0.0, octaves as Float);
+    let n_int = n.floor() as i32;
+
+    // Compute sum of octaves of noise for turbulence.
+    let mut sum = 0.0;
+    let mut lambda = 1.0;
+    let mut o = 1.0;
+    for i in 0..n_int {
+        sum += o * noise_point(&(lambda * p)).abs();
+        lambda *= 1.99;
+        o *= omega as Float;
+    }
+
+    // Account for contributions of clamped octaves in turbulence.
+    let n_partial = n - n_int as Float;
+    sum += o * lerp(
+        smoothstep(0.3, 0.7, n_partial),
+        0.2,
+        noise_point(&(lambda * p)).abs(),
+    );
+    for i in n_int..octaves {
+        sum += o * 0.2;
+        o *= omega;
+    }
+
+    sum
+}
+
+fn smoothstep(min: Float, max: Float, v: Float) -> Float {
+    let v = ((v - min) / (max - min)).clamp(0.0, 1.0);
+    v * v * (-2.0 * v + 3.0)
 }
 
 fn grad(x: i32, y: i32, z: i32, dx: Float, dy: Float, dz: Float) -> Float {

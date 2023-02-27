@@ -11,7 +11,6 @@ mod geometries;
 mod interactions;
 mod materials;
 mod primitives;
-mod renderer;
 mod samplers;
 mod shapes;
 mod spectra;
@@ -24,7 +23,12 @@ pub use base::{
     camera::Camera,
     film::{Film, FilmDescriptor},
     filter::Filter,
+    material::Material,
     spectrum::{CoefficientSpectrum, Spectrum},
+    texture::{
+        CylindricalMapping2D, IdentityMapping3D, PlanarMapping2D, SphericalMapping2D, Texture,
+        TextureMapping2D, TextureMapping3D, UVMapping2D,
+    },
     transform::{AnimatedTransform, Transform},
 };
 pub use cameras::{
@@ -42,10 +46,14 @@ pub use geometries::{
     bounds2::Bounds2, bounds3::Bounds3, interval::Interval, mat4::Mat4, normal::Normal,
     point2::Point2, point3::Point3, quaternion::Quaternion, ray::Ray, vec2::Vec2, vec3::Vec3,
 };
+pub use materials::{matte::MatteMaterial, plastic::PlasticMaterial};
 pub use primitives::{geometric::GeometricPrimitive, transformed::TransformedPrimitive};
-pub use renderer::Renderer;
 pub use shapes::{
     cone::Cone, curve::Curve, cylinder::Cylinder, disk::Disk, hyperboloid::Hyperboloid,
     paraboloid::Paraboloid, sphere::Sphere, triangle::Triangle,
+};
+pub use textures::{
+    checkerboard::Checkerboard2DTexture, constant::ConstantTexture, dots::DotsTexture,
+    image::ImageTexture, uv::UVTexture,
 };
 pub use utils::math::*;
