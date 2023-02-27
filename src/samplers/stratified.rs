@@ -1,7 +1,7 @@
 use rand::prelude::*;
 
 use crate::{
-    base::sampler::Sampler,
+    base::sampler::{shuffle, Sampler},
     geometries::point2::Point2,
     utils::math::{Float, ONE_MINUS_EPSILON},
 };
@@ -31,7 +31,7 @@ pub struct StratifiedSampler {
     y_samples: usize,
     jitter_samples: bool,
 
-    rng: ThreadRng,
+    rng: StdRng,
 }
 
 impl StratifiedSampler {
@@ -72,11 +72,11 @@ impl StratifiedSampler {
             y_samples,
             jitter_samples,
 
-            rng: rand::thread_rng(),
+            rng: StdRng::from_entropy(),
         }
     }
 
-    fn stratified_sample_float(samples: &mut [Float], rng: &mut ThreadRng, jitter_samples: bool) {
+    fn stratified_sample_float(samples: &mut [Float], rng: &mut StdRng, jitter_samples: bool) {
         let num_samples = samples.len();
         let inverse_num_samples = 1.0 / num_samples as Float;
         for i in 0..num_samples {
@@ -96,7 +96,7 @@ impl StratifiedSampler {
         samples: &mut [Point2],
         nx: usize,
         ny: usize,
-        rng: &mut ThreadRng,
+        rng: &mut StdRng,
         jitter_samples: bool,
     ) {
         let dx = 1.0 / nx as Float;
@@ -122,7 +122,7 @@ impl StratifiedSampler {
         }
     }
 
-    fn latin_hypercube(samples: &mut [Point2], num_dims: usize, rng: &mut ThreadRng) {
+    fn latin_hypercube(samples: &mut [Point2], num_dims: usize, rng: &mut StdRng) {
         // Generate LHS samples along diagonal.
         let num_samples = samples.len();
         let inverse_num_samples = 1.0 / num_samples as Float;
@@ -148,7 +148,7 @@ impl Sampler for StratifiedSampler {
         // Generate single stratified samples for pixel.
         for samples in self.float_samples.iter_mut() {
             Self::stratified_sample_float(samples, &mut self.rng, self.jitter_samples);
-            Self::shuffle(samples, self.samples_per_pixel, 1, &mut self.rng);
+            shuffle(samples, self.samples_per_pixel, 1, &mut self.rng);
         }
         for samples in self.point_samples.iter_mut() {
             Self::stratified_sample_point(
@@ -158,7 +158,7 @@ impl Sampler for StratifiedSampler {
                 &mut self.rng,
                 self.jitter_samples,
             );
-            Self::shuffle(samples, self.samples_per_pixel, 1, &mut self.rng);
+            shuffle(samples, self.samples_per_pixel, 1, &mut self.rng);
         }
 
         // Generate arrays of stratified samples for pixel.
@@ -170,7 +170,7 @@ impl Sampler for StratifiedSampler {
                     &mut self.rng,
                     self.jitter_samples,
                 );
-                Self::shuffle(
+                shuffle(
                     &mut self.float_batch[i][j * count..count],
                     count,
                     1,

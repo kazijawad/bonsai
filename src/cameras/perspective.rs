@@ -183,4 +183,8 @@ impl<'a> Camera for PerspectiveCamera<'a> {
 
         1.0
     }
+
+    fn get_film(&self) -> &Film {
+        self.film
+    }
 }

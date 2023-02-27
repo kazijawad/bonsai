@@ -49,4 +49,8 @@ impl<'a> Camera for EnvironmentCamera<'a> {
 
         1.0
     }
+
+    fn get_film(&self) -> &Film {
+        self.film
+    }
 }

@@ -8,6 +8,7 @@ mod bxdfs;
 mod cameras;
 mod filters;
 mod geometries;
+mod integrators;
 mod interactions;
 mod materials;
 mod primitives;
@@ -23,7 +24,10 @@ pub use base::{
     camera::Camera,
     film::{Film, FilmDescriptor},
     filter::Filter,
+    integrator::Integrator,
     material::Material,
+    sampler::Sampler,
+    scene::Scene,
     spectrum::{CoefficientSpectrum, Spectrum},
     texture::{
         CylindricalMapping2D, IdentityMapping3D, PlanarMapping2D, SphericalMapping2D, Texture,
@@ -46,8 +50,10 @@ pub use geometries::{
     bounds2::Bounds2, bounds3::Bounds3, interval::Interval, mat4::Mat4, normal::Normal,
     point2::Point2, point3::Point3, quaternion::Quaternion, ray::Ray, vec2::Vec2, vec3::Vec3,
 };
+pub use integrators::sampler::SamplerIntegrator;
 pub use materials::{matte::MatteMaterial, plastic::PlasticMaterial};
 pub use primitives::{geometric::GeometricPrimitive, transformed::TransformedPrimitive};
+pub use samplers::stratified::StratifiedSampler;
 pub use shapes::{
     cone::Cone, curve::Curve, cylinder::Cylinder, disk::Disk, hyperboloid::Hyperboloid,
     paraboloid::Paraboloid, sphere::Sphere, triangle::Triangle,

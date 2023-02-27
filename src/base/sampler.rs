@@ -2,7 +2,7 @@ use rand::prelude::*;
 
 use crate::{base::camera::CameraSample, geometries::point2::Point2, utils::math::Float};
 
-pub trait Sampler {
+pub trait Sampler: Send + Sync {
     fn start_pixel(&mut self, pixel: &Point2);
 
     fn get_float(&mut self) -> Float;
@@ -31,13 +31,13 @@ pub trait Sampler {
 
     fn start_next_sample(&mut self) -> bool;
     fn set_sample_number(&mut self, sample_number: usize) -> bool;
+}
 
-    fn shuffle<T>(sample: &mut [T], count: usize, num_dims: usize, rng: &mut ThreadRng) {
-        for i in 0..count {
-            let other = i + rng.gen_range(0..(count - i));
-            for j in 0..num_dims {
-                sample.swap(num_dims * i + j, num_dims * other + j);
-            }
+pub fn shuffle<T>(sample: &mut [T], count: usize, num_dims: usize, rng: &mut StdRng) {
+    for i in 0..count {
+        let other = i + rng.gen_range(0..(count - i));
+        for j in 0..num_dims {
+            sample.swap(num_dims * i + j, num_dims * other + j);
         }
     }
 }

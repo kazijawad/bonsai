@@ -156,4 +156,8 @@ impl<'a> Camera for OrthographicCamera<'a> {
 
         1.0
     }
+
+    fn get_film(&self) -> &Film {
+        self.film
+    }
 }

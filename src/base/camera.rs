@@ -1,4 +1,5 @@
 use crate::{
+    base::film::Film,
     geometries::{
         point2::Point2,
         ray::{Ray, RayDifferential},
@@ -68,4 +69,6 @@ pub trait Camera: Send + Sync {
         diff.has_differentials = true;
         weight
     }
+
+    fn get_film(&self) -> &Film;
 }

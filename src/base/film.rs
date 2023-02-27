@@ -121,6 +121,13 @@ impl Film {
         }
     }
 
+    pub fn sample_bounds(&self) -> Bounds2 {
+        Bounds2::new(
+            &(self.bounds.min + Vec2::new(0.5, 0.5) - self.filter.radius()).floor(),
+            &(self.bounds.max - Vec2::new(0.5, 0.5) + self.filter.radius()).ceil(),
+        )
+    }
+
     pub fn create_film_tile(&self, bounds: &Bounds2) -> Box<FilmTile> {
         // Bound image pixels that samples in bounds contribute to.
         let half_pixel = Vec2::new(0.5, 0.5);
@@ -212,13 +219,6 @@ impl Film {
         let width = self.bounds.max.x - self.bounds.min.x;
         let offset = (point.x - self.bounds.min.x) + (point.y - self.bounds.min.y) * width;
         offset as usize
-    }
-
-    fn sample_bounds(&self) -> Bounds2 {
-        Bounds2::new(
-            &(self.bounds.min + Vec2::new(0.5, 0.5) - self.filter.radius()).floor(),
-            &(self.bounds.max - Vec2::new(0.5, 0.5) + self.filter.radius()).ceil(),
-        )
     }
 }
 
