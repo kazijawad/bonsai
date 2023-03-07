@@ -54,7 +54,7 @@ impl SpecularTransmission {
 
 impl BxDF for SpecularReflection {
     fn f(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
-        Spectrum::new(0.0)
+        Spectrum::default()
     }
 
     fn sample_f(
@@ -81,7 +81,7 @@ impl BxDF for SpecularReflection {
 
 impl BxDF for SpecularTransmission {
     fn f(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
-        Spectrum::new(0.0)
+        Spectrum::default()
     }
 
     fn sample_f(
@@ -104,7 +104,7 @@ impl BxDF for SpecularTransmission {
             eta_i / eta_t,
             wi,
         ) {
-            return Spectrum::new(0.0);
+            return Spectrum::default();
         }
 
         *pdf = 1.0;

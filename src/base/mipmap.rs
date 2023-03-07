@@ -57,7 +57,7 @@ impl MIPMap {
                     let s = s as usize;
 
                     // Compute texel (s, t) in s-zoomed image.
-                    resampled[sample_i] = RGBSpectrum::new(0.0);
+                    resampled[sample_i] = RGBSpectrum::default();
 
                     for j in 0..4usize {
                         let mut offset = s_weights[s].offset + j as i32;
@@ -84,7 +84,7 @@ impl MIPMap {
                     let sample_i = (t * res_pow2_x + s) as usize;
                     let t = t as usize;
 
-                    resampled[sample_i] = RGBSpectrum::new(0.0);
+                    resampled[sample_i] = RGBSpectrum::default();
 
                     for j in 0..4 {
                         let mut offset = t_weights[t].offset + j;

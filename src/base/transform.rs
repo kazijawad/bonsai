@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, ops, ptr};
+use std::{cmp::Ordering, ops};
 
 use crate::{
     geometries::{
@@ -20,7 +20,7 @@ pub struct Transform {
     pub m_inverse: Mat4,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct AnimatedTransform<'a> {
     start_transform: &'a Transform,
     end_transform: &'a Transform,
@@ -38,7 +38,7 @@ pub struct AnimatedTransform<'a> {
     c5: Option<Vec<DerivativeTerm>>,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 struct DerivativeTerm {
     kc: Float,
     kx: Float,
@@ -455,7 +455,7 @@ impl<'a> AnimatedTransform<'a> {
         end_transform: &'a Transform,
         end_time: Float,
     ) -> Self {
-        if ptr::eq(start_transform, end_transform) {
+        if start_transform == end_transform {
             return Self {
                 start_transform,
                 start_time,
@@ -1833,8 +1833,6 @@ impl DerivativeTerm {
     }
 }
 
-// DEFAULTS
-
 impl Default for Transform {
     fn default() -> Self {
         Self {
@@ -1854,8 +1852,6 @@ impl Default for DerivativeTerm {
         }
     }
 }
-
-// TYPE CONVERSION
 
 impl From<Quaternion> for Transform {
     fn from(q: Quaternion) -> Self {
@@ -1887,8 +1883,6 @@ impl From<Quaternion> for Transform {
     }
 }
 
-// MULTIPLICATION
-
 impl ops::Mul for Transform {
     type Output = Self;
 
@@ -1911,8 +1905,6 @@ impl ops::Mul for &Transform {
     }
 }
 
-// ORDERING
-
 impl PartialOrd for Transform {
     fn lt(&self, other: &Self) -> bool {
         for i in 0..4 {
@@ -1928,7 +1920,7 @@ impl PartialOrd for Transform {
         false
     }
 
-    fn partial_cmp(&self, _other: &Self) -> Option<Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         None
     }
 }

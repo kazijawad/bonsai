@@ -1,7 +1,7 @@
 use crate::{
     base::{
         interaction::Interaction,
-        light::{Light, LightFlags, VisibilityTester, DELTA_POSITION},
+        light::{Light, LightFlag, VisibilityTester},
         spectrum::Spectrum,
         transform::Transform,
     },
@@ -15,7 +15,7 @@ pub struct PointLight {
     world_to_light: Transform,
     position: Point3,
     intensity: Spectrum,
-    flags: LightFlags,
+    flag: LightFlag,
 }
 
 impl PointLight {
@@ -27,7 +27,7 @@ impl PointLight {
             world_to_light,
             position,
             intensity,
-            flags: DELTA_POSITION,
+            flag: LightFlag::DeltaPosition,
         }
     }
 }
@@ -66,5 +66,9 @@ impl Light for PointLight {
 
     fn pdf_le(&self, ray: &Ray, light_norm: Normal, pdf_pos: &mut Float, pdf_dir: &mut Float) {
         todo!()
+    }
+
+    fn flag(&self) -> LightFlag {
+        self.flag
     }
 }

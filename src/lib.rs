@@ -58,6 +58,7 @@ pub use shapes::{
     cone::Cone, cylinder::Cylinder, disk::Disk, hyperboloid::Hyperboloid, paraboloid::Paraboloid,
     sphere::Sphere, triangle::Triangle,
 };
+pub use spectra::{rgb::RGBSpectrum, sampled::SampledSpectrum};
 pub use textures::{
     checkerboard::Checkerboard2DTexture, constant::ConstantTexture, dots::DotsTexture,
     image::ImageTexture, uv::UVTexture,

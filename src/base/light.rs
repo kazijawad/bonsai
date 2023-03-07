@@ -1,25 +1,17 @@
 use std::fmt::Debug;
 
 use crate::{
-    base::{
-        interaction::Interaction,
-        primitive::Primitive,
-        scene::Scene,
-        spectrum::{CoefficientSpectrum, Spectrum},
-    },
+    base::{interaction::Interaction, primitive::Primitive, scene::Scene, spectrum::Spectrum},
     geometries::{normal::Normal, point2::Point2, ray::Ray, ray::RayDifferential, vec3::Vec3},
     utils::math::Float,
 };
 
-pub type LightFlags = u8;
-
-pub const DELTA_POSITION: LightFlags = 1;
-pub const DELTA_DIRECTION: LightFlags = 2;
-pub const AREA: LightFlags = 4;
-pub const INFINITE: LightFlags = 8;
-
-pub fn is_delta_light(flags: LightFlags) -> bool {
-    flags & DELTA_POSITION != 0 || flags & DELTA_DIRECTION != 0
+#[derive(Debug, Clone, Copy)]
+pub enum LightFlag {
+    DeltaPosition,
+    DeltaDirection,
+    Area,
+    Infinite,
 }
 
 pub trait Light: Debug + Send + Sync {
@@ -38,7 +30,7 @@ pub trait Light: Debug + Send + Sync {
     fn pdf_li(&self, it: &dyn Interaction, wi: &Vec3) -> Float;
 
     fn le(&self, ray: &RayDifferential) -> Spectrum {
-        Spectrum::new(0.0)
+        Spectrum::default()
     }
 
     fn sample_le(
@@ -53,6 +45,19 @@ pub trait Light: Debug + Send + Sync {
     ) -> Spectrum;
 
     fn pdf_le(&self, ray: &Ray, light_norm: Normal, pdf_pos: &mut Float, pdf_dir: &mut Float);
+
+    fn flag(&self) -> LightFlag;
+
+    fn is_delta_flag(&self) -> bool {
+        let flag = self.flag();
+        if let LightFlag::DeltaPosition = flag {
+            true
+        } else if let LightFlag::DeltaDirection = flag {
+            true
+        } else {
+            false
+        }
+    }
 }
 
 pub struct VisibilityTester {

@@ -1,7 +1,7 @@
 use crate::{
     base::{
         bxdf::{BxDF, BxDFType, BSDF_REFLECTION, BSDF_TRANSMISSION},
-        spectrum::{CoefficientSpectrum, Spectrum},
+        spectrum::Spectrum,
     },
     geometries::{normal::Normal, point2::Point2, vec3::Vec3},
     interactions::surface::SurfaceInteraction,
@@ -71,11 +71,11 @@ impl BSDF {
         let wo = self.world_to_local(wo_world);
         let wi = self.world_to_local(wi_world);
         if wo.z == 0.0 {
-            return Spectrum::new(0.0);
+            return Spectrum::default();
         }
 
         let to_reflect = wi_world.dot(&self.ng.into()) * wo_world.dot(&self.ng.into()) > 0.0;
-        let mut f = Spectrum::new(0.0);
+        let mut f = Spectrum::default();
         for b in self.bxdfs.iter() {
             if b.matches_flags(flags)
                 && ((to_reflect && b.matches_flags(BSDF_REFLECTION))
@@ -96,7 +96,7 @@ impl BSDF {
         flags: BxDFType,
     ) -> Spectrum {
         let wo = self.world_to_local(wo);
-        let mut ret = Spectrum::new(0.0);
+        let mut ret = Spectrum::default();
         for b in self.bxdfs.iter() {
             if b.matches_flags(flags) {
                 ret += b.rho_hd(&wo, num_samples, samples);
@@ -112,7 +112,7 @@ impl BSDF {
         u2: &[Point2],
         flags: BxDFType,
     ) -> Spectrum {
-        let mut ret = Spectrum::new(0.0);
+        let mut ret = Spectrum::default();
         for b in self.bxdfs.iter() {
             if b.matches_flags(flags) {
                 ret += b.rho_hh(num_samples, u1, u2);

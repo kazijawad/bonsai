@@ -168,7 +168,7 @@ impl Add for RGBSpectrum {
 
     fn add(self, rhs: Self) -> Self::Output {
         debug_assert!(!self.is_nan() && !rhs.is_nan());
-        Self {
+        Self::Output {
             components: [self[0] + rhs[0], self[1] + rhs[1], self[2] + rhs[2]],
         }
     }
@@ -179,8 +179,52 @@ impl Add for &RGBSpectrum {
 
     fn add(self, rhs: Self) -> Self::Output {
         debug_assert!(!self.is_nan() && !rhs.is_nan());
-        RGBSpectrum {
+        Self::Output {
             components: [self[0] + rhs[0], self[1] + rhs[1], self[2] + rhs[2]],
+        }
+    }
+}
+
+impl Add<Float> for RGBSpectrum {
+    type Output = Self;
+
+    fn add(self, rhs: Float) -> Self::Output {
+        debug_assert!(!self.is_nan() && !rhs.is_nan());
+        Self::Output {
+            components: [self[0] + rhs, self[1] + rhs, self[2] + rhs],
+        }
+    }
+}
+
+impl Add<&Float> for &RGBSpectrum {
+    type Output = RGBSpectrum;
+
+    fn add(self, rhs: &Float) -> Self::Output {
+        debug_assert!(!self.is_nan() && !rhs.is_nan());
+        Self::Output {
+            components: [self[0] + rhs, self[1] + rhs, self[2] + rhs],
+        }
+    }
+}
+
+impl Add<RGBSpectrum> for Float {
+    type Output = RGBSpectrum;
+
+    fn add(self, rhs: RGBSpectrum) -> Self::Output {
+        debug_assert!(!self.is_nan() && !rhs.is_nan());
+        Self::Output {
+            components: [self + rhs[0], self + rhs[1], self + rhs[2]],
+        }
+    }
+}
+
+impl Add<&RGBSpectrum> for &Float {
+    type Output = RGBSpectrum;
+
+    fn add(self, rhs: &RGBSpectrum) -> Self::Output {
+        debug_assert!(!self.is_nan() && !rhs.is_nan());
+        Self::Output {
+            components: [self + rhs[0], self + rhs[1], self + rhs[2]],
         }
     }
 }
@@ -194,12 +238,21 @@ impl AddAssign for RGBSpectrum {
     }
 }
 
+impl AddAssign<Float> for RGBSpectrum {
+    fn add_assign(&mut self, rhs: Float) {
+        debug_assert!(!self.is_nan() && !rhs.is_nan());
+        self[0] += rhs;
+        self[1] += rhs;
+        self[2] += rhs;
+    }
+}
+
 impl Sub for RGBSpectrum {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
         debug_assert!(!self.is_nan() && !rhs.is_nan());
-        Self {
+        Self::Output {
             components: [self[0] - rhs[0], self[1] - rhs[1], self[2] - rhs[2]],
         }
     }
@@ -210,8 +263,52 @@ impl Sub for &RGBSpectrum {
 
     fn sub(self, rhs: Self) -> Self::Output {
         debug_assert!(!self.is_nan() && !rhs.is_nan());
-        RGBSpectrum {
+        Self::Output {
             components: [self[0] - rhs[0], self[1] - rhs[1], self[2] - rhs[2]],
+        }
+    }
+}
+
+impl Sub<Float> for RGBSpectrum {
+    type Output = Self;
+
+    fn sub(self, rhs: Float) -> Self::Output {
+        debug_assert!(!self.is_nan() && !rhs.is_nan());
+        Self::Output {
+            components: [self[0] - rhs, self[1] - rhs, self[2] - rhs],
+        }
+    }
+}
+
+impl Sub<&Float> for &RGBSpectrum {
+    type Output = RGBSpectrum;
+
+    fn sub(self, rhs: &Float) -> Self::Output {
+        debug_assert!(!self.is_nan() && !rhs.is_nan());
+        Self::Output {
+            components: [self[0] - rhs, self[1] - rhs, self[2] - rhs],
+        }
+    }
+}
+
+impl Sub<RGBSpectrum> for Float {
+    type Output = RGBSpectrum;
+
+    fn sub(self, rhs: RGBSpectrum) -> Self::Output {
+        debug_assert!(!self.is_nan() && !rhs.is_nan());
+        Self::Output {
+            components: [self - rhs[0], self - rhs[1], self - rhs[2]],
+        }
+    }
+}
+
+impl Sub<&RGBSpectrum> for &Float {
+    type Output = RGBSpectrum;
+
+    fn sub(self, rhs: &RGBSpectrum) -> Self::Output {
+        debug_assert!(!self.is_nan() && !rhs.is_nan());
+        Self::Output {
+            components: [self - rhs[0], self - rhs[1], self - rhs[2]],
         }
     }
 }
@@ -225,12 +322,21 @@ impl SubAssign for RGBSpectrum {
     }
 }
 
+impl SubAssign<Float> for RGBSpectrum {
+    fn sub_assign(&mut self, rhs: Float) {
+        debug_assert!(!self.is_nan() && !rhs.is_nan());
+        self[0] -= rhs;
+        self[1] -= rhs;
+        self[2] -= rhs;
+    }
+}
+
 impl Mul for RGBSpectrum {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
         debug_assert!(!self.is_nan() && !rhs.is_nan());
-        Self {
+        Self::Output {
             components: [self[0] * rhs[0], self[1] * rhs[1], self[2] * rhs[2]],
         }
     }
@@ -241,7 +347,7 @@ impl Mul for &RGBSpectrum {
 
     fn mul(self, rhs: Self) -> Self::Output {
         debug_assert!(!self.is_nan() && !rhs.is_nan());
-        RGBSpectrum {
+        Self::Output {
             components: [self[0] * rhs[0], self[1] * rhs[1], self[2] * rhs[2]],
         }
     }
@@ -252,8 +358,41 @@ impl Mul<Float> for RGBSpectrum {
 
     fn mul(self, rhs: Float) -> Self::Output {
         debug_assert!(!self.is_nan() && !rhs.is_nan());
-        Self {
+        Self::Output {
             components: [self[0] * rhs, self[1] * rhs, self[2] * rhs],
+        }
+    }
+}
+
+impl Mul<&Float> for &RGBSpectrum {
+    type Output = RGBSpectrum;
+
+    fn mul(self, rhs: &Float) -> Self::Output {
+        debug_assert!(!self.is_nan() && !rhs.is_nan());
+        Self::Output {
+            components: [self[0] * rhs, self[1] * rhs, self[2] * rhs],
+        }
+    }
+}
+
+impl Mul<RGBSpectrum> for Float {
+    type Output = RGBSpectrum;
+
+    fn mul(self, rhs: RGBSpectrum) -> Self::Output {
+        debug_assert!(!self.is_nan() && !rhs.is_nan());
+        Self::Output {
+            components: [self * rhs[0], self * rhs[1], self * rhs[2]],
+        }
+    }
+}
+
+impl Mul<&RGBSpectrum> for &Float {
+    type Output = RGBSpectrum;
+
+    fn mul(self, rhs: &RGBSpectrum) -> Self::Output {
+        debug_assert!(!self.is_nan() && !rhs.is_nan());
+        Self::Output {
+            components: [self * rhs[0], self * rhs[1], self * rhs[2]],
         }
     }
 }
@@ -281,7 +420,7 @@ impl Div for RGBSpectrum {
 
     fn div(self, rhs: Self) -> Self::Output {
         debug_assert!(!self.is_nan() && !rhs.is_nan());
-        Self {
+        Self::Output {
             components: [self[0] / rhs[0], self[1] / rhs[1], self[2] / rhs[2]],
         }
     }
@@ -292,7 +431,7 @@ impl Div for &RGBSpectrum {
 
     fn div(self, rhs: Self) -> Self::Output {
         debug_assert!(!self.is_nan() && !rhs.is_nan());
-        RGBSpectrum {
+        Self::Output {
             components: [self[0] / rhs[0], self[1] / rhs[1], self[2] / rhs[2]],
         }
     }
@@ -304,8 +443,42 @@ impl Div<Float> for RGBSpectrum {
     fn div(self, rhs: Float) -> Self::Output {
         debug_assert!(!self.is_nan() && !rhs.is_nan() && rhs != 0.0);
         let inverse = 1.0 / rhs;
-        Self {
-            components: [self[0] * rhs, self[1] * rhs, self[2] * rhs],
+        Self::Output {
+            components: [self[0] * inverse, self[1] * inverse, self[2] * inverse],
+        }
+    }
+}
+
+impl Div<&Float> for &RGBSpectrum {
+    type Output = RGBSpectrum;
+
+    fn div(self, rhs: &Float) -> Self::Output {
+        debug_assert!(!self.is_nan() && !rhs.is_nan() && (*rhs) != 0.0);
+        let inverse = 1.0 / rhs;
+        Self::Output {
+            components: [self[0] * inverse, self[1] * inverse, self[2] * inverse],
+        }
+    }
+}
+
+impl Div<RGBSpectrum> for Float {
+    type Output = RGBSpectrum;
+
+    fn div(self, rhs: RGBSpectrum) -> Self::Output {
+        debug_assert!(!self.is_nan() && !rhs.is_nan() && rhs != RGBSpectrum::default());
+        Self::Output {
+            components: [self / rhs[0], self / rhs[1], self / rhs[2]],
+        }
+    }
+}
+
+impl Div<&RGBSpectrum> for &Float {
+    type Output = RGBSpectrum;
+
+    fn div(self, rhs: &RGBSpectrum) -> Self::Output {
+        debug_assert!(!self.is_nan() && !rhs.is_nan() && rhs != &RGBSpectrum::default());
+        Self::Output {
+            components: [self / rhs[0], self / rhs[1], self / rhs[2]],
         }
     }
 }
@@ -334,7 +507,18 @@ impl Neg for RGBSpectrum {
 
     fn neg(self) -> Self::Output {
         debug_assert!(!self.is_nan());
-        Self {
+        Self::Output {
+            components: [-self[0], -self[1], -self[2]],
+        }
+    }
+}
+
+impl Neg for &RGBSpectrum {
+    type Output = RGBSpectrum;
+
+    fn neg(self) -> Self::Output {
+        debug_assert!(!self.is_nan());
+        Self::Output {
             components: [-self[0], -self[1], -self[2]],
         }
     }
@@ -351,6 +535,142 @@ impl Index<usize> for RGBSpectrum {
 
 impl IndexMut<usize> for RGBSpectrum {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        debug_assert!(index < Self::NUM_SAMPLES);
         &mut self.components[index]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{base::spectrum::CoefficientSpectrum, spectra::rgb::RGBSpectrum};
+
+    #[test]
+    fn add() {
+        let a = RGBSpectrum::new(1.0);
+        let b = RGBSpectrum::new(2.0);
+        let c = RGBSpectrum::new(3.0);
+
+        let x = 2.0;
+
+        assert_eq!(a + b, c);
+        assert_eq!(&a + &b, c);
+
+        assert_eq!(a + x, c);
+        assert_eq!(&a + &x, c);
+
+        assert_eq!(x + a, c);
+        assert_eq!(&x + &a, c);
+    }
+
+    #[test]
+    fn add_assign() {
+        let mut a = RGBSpectrum::new(1.0);
+        a += RGBSpectrum::new(1.0);
+        a += 3.0;
+        assert_eq!(a, RGBSpectrum::new(5.0));
+    }
+
+    #[test]
+    fn sub() {
+        let a = RGBSpectrum::new(1.0);
+        let b = RGBSpectrum::new(2.0);
+        let c = RGBSpectrum::new(3.0);
+
+        let x = 2.0;
+
+        assert_eq!(c - b, a);
+        assert_eq!(&c - &b, a);
+
+        assert_eq!(c - x, a);
+        assert_eq!(&c - &x, a);
+
+        assert_eq!(x - a, a);
+        assert_eq!(&x - &a, a);
+    }
+
+    #[test]
+    fn sub_assign() {
+        let mut a = RGBSpectrum::new(3.0);
+        a -= RGBSpectrum::new(2.0);
+        a -= 5.0;
+        assert_eq!(a, RGBSpectrum::new(-4.0));
+    }
+
+    #[test]
+    fn mul() {
+        let a = RGBSpectrum::new(1.0);
+        let b = RGBSpectrum::new(2.0);
+        let c = RGBSpectrum::new(2.0);
+
+        let x = 2.0;
+
+        assert_eq!(a * b, c);
+        assert_eq!(&a * &b, c);
+
+        assert_eq!(a * x, c);
+        assert_eq!(&a * &x, c);
+
+        assert_eq!(x * a, c);
+        assert_eq!(&x * &a, c);
+    }
+
+    #[test]
+    fn mul_assign() {
+        let mut a = RGBSpectrum::new(1.0);
+        a *= RGBSpectrum::new(2.0);
+        a *= 2.0;
+        assert_eq!(a, RGBSpectrum::new(4.0));
+    }
+
+    #[test]
+    fn div() {
+        let a = RGBSpectrum::new(1.0);
+        let b = RGBSpectrum::new(2.0);
+        let c = RGBSpectrum::new(0.5);
+
+        let x = 2.0;
+
+        assert_eq!(a / b, c);
+        assert_eq!(&a / &b, c);
+
+        assert_eq!(a / x, c);
+        assert_eq!(&a / &x, c);
+
+        assert_eq!(x / a, 1.0 / c);
+        assert_eq!(&x / &a, 1.0 / c);
+    }
+
+    #[test]
+    fn div_assign() {
+        let mut a = RGBSpectrum::new(1.0);
+        a /= RGBSpectrum::new(2.0);
+        a /= 2.0;
+        assert_eq!(a, RGBSpectrum::new(0.25));
+    }
+
+    #[test]
+    fn neg() {
+        let a = -RGBSpectrum::new(1.0);
+        let b = -&RGBSpectrum::new(1.0);
+        let c = RGBSpectrum::new(-1.0);
+        assert_eq!(a, c);
+        assert_eq!(b, c);
+    }
+
+    #[test]
+    fn index() {
+        let a = RGBSpectrum::new(0.5);
+        assert_eq!(a[0], 0.5);
+        assert_eq!(a[1], 0.5);
+        assert_eq!(a[2], 0.5);
+    }
+
+    #[test]
+    fn index_mut() {
+        let mut a = RGBSpectrum::new(0.5);
+        a[1] -= 0.5;
+        assert_eq!(a[0], 0.5);
+        assert_eq!(a[1], 0.0);
+        assert_eq!(a[2], 0.5);
     }
 }

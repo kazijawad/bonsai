@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use crate::utils::math::{find_interval, lerp, Float};
 
 cfg_if::cfg_if! {
@@ -8,6 +10,7 @@ cfg_if::cfg_if! {
     }
 }
 
+#[derive(Debug)]
 pub enum SpectrumType {
     Reflectance,
     Illuminant,
@@ -17,7 +20,7 @@ pub enum SpectrumType {
 pub type XYZ = [Float; 3];
 pub type RGB = [Float; 3];
 
-pub trait CoefficientSpectrum: Send + Sync {
+pub trait CoefficientSpectrum: Debug + Default + Send + Sync {
     const NUM_SAMPLES: usize;
 
     fn init() {}

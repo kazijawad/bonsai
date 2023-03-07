@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{
     base::{
-        light::{Light, INFINITE},
+        light::{Light, LightFlag},
         material::TransportMode,
         primitive::Primitive,
     },
@@ -29,7 +29,7 @@ impl<'a> Scene<'a> {
 
         for light in scene.lights.iter() {
             light.preprocess(&scene);
-            if light.get_flags() & INFINITE != 0 {
+            if let LightFlag::Infinite = light.flag() {
                 scene.infinite_lights.push(light.clone());
             }
         }

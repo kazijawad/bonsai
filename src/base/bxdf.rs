@@ -43,7 +43,7 @@ pub trait BxDF: Debug + Send + Sync + DynClone {
     }
 
     fn rho_hd(&self, wo: &Vec3, num_samples: usize, samples: &[Point2]) -> Spectrum {
-        let mut reflection_factor = Spectrum::new(0.0);
+        let mut reflection_factor = Spectrum::default();
 
         for i in 0..num_samples {
             let mut wi = Vec3::default();
@@ -58,7 +58,7 @@ pub trait BxDF: Debug + Send + Sync + DynClone {
     }
 
     fn rho_hh(&self, num_samples: usize, u1: &[Point2], u2: &[Point2]) -> Spectrum {
-        let mut reflection_factor = Spectrum::new(0.0);
+        let mut reflection_factor = Spectrum::default();
 
         for i in 0..num_samples {
             let wo = uniform_sample_hemisphere(&u1[i]);
