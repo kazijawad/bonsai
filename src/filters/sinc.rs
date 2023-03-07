@@ -17,10 +17,10 @@ pub struct LanczosSincFilterDescriptior {
 }
 
 impl LanczosSincFilter {
-    pub fn create(options: LanczosSincFilterDescriptior) -> Self {
-        let x_width = options.x_width.unwrap_or(4.0);
-        let y_width = options.y_width.unwrap_or(4.0);
-        let tau = options.tau.unwrap_or(3.0);
+    pub fn create(desc: LanczosSincFilterDescriptior) -> Self {
+        let x_width = desc.x_width.unwrap_or(4.0);
+        let y_width = desc.y_width.unwrap_or(4.0);
+        let tau = desc.tau.unwrap_or(3.0);
         Self::new(Vec2::new(x_width, y_width), tau)
     }
 

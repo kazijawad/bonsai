@@ -13,7 +13,7 @@ use crate::{
     },
 };
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct MicrofacetReflection {
     bxdf_type: BxDFType,
     r: Spectrum,
@@ -21,7 +21,7 @@ pub struct MicrofacetReflection {
     fresnel: Box<dyn Fresnel>,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct MicrofactTransmission {
     bxdf_type: BxDFType,
     t: Spectrum,

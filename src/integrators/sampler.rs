@@ -1,7 +1,3 @@
-use std::sync::Arc;
-
-use rayon::prelude::*;
-
 use crate::{
     base::{
         camera::Camera, integrator::Integrator, sampler::Sampler, scene::Scene, spectrum::Spectrum,

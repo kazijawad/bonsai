@@ -14,7 +14,7 @@ use crate::{
     utils::math::{self, Float},
 };
 
-#[derive(Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Transform {
     pub m: Mat4,
     pub m_inverse: Mat4,
@@ -81,23 +81,6 @@ impl<'a> Transform {
         // Scale canonical perspective view to specified field of view.
         let inverse_tan_angle = 1.0 / (fov.to_radians() / 2.0).tan();
         Self::scale(inverse_tan_angle, inverse_tan_angle, 1.0) * Self::new(mat, inverse_mat)
-    }
-
-    pub fn transform_point(&self, p: &Point3) -> Point3 {
-        let x = p.x;
-        let y = p.y;
-        let z = p.z;
-
-        let xp = self.m.m[0][0] * x + self.m.m[0][1] * y + self.m.m[0][2] * z + self.m.m[0][3];
-        let yp = self.m.m[1][0] * x + self.m.m[1][1] * y + self.m.m[1][2] * z + self.m.m[1][3];
-        let zp = self.m.m[2][0] * x + self.m.m[2][1] * y + self.m.m[2][2] * z + self.m.m[2][3];
-        let wp = self.m.m[3][0] * x + self.m.m[3][1] * y + self.m.m[3][2] * z + self.m.m[3][3];
-
-        if wp == 1.0 {
-            Point3::new(xp, yp, zp)
-        } else {
-            Point3::new(xp, yp, zp) / wp
-        }
     }
 
     pub fn transform_point_with_error(&self, p: &Point3, error: &mut Vec3) -> Point3 {
@@ -271,22 +254,22 @@ impl<'a> Transform {
         let tr = self.transform_ray(&Ray::from(r.clone()));
         let mut ret = RayDifferential::new(&tr.origin, &tr.direction, tr.t_max, tr.time);
         ret.has_differentials = r.has_differentials;
-        ret.rx_origin = self.transform_point(&r.rx_origin);
-        ret.ry_origin = self.transform_point(&r.ry_origin);
+        ret.rx_origin = r.rx_origin.transform(self);
+        ret.ry_origin = r.ry_origin.transform(self);
         ret.rx_direction = self.transform_vec(&r.rx_direction);
         ret.ry_direction = self.transform_vec(&r.ry_direction);
         ret
     }
 
     pub fn transform_bounds(&self, b: &Bounds3) -> Bounds3 {
-        let mut ret = Bounds3::from(self.transform_point(&Point3::new(b.min.x, b.min.y, b.min.z)));
-        ret = ret.union_point(&self.transform_point(&Point3::new(b.max.x, b.min.y, b.min.z)));
-        ret = ret.union_point(&self.transform_point(&Point3::new(b.min.x, b.max.y, b.min.z)));
-        ret = ret.union_point(&self.transform_point(&Point3::new(b.min.x, b.min.y, b.max.z)));
-        ret = ret.union_point(&self.transform_point(&Point3::new(b.min.x, b.max.y, b.max.z)));
-        ret = ret.union_point(&self.transform_point(&Point3::new(b.max.x, b.max.y, b.min.z)));
-        ret = ret.union_point(&self.transform_point(&Point3::new(b.max.x, b.min.y, b.max.z)));
-        ret = ret.union_point(&self.transform_point(&Point3::new(b.max.x, b.max.y, b.max.z)));
+        let mut ret = Bounds3::from(Point3::new(b.min.x, b.min.y, b.min.z).transform(self));
+        ret = ret.union_point(&Point3::new(b.max.x, b.min.y, b.min.z).transform(self));
+        ret = ret.union_point(&Point3::new(b.min.x, b.max.y, b.min.z).transform(self));
+        ret = ret.union_point(&Point3::new(b.min.x, b.min.y, b.max.z).transform(self));
+        ret = ret.union_point(&Point3::new(b.min.x, b.max.y, b.max.z).transform(self));
+        ret = ret.union_point(&Point3::new(b.max.x, b.max.y, b.min.z).transform(self));
+        ret = ret.union_point(&Point3::new(b.max.x, b.min.y, b.max.z).transform(self));
+        ret = ret.union_point(&Point3::new(b.max.x, b.max.y, b.max.z).transform(self));
         ret
     }
 
@@ -1745,13 +1728,13 @@ impl<'a> AnimatedTransform<'a> {
 
     pub fn transform_point(&self, p: &Point3, time: Float) -> Point3 {
         if !self.is_animated || time <= self.start_time {
-            self.start_transform.transform_point(p)
+            p.transform(self.start_transform)
         } else if time >= self.end_time {
-            self.end_transform.transform_point(p)
+            p.transform(self.end_transform)
         } else {
             let mut t = Transform::default();
             self.interpolate(time, &mut t);
-            t.transform_point(p)
+            p.transform(&t)
         }
     }
 
@@ -1786,12 +1769,12 @@ impl<'a> AnimatedTransform<'a> {
 
     pub fn bound_point_motion(&self, p: &Point3) -> Bounds3 {
         if !self.is_animated {
-            return Bounds3::from(self.start_transform.transform_point(p));
+            return Bounds3::from(p.transform(self.start_transform));
         }
 
         let mut bounds = Bounds3::new(
-            &self.start_transform.transform_point(p),
-            &self.end_transform.transform_point(p),
+            &p.transform(self.start_transform),
+            &p.transform(self.end_transform),
         );
 
         let rotation = self.rotation.as_ref().unwrap();

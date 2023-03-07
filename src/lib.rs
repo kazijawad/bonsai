@@ -10,6 +10,7 @@ mod filters;
 mod geometries;
 mod integrators;
 mod interactions;
+mod lights;
 mod materials;
 mod primitives;
 mod samplers;
@@ -20,7 +21,6 @@ mod utils;
 
 pub use accelerators::bvh::BVH;
 pub use base::{
-    aggregate::Aggregate,
     camera::Camera,
     film::{Film, FilmDescriptor},
     filter::Filter,
@@ -55,8 +55,8 @@ pub use materials::{matte::MatteMaterial, plastic::PlasticMaterial};
 pub use primitives::{geometric::GeometricPrimitive, transformed::TransformedPrimitive};
 pub use samplers::stratified::StratifiedSampler;
 pub use shapes::{
-    cone::Cone, curve::Curve, cylinder::Cylinder, disk::Disk, hyperboloid::Hyperboloid,
-    paraboloid::Paraboloid, sphere::Sphere, triangle::Triangle,
+    cone::Cone, cylinder::Cylinder, disk::Disk, hyperboloid::Hyperboloid, paraboloid::Paraboloid,
+    sphere::Sphere, triangle::Triangle,
 };
 pub use textures::{
     checkerboard::Checkerboard2DTexture, constant::ConstantTexture, dots::DotsTexture,

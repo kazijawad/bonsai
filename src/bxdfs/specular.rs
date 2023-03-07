@@ -12,14 +12,14 @@ use crate::{
     },
 };
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct SpecularReflection {
     bxdf_type: BxDFType,
     r: Spectrum,
     fresnel: Box<dyn Fresnel>,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct SpecularTransmission {
     bxdf_type: BxDFType,
     t: Spectrum,

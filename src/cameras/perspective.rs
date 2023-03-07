@@ -67,18 +67,9 @@ impl<'a> PerspectiveCamera<'a> {
         let raster_to_camera = &camera_to_screen.inverse() * &raster_to_screen;
 
         // Compute differential changes in origin for perspective camera rays.
-        let dx_camera = raster_to_camera.transform_point(&Point3::new(1.0, 0.0, 0.0))
-            - raster_to_camera.transform_point(&Point3::default());
-        let dy_camera = raster_to_camera.transform_point(&Point3::new(0.0, 1.0, 0.0))
-            - raster_to_camera.transform_point(&Point3::default());
-
-        // Compute image plane bounds at z = 1.
-        let resolution = film.full_resolution;
-        let mut point_min = raster_to_camera.transform_point(&Point3::default());
-        let mut point_max =
-            raster_to_camera.transform_point(&Point3::new(resolution.x, resolution.y, 0.0));
-        point_min /= point_min.z;
-        point_max /= point_max.z;
+        let origin_point = Point3::default().transform(&raster_to_camera);
+        let dx_camera = Point3::new(1.0, 0.0, 0.0).transform(&raster_to_camera) - origin_point;
+        let dy_camera = Point3::new(0.0, 1.0, 0.0).transform(&raster_to_camera) - origin_point;
 
         Self {
             camera_to_world,
@@ -101,7 +92,7 @@ impl<'a> Camera for PerspectiveCamera<'a> {
     fn generate_ray(&self, sample: &CameraSample, ray: &mut Ray) -> Float {
         // Compute raster and camera sample positions.
         let film_point = Point3::new(sample.film_point.x, sample.film_point.y, 0.0);
-        let camera_point = self.raster_to_camera.transform_point(&film_point);
+        let camera_point = film_point.transform(&self.raster_to_camera);
         *ray = Ray::new(
             &Point3::default(),
             &Vec3::from(camera_point).normalize(),
@@ -132,7 +123,7 @@ impl<'a> Camera for PerspectiveCamera<'a> {
     fn generate_ray_differential(&self, sample: &CameraSample, r: &mut RayDifferential) -> Float {
         // Compute raster and camera sample positions.
         let film_point = Point3::new(sample.film_point.x, sample.film_point.y, 0.0);
-        let camera_point = self.raster_to_camera.transform_point(&film_point);
+        let camera_point = film_point.transform(&self.raster_to_camera);
         *r = RayDifferential::new(
             &Point3::default(),
             &Vec3::from(camera_point).normalize(),

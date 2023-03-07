@@ -1,6 +1,6 @@
 use std::ops;
 
-use crate::{geometries::vec3::Vec3, utils::math::Float};
+use crate::{base::transform::Transform, geometries::vec3::Vec3, utils::math::Float};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Point3 {
@@ -17,6 +17,19 @@ impl Point3 {
 
     pub fn lerp(t: Float, a: &Self, b: &Self) -> Self {
         (1.0 - t) * a + t * b
+    }
+
+    pub fn transform(&self, t: &Transform) -> Self {
+        let xp = t.m.m[0][0] * self.x + t.m.m[0][1] * self.y + t.m.m[0][2] * self.z + t.m.m[0][3];
+        let yp = t.m.m[1][0] * self.x + t.m.m[1][1] * self.y + t.m.m[1][2] * self.z + t.m.m[1][3];
+        let zp = t.m.m[2][0] * self.x + t.m.m[2][1] * self.y + t.m.m[2][2] * self.z + t.m.m[2][3];
+        let wp = t.m.m[3][0] * self.x + t.m.m[3][1] * self.y + t.m.m[3][2] * self.z + t.m.m[3][3];
+
+        if wp == 1.0 {
+            Point3::new(xp, yp, zp)
+        } else {
+            Point3::new(xp, yp, zp) / wp
+        }
     }
 
     pub fn distance_squared(&self, p: &Self) -> Float {

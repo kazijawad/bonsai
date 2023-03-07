@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use dyn_clone::DynClone;
 
 use crate::{
@@ -8,7 +10,7 @@ use crate::{
     },
 };
 
-pub trait MicrofacetDistribution: Send + Sync + DynClone {
+pub trait MicrofacetDistribution: Debug + Send + Sync + DynClone {
     fn d(&self, wh: &Vec3) -> Float;
 
     fn lambda(&self, w: &Vec3) -> Float;
@@ -28,14 +30,14 @@ pub trait MicrofacetDistribution: Send + Sync + DynClone {
 
 dyn_clone::clone_trait_object!(MicrofacetDistribution);
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct BeckmannDistribution {
     sample_visible_area: bool,
     alpha_x: Float,
     alpha_y: Float,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct TrowbridgeReitzDistribution {
     sample_visible_area: bool,
     alpha_x: Float,

@@ -3,7 +3,7 @@ use std::mem;
 use itertools::partition;
 
 use crate::{
-    base::{aggregate::Aggregate, material::TransportMode, primitive::Primitive},
+    base::{material::TransportMode, primitive::Primitive},
     geometries::{bounds3::Bounds3, point3::Point3, ray::Ray, vec3::Vec3},
     interactions::surface::SurfaceInteraction,
 };
@@ -399,8 +399,6 @@ impl<'a> Primitive for BVH<'a> {
         panic!("Aggregate::compute_scattering_function should not be called")
     }
 }
-
-impl<'a> Aggregate for BVH<'a> {}
 
 impl BVHPrimitiveInfo {
     pub fn new(primitive_index: usize, bounds: Bounds3) -> Self {

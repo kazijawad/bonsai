@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use dyn_clone::DynClone;
 
 use crate::{
@@ -10,7 +12,7 @@ use crate::{
     },
 };
 
-pub type BxDFType = i32;
+pub type BxDFType = u8;
 
 pub const BSDF_REFLECTION: BxDFType = 1 << 0;
 pub const BSDF_TRANSMISSION: BxDFType = 1 << 1;
@@ -20,7 +22,7 @@ pub const BSDF_SPECULAR: BxDFType = 1 << 4;
 pub const BSDF_ALL: BxDFType =
     BSDF_DIFFUSE | BSDF_GLOSSY | BSDF_SPECULAR | BSDF_REFLECTION | BSDF_TRANSMISSION;
 
-pub trait BxDF: Send + Sync + DynClone {
+pub trait BxDF: Debug + Send + Sync + DynClone {
     fn f(&self, wo: &Vec3, wi: &Vec3) -> Spectrum;
 
     fn sample_f(

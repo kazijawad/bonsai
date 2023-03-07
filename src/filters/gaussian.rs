@@ -19,11 +19,8 @@ pub struct GaussianFilterDescriptior {
 }
 
 impl GaussianFilter {
-    pub fn create(descriptor: &GaussianFilterDescriptior) -> Self {
-        Self::new(
-            Vec2::new(descriptor.x_width, descriptor.y_width),
-            descriptor.alpha,
-        )
+    pub fn create(desc: &GaussianFilterDescriptior) -> Self {
+        Self::new(Vec2::new(desc.x_width, desc.y_width), desc.alpha)
     }
 
     pub fn new(radius: Vec2, alpha: Float) -> Self {

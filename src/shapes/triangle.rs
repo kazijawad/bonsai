@@ -49,7 +49,7 @@ impl<'a> TriangleMesh<'a> {
         // Convert mesh vertices to world space.
         let mut world_positions = Vec::with_capacity(positions.len());
         for i in 0..positions.len() {
-            world_positions[i] = object_to_world.transform_point(&positions[i]);
+            world_positions[i] = positions[i].transform(object_to_world);
         }
 
         let mut world_normals = Vec::with_capacity(normals.len());
@@ -105,15 +105,9 @@ impl<'a> Triangle<'a> {
 
 impl<'a> Shape for Triangle<'a> {
     fn object_bound(&self) -> Bounds3 {
-        let p0 = self
-            .world_to_object
-            .transform_point(&self.mesh.positions[self.vertex_index]);
-        let p1 = self
-            .world_to_object
-            .transform_point(&self.mesh.positions[self.vertex_index + 1]);
-        let p2 = self
-            .world_to_object
-            .transform_point(&self.mesh.positions[self.vertex_index + 2]);
+        let p0 = self.mesh.positions[self.vertex_index].transform(self.world_to_object);
+        let p1 = self.mesh.positions[self.vertex_index + 1].transform(self.world_to_object);
+        let p2 = self.mesh.positions[self.vertex_index + 2].transform(self.world_to_object);
 
         Bounds3::new(&p0, &p1).union_point(&p2)
     }

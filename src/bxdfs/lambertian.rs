@@ -11,13 +11,13 @@ use crate::{
     },
 };
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct LambertianReflection {
     bxdf_type: BxDFType,
     r: Spectrum,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct LambertianTransmission {
     bxdf_type: BxDFType,
     t: Spectrum,

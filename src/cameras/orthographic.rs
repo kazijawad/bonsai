@@ -77,7 +77,7 @@ impl<'a> Camera for OrthographicCamera<'a> {
     fn generate_ray(&self, sample: &CameraSample, ray: &mut Ray) -> Float {
         // Compute raster and camera sample positions.
         let film_point = Point3::new(sample.film_point.x, sample.film_point.y, 0.0);
-        let camera_point = self.raster_to_camera.transform_point(&film_point);
+        let camera_point = film_point.transform(&self.raster_to_camera);
         *ray = Ray::new(
             &camera_point,
             &Vec3::new(0.0, 0.0, 1.0),
@@ -108,7 +108,7 @@ impl<'a> Camera for OrthographicCamera<'a> {
     fn generate_ray_differential(&self, sample: &CameraSample, r: &mut RayDifferential) -> Float {
         // Compute raster and camera sample positions.
         let film_point = Point3::new(sample.film_point.x, sample.film_point.y, 0.0);
-        let camera_point = self.raster_to_camera.transform_point(&film_point);
+        let camera_point = film_point.transform(&self.raster_to_camera);
         *r = RayDifferential::new(
             &camera_point,
             &Vec3::new(0.0, 0.0, 1.0),

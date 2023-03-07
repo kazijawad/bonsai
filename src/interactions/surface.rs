@@ -10,6 +10,7 @@ use crate::{
     utils::math::Float,
 };
 
+#[derive(Debug)]
 pub struct Shading {
     pub n: Normal,
     pub dpdu: Vec3,
@@ -18,7 +19,8 @@ pub struct Shading {
     pub dndv: Normal,
 }
 
-pub struct SurfaceInteraction<'a> {
+#[derive(Debug)]
+pub struct SurfaceInteraction {
     pub p: Point3,
     pub p_error: Vec3,
     pub time: Float,
@@ -30,7 +32,6 @@ pub struct SurfaceInteraction<'a> {
     pub dndu: Normal,
     pub dndv: Normal,
     pub shading: Shading,
-    pub primitive: Option<&'a dyn Primitive>,
     pub bsdf: Option<BSDF>,
     pub dpdx: Vec3,
     pub dpdy: Vec3,
@@ -40,7 +41,7 @@ pub struct SurfaceInteraction<'a> {
     pub dvdy: Float,
 }
 
-impl<'a> SurfaceInteraction<'a> {
+impl SurfaceInteraction {
     pub fn new(
         p: Point3,
         p_error: Vec3,
@@ -78,7 +79,6 @@ impl<'a> SurfaceInteraction<'a> {
                 dndu,
                 dndv,
             },
-            primitive: None,
             bsdf: None,
             dpdx: Vec3::default(),
             dpdy: Vec3::default(),
@@ -115,13 +115,12 @@ impl<'a> SurfaceInteraction<'a> {
     pub fn compute_scattering_functions(
         &mut self,
         ray: &RayDifferential,
+        primitive: &dyn Primitive,
         mode: TransportMode,
         allow_multiple_lobes: bool,
     ) {
         self.compute_differentials(ray);
-        self.primitive
-            .unwrap()
-            .compute_scattering_functions(self, mode, allow_multiple_lobes);
+        primitive.compute_scattering_functions(self, mode, allow_multiple_lobes);
     }
 
     pub fn compute_differentials(&mut self, ray: &RayDifferential) {
@@ -212,7 +211,6 @@ impl<'a> SurfaceInteraction<'a> {
             dndu: t.transform_normal(&self.shading.dndu),
             dndv: t.transform_normal(&self.shading.dndv),
         };
-        let primitive = self.primitive;
         let bsdf = self.bsdf.clone();
         let dudx = self.dudx;
         let dvdx = self.dvdx;
@@ -233,7 +231,6 @@ impl<'a> SurfaceInteraction<'a> {
             dndu,
             dndv,
             shading,
-            primitive,
             bsdf,
             dpdx,
             dpdy,
@@ -241,38 +238,6 @@ impl<'a> SurfaceInteraction<'a> {
             dvdx,
             dudy,
             dvdy,
-        }
-    }
-}
-
-impl<'a> Default for SurfaceInteraction<'a> {
-    fn default() -> Self {
-        Self {
-            p: Point3::default(),
-            p_error: Vec3::default(),
-            time: 0.0,
-            wo: Vec3::default(),
-            n: Normal::default(),
-            uv: Point2::default(),
-            dpdu: Vec3::default(),
-            dpdv: Vec3::default(),
-            dndu: Normal::default(),
-            dndv: Normal::default(),
-            shading: Shading {
-                n: Normal::default(),
-                dpdu: Vec3::default(),
-                dpdv: Vec3::default(),
-                dndu: Normal::default(),
-                dndv: Normal::default(),
-            },
-            primitive: None,
-            bsdf: None,
-            dpdx: Vec3::default(),
-            dpdy: Vec3::default(),
-            dudx: 0.0,
-            dvdx: 0.0,
-            dudy: 0.0,
-            dvdy: 0.0,
         }
     }
 }

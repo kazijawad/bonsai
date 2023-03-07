@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use dyn_clone::DynClone;
 
 use crate::{
@@ -8,26 +10,26 @@ use crate::{
     },
 };
 
-pub trait Fresnel: Send + Sync + DynClone {
+pub trait Fresnel: Debug + Send + Sync + DynClone {
     fn evaluate(&self, cos_theta_i: Float) -> Spectrum;
 }
 
 dyn_clone::clone_trait_object!(Fresnel);
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct FresnelConductor {
     eta_i: Spectrum,
     eta_t: Spectrum,
     k: Spectrum,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct FresnelDielectric {
     eta_i: Float,
     eta_t: Float,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct FresnelNoOp;
 
 impl FresnelConductor {

@@ -1,6 +1,6 @@
 use crate::interactions::surface::SurfaceInteraction;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum TransportMode {
     Radiance,
     Importance,

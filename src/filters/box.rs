@@ -15,9 +15,9 @@ pub struct BoxFilterDescriptior {
 }
 
 impl BoxFilter {
-    pub fn create(options: BoxFilterDescriptior) -> Self {
-        let x_width = options.x_width.unwrap_or(0.5);
-        let y_width = options.y_width.unwrap_or(0.5);
+    pub fn create(desc: BoxFilterDescriptior) -> Self {
+        let x_width = desc.x_width.unwrap_or(0.5);
+        let y_width = desc.y_width.unwrap_or(0.5);
         Self::new(Vec2::new(x_width, y_width))
     }
 

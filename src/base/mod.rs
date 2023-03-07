@@ -1,4 +1,3 @@
-pub mod aggregate;
 pub mod bsdf;
 pub mod bxdf;
 pub mod camera;

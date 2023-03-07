@@ -15,9 +15,9 @@ pub struct TriangleFilterDescriptior {
 }
 
 impl TriangleFilter {
-    pub fn create(options: TriangleFilterDescriptior) -> Self {
-        let x_width = options.x_width.unwrap_or(2.0);
-        let y_width = options.y_width.unwrap_or(2.0);
+    pub fn create(desc: TriangleFilterDescriptior) -> Self {
+        let x_width = desc.x_width.unwrap_or(2.0);
+        let y_width = desc.y_width.unwrap_or(2.0);
         Self::new(Vec2::new(x_width, y_width))
     }
 
