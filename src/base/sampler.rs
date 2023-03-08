@@ -5,32 +5,28 @@ use crate::{base::camera::CameraSample, geometries::point2::Point2, utils::math:
 pub trait Sampler: Send + Sync {
     fn start_pixel(&mut self, pixel: &Point2);
 
-    fn get_float(&mut self) -> Float;
-    fn get_point(&mut self) -> Point2;
+    fn get_1d(&mut self) -> Float;
+    fn get_2d(&mut self) -> Point2;
 
-    fn get_camera_sample(&mut self, raster_point: &Point2) -> CameraSample {
-        let film_point = raster_point + &self.get_point();
-        let time = self.get_float();
-        let lens_point = self.get_point();
+    fn get_camera_sample(&mut self, pixel: &Point2) -> CameraSample {
         CameraSample {
-            film_point,
-            lens_point,
-            time,
+            film_point: pixel + &self.get_2d(),
+            lens_point: self.get_2d(),
+            time: self.get_1d(),
         }
     }
 
-    fn request_float_batch(&mut self, n: usize);
-    fn request_point_batch(&mut self, n: usize);
+    fn request_1d_vec(&mut self, n: usize);
+    fn request_2d_vec(&mut self, n: usize);
 
-    fn round_count(&self, n: usize) -> usize {
-        n
-    }
-
-    fn get_float_batch(&mut self, n: usize) -> Vec<Float>;
-    fn get_point_batch(&mut self, n: usize) -> Vec<Point2>;
+    fn get_1d_vec(&mut self, n: usize) -> Vec<Float>;
+    fn get_2d_vec(&mut self, n: usize) -> Vec<Point2>;
 
     fn start_next_sample(&mut self) -> bool;
     fn set_sample_number(&mut self, sample_number: usize) -> bool;
+
+    fn samples_per_pixel(&self) -> usize;
+    fn current_sample_number(&self) -> usize;
 }
 
 pub fn shuffle<T>(sample: &mut [T], count: usize, num_dims: usize, rng: &mut StdRng) {

@@ -13,8 +13,8 @@ use crate::{
     utils::math::{lerp, Float},
 };
 
-pub struct OrthographicCamera<'a> {
-    camera_to_world: &'a AnimatedTransform<'a>,
+pub struct OrthographicCamera {
+    camera_to_world: AnimatedTransform,
     camera_to_screen: Transform,
     screen_to_raster: Transform,
     raster_to_screen: Transform,
@@ -25,18 +25,18 @@ pub struct OrthographicCamera<'a> {
     focal_distance: Float,
     dx_camera: Vec3,
     dy_camera: Vec3,
-    film: &'a Film,
+    film: Film,
 }
 
-impl<'a> OrthographicCamera<'a> {
+impl OrthographicCamera {
     pub fn new(
-        camera_to_world: &'a AnimatedTransform,
+        camera_to_world: AnimatedTransform,
         screen_window: &Bounds2,
         shutter_open: Float,
         shutter_close: Float,
         lens_radius: Float,
         focal_distance: Float,
-        film: &'a Film,
+        film: Film,
     ) -> Self {
         let camera_to_screen = Transform::orthographic(0.0, 1.0);
 
@@ -73,7 +73,7 @@ impl<'a> OrthographicCamera<'a> {
     }
 }
 
-impl<'a> Camera for OrthographicCamera<'a> {
+impl Camera for OrthographicCamera {
     fn generate_ray(&self, sample: &CameraSample, ray: &mut Ray) -> Float {
         // Compute raster and camera sample positions.
         let film_point = Point3::new(sample.film_point.x, sample.film_point.y, 0.0);
@@ -157,7 +157,7 @@ impl<'a> Camera for OrthographicCamera<'a> {
         1.0
     }
 
-    fn get_film(&self) -> &Film {
-        self.film
+    fn film(&self) -> &Film {
+        &self.film
     }
 }

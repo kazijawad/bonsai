@@ -6,25 +6,26 @@ use crate::{
         fresnel::FresnelDielectric,
         material::{Material, TransportMode},
         microfacet::TrowbridgeReitzDistribution,
-        spectrum::{CoefficientSpectrum, Spectrum},
+        spectrum::Spectrum,
         texture::Texture,
     },
     bxdfs::{lambertian::LambertianReflection, microfacet::MicrofacetReflection},
     interactions::surface::SurfaceInteraction,
+    spectra::rgb::RGBSpectrum,
     utils::math::Float,
 };
 
 pub struct PlasticMaterial {
-    kd: Arc<dyn Texture<Spectrum>>,
-    ks: Arc<dyn Texture<Spectrum>>,
+    kd: Arc<dyn Texture<RGBSpectrum>>,
+    ks: Arc<dyn Texture<RGBSpectrum>>,
     roughness: Arc<dyn Texture<Float>>,
     remap_roughness: bool,
 }
 
 impl PlasticMaterial {
     pub fn new(
-        kd: Arc<dyn Texture<Spectrum>>,
-        ks: Arc<dyn Texture<Spectrum>>,
+        kd: Arc<dyn Texture<RGBSpectrum>>,
+        ks: Arc<dyn Texture<RGBSpectrum>>,
         roughness: Arc<dyn Texture<Float>>,
         remap_roughness: bool,
     ) -> Self {

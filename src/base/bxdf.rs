@@ -3,8 +3,8 @@ use std::fmt::Debug;
 use dyn_clone::DynClone;
 
 use crate::{
-    base::spectrum::{CoefficientSpectrum, Spectrum},
     geometries::{point2::Point2, vec3::Vec3},
+    spectra::rgb::RGBSpectrum,
     utils::{
         bxdf::{abs_cos_theta, same_hemisphere},
         math::{Float, PI},
@@ -23,7 +23,7 @@ pub const BSDF_ALL: BxDFType =
     BSDF_DIFFUSE | BSDF_GLOSSY | BSDF_SPECULAR | BSDF_REFLECTION | BSDF_TRANSMISSION;
 
 pub trait BxDF: Debug + Send + Sync + DynClone {
-    fn f(&self, wo: &Vec3, wi: &Vec3) -> Spectrum;
+    fn f(&self, wo: &Vec3, wi: &Vec3) -> RGBSpectrum;
 
     fn sample_f(
         &self,
@@ -32,7 +32,7 @@ pub trait BxDF: Debug + Send + Sync + DynClone {
         sample: &Point2,
         pdf: &mut Float,
         sampled_type: &mut Option<BxDFType>,
-    ) -> Spectrum {
+    ) -> RGBSpectrum {
         // Cosine-sample the hemisphere, flipping the direction if necessary.
         *wi = cosine_sample_hemisphere(sample);
         if wo.z < 0.0 {
@@ -42,8 +42,8 @@ pub trait BxDF: Debug + Send + Sync + DynClone {
         self.f(wo, wi)
     }
 
-    fn rho_hd(&self, wo: &Vec3, num_samples: usize, samples: &[Point2]) -> Spectrum {
-        let mut reflection_factor = Spectrum::default();
+    fn rho_hd(&self, wo: &Vec3, num_samples: usize, samples: &[Point2]) -> RGBSpectrum {
+        let mut reflection_factor = RGBSpectrum::default();
 
         for i in 0..num_samples {
             let mut wi = Vec3::default();
@@ -54,11 +54,11 @@ pub trait BxDF: Debug + Send + Sync + DynClone {
             }
         }
 
-        reflection_factor / Spectrum::new(num_samples as Float)
+        reflection_factor / RGBSpectrum::new(num_samples as Float)
     }
 
-    fn rho_hh(&self, num_samples: usize, u1: &[Point2], u2: &[Point2]) -> Spectrum {
-        let mut reflection_factor = Spectrum::default();
+    fn rho_hh(&self, num_samples: usize, u1: &[Point2], u2: &[Point2]) -> RGBSpectrum {
+        let mut reflection_factor = RGBSpectrum::default();
 
         for i in 0..num_samples {
             let wo = uniform_sample_hemisphere(&u1[i]);

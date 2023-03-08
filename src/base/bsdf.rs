@@ -1,10 +1,8 @@
 use crate::{
-    base::{
-        bxdf::{BxDF, BxDFType, BSDF_REFLECTION, BSDF_TRANSMISSION},
-        spectrum::Spectrum,
-    },
+    base::bxdf::{BxDF, BxDFType, BSDF_REFLECTION, BSDF_TRANSMISSION},
     geometries::{normal::Normal, point2::Point2, vec3::Vec3},
     interactions::surface::SurfaceInteraction,
+    spectra::rgb::RGBSpectrum,
     utils::math::Float,
 };
 
@@ -67,15 +65,15 @@ impl BSDF {
         )
     }
 
-    pub fn f(&self, wo_world: &Vec3, wi_world: &Vec3, flags: BxDFType) -> Spectrum {
+    pub fn f(&self, wo_world: &Vec3, wi_world: &Vec3, flags: BxDFType) -> RGBSpectrum {
         let wo = self.world_to_local(wo_world);
         let wi = self.world_to_local(wi_world);
         if wo.z == 0.0 {
-            return Spectrum::default();
+            return RGBSpectrum::default();
         }
 
         let to_reflect = wi_world.dot(&self.ng.into()) * wo_world.dot(&self.ng.into()) > 0.0;
-        let mut f = Spectrum::default();
+        let mut f = RGBSpectrum::default();
         for b in self.bxdfs.iter() {
             if b.matches_flags(flags)
                 && ((to_reflect && b.matches_flags(BSDF_REFLECTION))
@@ -94,9 +92,9 @@ impl BSDF {
         num_samples: usize,
         samples: &[Point2],
         flags: BxDFType,
-    ) -> Spectrum {
+    ) -> RGBSpectrum {
         let wo = self.world_to_local(wo);
-        let mut ret = Spectrum::default();
+        let mut ret = RGBSpectrum::default();
         for b in self.bxdfs.iter() {
             if b.matches_flags(flags) {
                 ret += b.rho_hd(&wo, num_samples, samples);
@@ -111,8 +109,8 @@ impl BSDF {
         u1: &[Point2],
         u2: &[Point2],
         flags: BxDFType,
-    ) -> Spectrum {
-        let mut ret = Spectrum::default();
+    ) -> RGBSpectrum {
+        let mut ret = RGBSpectrum::default();
         for b in self.bxdfs.iter() {
             if b.matches_flags(flags) {
                 ret += b.rho_hh(num_samples, u1, u2);

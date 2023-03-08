@@ -21,9 +21,9 @@ pub struct Transform {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct AnimatedTransform<'a> {
-    start_transform: &'a Transform,
-    end_transform: &'a Transform,
+pub struct AnimatedTransform {
+    start_transform: Transform,
+    end_transform: Transform,
     start_time: Float,
     end_time: Float,
     is_animated: bool,
@@ -46,7 +46,7 @@ struct DerivativeTerm {
     kz: Float,
 }
 
-impl<'a> Transform {
+impl Transform {
     pub fn new(m: Mat4, m_inverse: Mat4) -> Self {
         Self { m, m_inverse }
     }
@@ -448,11 +448,11 @@ impl<'a> Transform {
     }
 }
 
-impl<'a> AnimatedTransform<'a> {
+impl AnimatedTransform {
     pub fn new(
-        start_transform: &'a Transform,
+        start_transform: Transform,
         start_time: Float,
-        end_transform: &'a Transform,
+        end_transform: Transform,
         end_time: Float,
     ) -> Self {
         if start_transform == end_transform {
@@ -1728,9 +1728,9 @@ impl<'a> AnimatedTransform<'a> {
 
     pub fn transform_point(&self, p: &Point3, time: Float) -> Point3 {
         if !self.is_animated || time <= self.start_time {
-            p.transform(self.start_transform)
+            p.transform(&self.start_transform)
         } else if time >= self.end_time {
-            p.transform(self.end_transform)
+            p.transform(&self.end_transform)
         } else {
             let mut t = Transform::default();
             self.interpolate(time, &mut t);
@@ -1769,12 +1769,12 @@ impl<'a> AnimatedTransform<'a> {
 
     pub fn bound_point_motion(&self, p: &Point3) -> Bounds3 {
         if !self.is_animated {
-            return Bounds3::from(p.transform(self.start_transform));
+            return Bounds3::from(p.transform(&self.start_transform));
         }
 
         let mut bounds = Bounds3::new(
-            &p.transform(self.start_transform),
-            &p.transform(self.end_transform),
+            &p.transform(&self.start_transform),
+            &p.transform(&self.end_transform),
         );
 
         let rotation = self.rotation.as_ref().unwrap();

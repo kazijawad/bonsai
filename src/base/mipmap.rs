@@ -1,5 +1,5 @@
 use crate::{
-    base::spectrum::CoefficientSpectrum,
+    base::spectrum::Spectrum,
     geometries::point2::Point2,
     modulo,
     spectra::rgb::RGBSpectrum,

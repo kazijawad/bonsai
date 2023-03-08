@@ -10,7 +10,7 @@ use crate::{
 
 pub struct TransformedPrimitive<'a> {
     primitive: &'a dyn Primitive,
-    primitive_to_world: &'a AnimatedTransform<'a>,
+    primitive_to_world: &'a AnimatedTransform,
 }
 
 impl<'a> TransformedPrimitive<'a> {

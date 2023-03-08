@@ -3,9 +3,9 @@ use crate::{
         bxdf::{BxDF, BxDFType, BSDF_REFLECTION, BSDF_SPECULAR, BSDF_TRANSMISSION},
         fresnel::{Fresnel, FresnelDielectric},
         material::TransportMode,
-        spectrum::{CoefficientSpectrum, Spectrum},
     },
     geometries::{normal::Normal, point2::Point2, vec3::Vec3},
+    spectra::rgb::RGBSpectrum,
     utils::{
         bxdf::{abs_cos_theta, cos_theta, refract},
         math::Float,
@@ -15,14 +15,14 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct SpecularReflection {
     bxdf_type: BxDFType,
-    r: Spectrum,
+    r: RGBSpectrum,
     fresnel: Box<dyn Fresnel>,
 }
 
 #[derive(Debug, Clone)]
 pub struct SpecularTransmission {
     bxdf_type: BxDFType,
-    t: Spectrum,
+    t: RGBSpectrum,
     fresnel: FresnelDielectric,
     eta_a: Float,
     eta_b: Float,
@@ -30,7 +30,7 @@ pub struct SpecularTransmission {
 }
 
 impl SpecularReflection {
-    pub fn new(r: Spectrum, fresnel: Box<dyn Fresnel>) -> Self {
+    pub fn new(r: RGBSpectrum, fresnel: Box<dyn Fresnel>) -> Self {
         Self {
             bxdf_type: BSDF_REFLECTION | BSDF_SPECULAR,
             r,
@@ -40,7 +40,7 @@ impl SpecularReflection {
 }
 
 impl SpecularTransmission {
-    pub fn new(t: Spectrum, eta_a: Float, eta_b: Float, mode: TransportMode) -> Self {
+    pub fn new(t: RGBSpectrum, eta_a: Float, eta_b: Float, mode: TransportMode) -> Self {
         Self {
             bxdf_type: BSDF_TRANSMISSION | BSDF_SPECULAR,
             t,
@@ -53,8 +53,8 @@ impl SpecularTransmission {
 }
 
 impl BxDF for SpecularReflection {
-    fn f(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
-        Spectrum::default()
+    fn f(&self, wo: &Vec3, wi: &Vec3) -> RGBSpectrum {
+        RGBSpectrum::default()
     }
 
     fn sample_f(
@@ -64,7 +64,7 @@ impl BxDF for SpecularReflection {
         sample: &Point2,
         pdf: &mut Float,
         sampled_type: &mut Option<BxDFType>,
-    ) -> Spectrum {
+    ) -> RGBSpectrum {
         *wi = Vec3::new(-wo.x, -wo.y, wo.z);
         *pdf = 1.0;
         self.fresnel.evaluate(cos_theta(wi)) * self.r / abs_cos_theta(wi)
@@ -80,8 +80,8 @@ impl BxDF for SpecularReflection {
 }
 
 impl BxDF for SpecularTransmission {
-    fn f(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
-        Spectrum::default()
+    fn f(&self, wo: &Vec3, wi: &Vec3) -> RGBSpectrum {
+        RGBSpectrum::default()
     }
 
     fn sample_f(
@@ -91,7 +91,7 @@ impl BxDF for SpecularTransmission {
         sample: &Point2,
         pdf: &mut Float,
         sampled_type: &mut Option<BxDFType>,
-    ) -> Spectrum {
+    ) -> RGBSpectrum {
         // Determine which eta is incident or transmitted.
         let entering = cos_theta(wo) > 0.0;
         let eta_i = if entering { self.eta_a } else { self.eta_b };
@@ -104,11 +104,11 @@ impl BxDF for SpecularTransmission {
             eta_i / eta_t,
             wi,
         ) {
-            return Spectrum::default();
+            return RGBSpectrum::default();
         }
 
         *pdf = 1.0;
-        let mut factor = self.t * (Spectrum::new(1.0) - self.fresnel.evaluate(cos_theta(&wi)));
+        let mut factor = self.t * (RGBSpectrum::new(1.0) - self.fresnel.evaluate(cos_theta(&wi)));
 
         // Account for non-symmetry with transmission to different medium.
         if let TransportMode::Radiance = self.mode {

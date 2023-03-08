@@ -1,0 +1,156 @@
+use crate::{
+    base::{
+        camera::Camera, film::SampledPixel, integrator::Integrator, interaction::Interaction,
+        material::TransportMode, primitive::Primitive, sampler::Sampler, scene::Scene,
+        spectrum::Spectrum,
+    },
+    geometries::{
+        point2::Point2,
+        ray::{Ray, RayDifferential},
+        vec3::Vec3,
+    },
+    interactions::surface::SurfaceInteraction,
+    spectra::rgb::RGBSpectrum,
+    utils::math::Float,
+};
+
+pub struct WhittedIntegrator {
+    camera: Box<dyn Camera>,
+    sampler: Box<dyn Sampler>,
+    max_depth: u32,
+}
+
+impl WhittedIntegrator {
+    pub fn new(camera: Box<dyn Camera>, sampler: Box<dyn Sampler>, max_depth: u32) -> Self {
+        Self {
+            camera,
+            sampler,
+            max_depth,
+        }
+    }
+}
+
+impl Integrator for WhittedIntegrator {
+    fn preprocess(&self, scene: &Scene) {}
+
+    fn li(&self, diff: &RayDifferential, scene: &Scene, depth: u32) -> RGBSpectrum {
+        let mut radiance = RGBSpectrum::default();
+
+        // Find closest ray intersection or return background radiance.
+        let mut ray = Ray::from(diff.clone());
+        let mut si = SurfaceInteraction::default();
+        if !scene.intersect(&mut ray, &mut si) {
+            for light in scene.lights.iter() {
+                radiance += light.le(diff);
+            }
+            return radiance;
+        }
+        let diff = RayDifferential::from(ray);
+
+        // Initialize common variables for integrator.
+        let n = si.shading.n;
+        let wo = si.wo;
+
+        // Compute scattering functions for surface interaction.
+        si.compute_scattering_functions(&diff, scene, TransportMode::Radiance, false);
+        if si.bsdf.is_none() {
+            let diff = RayDifferential::from(si.spawn_ray(&diff.ray.direction));
+            return self.li(&diff, scene, depth);
+        }
+
+        // Compute emitted light if ray hit an area light source.
+        radiance += si.le(&wo);
+
+        // Add contribution of each light source.
+        for light in scene.lights.iter() {
+            let wi = Vec3::default();
+            let pdf = 0.0;
+            todo!()
+        }
+
+        if depth + 1 < self.max_depth {
+            // Trace rays for specular reflection and refraction.
+            todo!()
+        }
+
+        radiance
+    }
+
+    fn render(&mut self, scene: &Scene) {
+        let bounds = self.camera.film().bounds;
+
+        for y in (bounds.min.y as usize)..(bounds.max.y as usize) {
+            for x in (bounds.min.x as usize)..(bounds.max.x as usize) {
+                let pixel = Point2::new(x as Float, y as Float);
+                let mut sampled_pixel = SampledPixel::default();
+
+                self.sampler.start_pixel(&pixel);
+
+                loop {
+                    // Initialize camera sample for current sample.
+                    let camera_sample = self.sampler.get_camera_sample(&pixel);
+
+                    // Generate camera ray for current sample.
+                    let mut ray = RayDifferential::default();
+                    let ray_weight = self
+                        .camera
+                        .generate_ray_differential(&camera_sample, &mut ray);
+                    ray.scale_differentials(
+                        1.0 / (self.sampler.samples_per_pixel() as Float).sqrt(),
+                    );
+
+                    // Evaluate radiance along camera ray.
+                    let mut radiance = if ray_weight > 0.0 {
+                        self.li(&ray, scene, 0)
+                    } else {
+                        RGBSpectrum::default()
+                    };
+
+                    // Issue warning if unexpected radiance value returned.
+                    if radiance.is_nan() {
+                        eprintln!(
+                            "NaN radiance value returned for pixel ({:?}, {:?}), sample {:?}. Setting to black.",
+                            pixel.x,
+                            pixel.y,
+                            self.sampler.current_sample_number()
+                        );
+                        radiance = RGBSpectrum::new(1.0);
+                    } else if radiance.y() < -1e-5 {
+                        eprintln!(
+                            "Negative luminance value, {:?}, returned for pixel ({:?}, {:?}), sample {:?}, Setting to black.",
+                            radiance.y(),
+                            pixel.x,
+                            pixel.y,
+                            self.sampler.current_sample_number()
+                        );
+                        radiance = RGBSpectrum::new(1.0);
+                    } else if radiance.y().is_infinite() {
+                        eprintln!(
+                            "Infinite luminance returned for pixel ({:?}, {:?}), sample {:?}, Setting to black.",
+                            pixel.x,
+                            pixel.y,
+                            self.sampler.current_sample_number()
+                        );
+                        radiance = RGBSpectrum::new(1.0);
+                    }
+
+                    // Add camera ray's contribution to image.
+                    self.camera.film().add_sample(
+                        &mut sampled_pixel,
+                        &camera_sample.film_point,
+                        radiance,
+                        ray_weight,
+                    );
+
+                    if !self.sampler.start_next_sample() {
+                        break;
+                    }
+                }
+
+                self.camera.film().merge_samples(sampled_pixel, x, y);
+            }
+        }
+
+        self.camera.film().write_image();
+    }
+}

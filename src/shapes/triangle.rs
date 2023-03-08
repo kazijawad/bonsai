@@ -138,7 +138,7 @@ impl<'a> Shape for Triangle<'a> {
         let mut p2t = p2 - &Vec3::from(ray.origin);
 
         // Permutate components of triangle vertices and ray direction.
-        let kz = ray.direction.abs().max_dimension() as u32;
+        let kz = ray.direction.abs().max_dimension();
         let mut kx = kz + 1;
         if kx == 3 {
             kx = 0;
@@ -148,9 +148,9 @@ impl<'a> Shape for Triangle<'a> {
             ky = 0;
         }
         let d = ray.direction.permute(kx, ky, kz);
-        p0t = p0t.permute(kx, ky, kz);
-        p1t = p1t.permute(kx, ky, kz);
-        p2t = p2t.permute(kx, ky, kz);
+        p0t = p0t.permute(kx as usize, ky as usize, kz as usize);
+        p1t = p1t.permute(kx as usize, ky as usize, kz as usize);
+        p2t = p2t.permute(kx as usize, ky as usize, kz as usize);
 
         // Apply shear transformation to translated vertex positions.
         let sx = -d.x / d.z;
@@ -426,7 +426,7 @@ impl<'a> Shape for Triangle<'a> {
         let mut p2t = p2 - &Vec3::from(ray.origin);
 
         // Permutate components of triangle vertices and ray direction.
-        let kz = ray.direction.abs().max_dimension() as u32;
+        let kz = ray.direction.abs().max_dimension();
         let mut kx = kz + 1;
         if kx == 3 {
             kx = 0;

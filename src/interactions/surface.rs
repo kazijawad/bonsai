@@ -1,13 +1,17 @@
 use crate::{
     base::{
-        bsdf::BSDF, material::TransportMode, primitive::Primitive, spectrum::Spectrum,
+        bsdf::BSDF, interaction::Interaction, material::TransportMode, primitive::Primitive,
         transform::Transform,
     },
     geometries::{
-        normal::Normal, point2::Point2, point3::Point3, ray::RayDifferential, vec3::Vec3,
+        normal::Normal,
+        point2::Point2,
+        point3::Point3,
+        ray::{Ray, RayDifferential},
+        vec3::Vec3,
     },
-    solve_linear_system_2x2,
-    utils::math::Float,
+    spectra::rgb::RGBSpectrum,
+    utils::math::{solve_linear_system_2x2, Float},
 };
 
 #[derive(Debug)]
@@ -186,8 +190,8 @@ impl SurfaceInteraction {
         }
     }
 
-    pub fn le(&self, w: &Vec3) -> Spectrum {
-        todo!()
+    pub fn le(&self, w: &Vec3) -> RGBSpectrum {
+        RGBSpectrum::default()
     }
 
     pub fn transform(&self, t: &Transform) -> Self {
@@ -238,6 +242,77 @@ impl SurfaceInteraction {
             dvdx,
             dudy,
             dvdy,
+        }
+    }
+}
+
+impl Interaction for SurfaceInteraction {
+    fn position(&self) -> Point3 {
+        self.p
+    }
+
+    fn position_error(&self) -> Vec3 {
+        self.p_error
+    }
+
+    fn normal(&self) -> Normal {
+        self.n
+    }
+
+    fn spawn_ray(&self, direction: &Vec3) -> Ray {
+        let origin = self.p.offset_ray_origin(&self.p_error, &self.n, direction);
+        Ray::new(&origin, direction, Float::INFINITY, self.time)
+    }
+
+    fn spawn_ray_to_point(&self, point: Point3) -> Ray {
+        let origin = self
+            .p
+            .offset_ray_origin(&self.p_error, &self.n, &(point - self.p));
+        let direction = point - self.p;
+        Ray::new(&origin, &direction, 1.0 - 0.0001, self.time)
+    }
+
+    fn spawn_ray_to_it(&self, it: &dyn Interaction) -> Ray {
+        let origin = self
+            .p
+            .offset_ray_origin(&self.p_error, &self.n, &(it.position() - self.p));
+        let target = it.position().offset_ray_origin(
+            &it.position_error(),
+            &it.normal(),
+            &(origin - it.position()),
+        );
+        let direction = target - origin;
+        Ray::new(&origin, &direction, 1.0 - 0.0001, self.time)
+    }
+}
+
+impl Default for SurfaceInteraction {
+    fn default() -> Self {
+        Self {
+            p: Point3::default(),
+            p_error: Vec3::default(),
+            time: 0.0,
+            wo: Vec3::default(),
+            n: Normal::default(),
+            uv: Point2::default(),
+            dpdu: Vec3::default(),
+            dpdv: Vec3::default(),
+            dndu: Normal::default(),
+            dndv: Normal::default(),
+            shading: Shading {
+                n: Normal::default(),
+                dpdu: Vec3::default(),
+                dpdv: Vec3::default(),
+                dndu: Normal::default(),
+                dndv: Normal::default(),
+            },
+            bsdf: None,
+            dpdx: Vec3::default(),
+            dpdy: Vec3::default(),
+            dudx: 0.0,
+            dvdx: 0.0,
+            dudy: 0.0,
+            dvdy: 0.0,
         }
     }
 }

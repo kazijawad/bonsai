@@ -4,21 +4,22 @@ use crate::{
     base::{
         bsdf::BSDF,
         material::{Material, TransportMode},
-        spectrum::{CoefficientSpectrum, Spectrum},
+        spectrum::Spectrum,
         texture::Texture,
     },
     bxdfs::{lambertian::LambertianReflection, oren_nayer::OrenNayer},
     interactions::surface::SurfaceInteraction,
+    spectra::rgb::RGBSpectrum,
     utils::math::Float,
 };
 
 pub struct MatteMaterial {
-    kd: Arc<dyn Texture<Spectrum>>,
+    kd: Arc<dyn Texture<RGBSpectrum>>,
     sigma: Arc<dyn Texture<Float>>,
 }
 
 impl MatteMaterial {
-    pub fn new(kd: Arc<dyn Texture<Spectrum>>, sigma: Arc<dyn Texture<Float>>) -> Self {
+    pub fn new(kd: Arc<dyn Texture<RGBSpectrum>>, sigma: Arc<dyn Texture<Float>>) -> Self {
         Self { kd, sigma }
     }
 }

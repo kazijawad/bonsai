@@ -1,11 +1,11 @@
 use crate::{
     base::{
-        spectrum::{Spectrum, SpectrumType, RGB},
+        spectrum::{Spectrum, RGB},
         texture::{Texture, TextureMapping2D},
     },
     geometries::vec2::Vec2,
     interactions::surface::SurfaceInteraction,
-    CoefficientSpectrum,
+    spectra::rgb::RGBSpectrum,
 };
 
 pub struct UVTexture {
@@ -18,12 +18,12 @@ impl UVTexture {
     }
 }
 
-impl Texture<Spectrum> for UVTexture {
-    fn evaluate(&self, si: &SurfaceInteraction) -> Spectrum {
+impl Texture<RGBSpectrum> for UVTexture {
+    fn evaluate(&self, si: &SurfaceInteraction) -> RGBSpectrum {
         let mut dstdx = Vec2::default();
         let mut dstdy = Vec2::default();
         let st = self.mapping.map(si, &mut dstdx, &mut dstdy);
         let rgb: RGB = [st.x - st.x.floor(), st.y - st.y.floor(), 0.0];
-        Spectrum::from_rgb(&rgb, SpectrumType::Ignore)
+        RGBSpectrum::from_rgb(&rgb)
     }
 }

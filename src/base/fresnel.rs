@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use dyn_clone::DynClone;
 
 use crate::{
-    base::spectrum::{CoefficientSpectrum, Spectrum},
+    spectra::rgb::RGBSpectrum,
     utils::{
         bxdf::{fresnel_conductor, fresnel_dielectric},
         math::Float,
@@ -11,16 +11,16 @@ use crate::{
 };
 
 pub trait Fresnel: Debug + Send + Sync + DynClone {
-    fn evaluate(&self, cos_theta_i: Float) -> Spectrum;
+    fn evaluate(&self, cos_theta_i: Float) -> RGBSpectrum;
 }
 
 dyn_clone::clone_trait_object!(Fresnel);
 
 #[derive(Debug, Clone)]
 pub struct FresnelConductor {
-    eta_i: Spectrum,
-    eta_t: Spectrum,
-    k: Spectrum,
+    eta_i: RGBSpectrum,
+    eta_t: RGBSpectrum,
+    k: RGBSpectrum,
 }
 
 #[derive(Debug, Clone)]
@@ -33,7 +33,7 @@ pub struct FresnelDielectric {
 pub struct FresnelNoOp;
 
 impl FresnelConductor {
-    pub fn new(eta_i: &Spectrum, eta_t: &Spectrum, k: &Spectrum) -> Self {
+    pub fn new(eta_i: &RGBSpectrum, eta_t: &RGBSpectrum, k: &RGBSpectrum) -> Self {
         Self {
             eta_i: eta_i.clone(),
             eta_t: eta_t.clone(),
@@ -49,19 +49,19 @@ impl FresnelDielectric {
 }
 
 impl Fresnel for FresnelConductor {
-    fn evaluate(&self, cos_theta_i: Float) -> Spectrum {
+    fn evaluate(&self, cos_theta_i: Float) -> RGBSpectrum {
         fresnel_conductor(cos_theta_i.abs(), &self.eta_i, &self.eta_t, &self.k)
     }
 }
 
 impl Fresnel for FresnelDielectric {
-    fn evaluate(&self, cos_theta_i: Float) -> Spectrum {
-        Spectrum::new(fresnel_dielectric(cos_theta_i, self.eta_i, self.eta_t))
+    fn evaluate(&self, cos_theta_i: Float) -> RGBSpectrum {
+        RGBSpectrum::new(fresnel_dielectric(cos_theta_i, self.eta_i, self.eta_t))
     }
 }
 
 impl Fresnel for FresnelNoOp {
-    fn evaluate(&self, cos_theta_i: Float) -> Spectrum {
-        Spectrum::new(1.0)
+    fn evaluate(&self, cos_theta_i: Float) -> RGBSpectrum {
+        RGBSpectrum::new(1.0)
     }
 }

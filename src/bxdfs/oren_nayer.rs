@@ -1,9 +1,7 @@
 use crate::{
-    base::{
-        bxdf::{BxDF, BxDFType, BSDF_DIFFUSE, BSDF_REFLECTION},
-        spectrum::Spectrum,
-    },
+    base::bxdf::{BxDF, BxDFType, BSDF_DIFFUSE, BSDF_REFLECTION},
     geometries::vec3::Vec3,
+    spectra::rgb::RGBSpectrum,
     utils::{
         bxdf::{abs_cos_theta, cos_phi, sin_phi, sin_theta},
         math::{Float, PI},
@@ -13,13 +11,13 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct OrenNayer {
     bxdf_type: BxDFType,
-    r: Spectrum,
+    r: RGBSpectrum,
     a: Float,
     b: Float,
 }
 
 impl OrenNayer {
-    pub fn new(r: Spectrum, sigma: Float) -> Self {
+    pub fn new(r: RGBSpectrum, sigma: Float) -> Self {
         let sigma = sigma.to_radians();
         let sigma_2 = sigma * sigma;
         Self {
@@ -32,7 +30,7 @@ impl OrenNayer {
 }
 
 impl BxDF for OrenNayer {
-    fn f(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
+    fn f(&self, wo: &Vec3, wi: &Vec3) -> RGBSpectrum {
         let sin_theta_i = sin_theta(wi);
         let sin_theta_o = sin_theta(wo);
 

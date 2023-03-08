@@ -1,8 +1,9 @@
 use std::mem;
 
 use crate::{
-    base::spectrum::{CoefficientSpectrum, Spectrum},
+    base::spectrum::Spectrum,
     geometries::{normal::Normal, vec3::Vec3},
+    spectra::rgb::RGBSpectrum,
     utils::math::Float,
 };
 
@@ -122,16 +123,16 @@ pub fn fresnel_dielectric(cos_theta_i: Float, mut eta_i: Float, mut eta_t: Float
 
 pub fn fresnel_conductor(
     cos_theta_i: Float,
-    eta_i: &Spectrum,
-    eta_t: &Spectrum,
-    k: &Spectrum,
-) -> Spectrum {
-    let cos_theta_i = Spectrum::new(cos_theta_i.clamp(-1.0, 1.0));
+    eta_i: &RGBSpectrum,
+    eta_t: &RGBSpectrum,
+    k: &RGBSpectrum,
+) -> RGBSpectrum {
+    let cos_theta_i = RGBSpectrum::new(cos_theta_i.clamp(-1.0, 1.0));
     let eta = eta_t / eta_i;
     let eta_k = k / eta_i;
 
     let cos_theta_i2 = cos_theta_i * cos_theta_i;
-    let sin_theta_i2 = Spectrum::new(1.0) - cos_theta_i2;
+    let sin_theta_i2 = RGBSpectrum::new(1.0) - cos_theta_i2;
     let eta_2 = eta * eta;
     let eta_k2 = eta_k * eta_k;
 

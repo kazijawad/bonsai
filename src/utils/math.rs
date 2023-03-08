@@ -3,13 +3,9 @@ use std::mem;
 cfg_if::cfg_if! {
     if #[cfg(feature = "float-as-double")] {
         pub type Float = f64;
-        pub type UInt = u64;
-        pub type AtomicUInt = std::sync::atomic::AtomicU64;
         pub const PI: Float = std::f64::consts::PI;
     } else {
         pub type Float = f32;
-        pub type UInt = u32;
-        pub type AtomicUInt = std::sync::atomic::AtomicU32;
         pub const PI: Float = std::f32::consts::PI;
     }
 }

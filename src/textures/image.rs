@@ -3,7 +3,7 @@ use image::{open, GenericImageView};
 use crate::{
     base::{
         mipmap::{ImageWrap, MIPMap},
-        spectrum::{CoefficientSpectrum, SpectrumType, RGB},
+        spectrum::{Spectrum, RGB},
         texture::TextureMapping2D,
     },
     geometries::point2::Point2,
@@ -42,7 +42,7 @@ impl ImageTexture {
 
         // Invert gamma correction.
         for texel in texels.iter_mut() {
-            for i in 0..RGBSpectrum::NUM_SAMPLES {
+            for i in 0..texel.len() {
                 let color = if gamma_corrected {
                     inverse_gamma_correct(texel[i])
                 } else {
@@ -71,8 +71,7 @@ impl ImageTexture {
             for x in 0..width {
                 let pixel = image.get_pixel(x, y).0;
                 let color: RGB = [pixel[0] / 255.0, pixel[1] / 255.0, pixel[2] / 255.0];
-                texels[(y * width + x) as usize] =
-                    RGBSpectrum::from_rgb(&color, SpectrumType::Ignore);
+                texels[(y * width + x) as usize] = RGBSpectrum::from_rgb(&color);
             }
         }
 

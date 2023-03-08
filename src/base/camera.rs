@@ -70,5 +70,5 @@ pub trait Camera: Send + Sync {
         weight
     }
 
-    fn get_film(&self) -> &Film;
+    fn film(&self) -> &Film;
 }

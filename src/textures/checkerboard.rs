@@ -1,12 +1,10 @@
 use std::sync::Arc;
 
 use crate::{
-    base::{
-        spectrum::{CoefficientSpectrum, Spectrum},
-        texture::{Texture, TextureMapping2D},
-    },
+    base::texture::{Texture, TextureMapping2D},
     geometries::vec2::Vec2,
     interactions::surface::SurfaceInteraction,
+    spectra::rgb::RGBSpectrum,
     utils::math::Float,
 };
 
@@ -17,16 +15,16 @@ pub enum AAMethod {
 
 pub struct Checkerboard2DTexture {
     mapping: Box<dyn TextureMapping2D>,
-    tex1: Arc<dyn Texture<Spectrum>>,
-    tex2: Arc<dyn Texture<Spectrum>>,
+    tex1: Arc<dyn Texture<RGBSpectrum>>,
+    tex2: Arc<dyn Texture<RGBSpectrum>>,
     aa_method: AAMethod,
 }
 
 impl Checkerboard2DTexture {
     pub fn new(
         mapping: Box<dyn TextureMapping2D>,
-        tex1: Arc<dyn Texture<Spectrum>>,
-        tex2: Arc<dyn Texture<Spectrum>>,
+        tex1: Arc<dyn Texture<RGBSpectrum>>,
+        tex2: Arc<dyn Texture<RGBSpectrum>>,
         aa_method: AAMethod,
     ) -> Self {
         Self {
@@ -38,8 +36,8 @@ impl Checkerboard2DTexture {
     }
 }
 
-impl Texture<Spectrum> for Checkerboard2DTexture {
-    fn evaluate(&self, si: &SurfaceInteraction) -> Spectrum {
+impl Texture<RGBSpectrum> for Checkerboard2DTexture {
+    fn evaluate(&self, si: &SurfaceInteraction) -> RGBSpectrum {
         let mut dstdx = Vec2::default();
         let mut dstdy = Vec2::default();
         let st = self.mapping.map(si, &mut dstdx, &mut dstdy);
@@ -78,8 +76,8 @@ impl Texture<Spectrum> for Checkerboard2DTexture {
                 area2 = 0.5;
             }
 
-            Spectrum::new(1.0 - area2) * self.tex1.evaluate(si)
-                + Spectrum::new(area2) * self.tex2.evaluate(si)
+            RGBSpectrum::new(1.0 - area2) * self.tex1.evaluate(si)
+                + RGBSpectrum::new(area2) * self.tex2.evaluate(si)
         }
     }
 }

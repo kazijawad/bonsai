@@ -1,8 +1,9 @@
 use std::fmt::Debug;
 
 use crate::{
-    base::{interaction::Interaction, primitive::Primitive, scene::Scene, spectrum::Spectrum},
+    base::{interaction::Interaction, primitive::Primitive, scene::Scene},
     geometries::{normal::Normal, point2::Point2, ray::Ray, ray::RayDifferential, vec3::Vec3},
+    spectra::rgb::RGBSpectrum,
     utils::math::Float,
 };
 
@@ -17,7 +18,7 @@ pub enum LightFlag {
 pub trait Light: Debug + Send + Sync {
     fn preprocess(&self, scene: &Scene) {}
 
-    fn power(&self) -> Spectrum;
+    fn power(&self) -> RGBSpectrum;
 
     fn sample_li(
         &self,
@@ -25,12 +26,12 @@ pub trait Light: Debug + Send + Sync {
         wi: &mut Vec3,
         pdf: &mut Float,
         vis: &mut VisibilityTester,
-    ) -> Spectrum;
+    ) -> RGBSpectrum;
 
     fn pdf_li(&self, it: &dyn Interaction, wi: &Vec3) -> Float;
 
-    fn le(&self, ray: &RayDifferential) -> Spectrum {
-        Spectrum::default()
+    fn le(&self, ray: &RayDifferential) -> RGBSpectrum {
+        RGBSpectrum::default()
     }
 
     fn sample_le(
@@ -42,7 +43,7 @@ pub trait Light: Debug + Send + Sync {
         light_norm: Normal,
         pdf_pos: &mut Float,
         pdf_dir: &mut Float,
-    ) -> Spectrum;
+    ) -> RGBSpectrum;
 
     fn pdf_le(&self, ray: &Ray, light_norm: Normal, pdf_pos: &mut Float, pdf_dir: &mut Float);
 

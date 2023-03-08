@@ -1,6 +1,10 @@
-use std::ops;
+use std::ops::{self, Index, IndexMut, Neg};
 
-use crate::{base::transform::Transform, geometries::vec3::Vec3, utils::math::Float};
+use crate::{
+    base::transform::Transform,
+    geometries::{normal::Normal, vec3::Vec3},
+    utils::math::{next_down, next_up, Float},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Point3 {
@@ -17,6 +21,23 @@ impl Point3 {
 
     pub fn lerp(t: Float, a: &Self, b: &Self) -> Self {
         (1.0 - t) * a + t * b
+    }
+
+    pub fn offset_ray_origin(&self, p_error: &Vec3, n: &Normal, w: &Vec3) -> Self {
+        let d = Vec3::from(n.abs()).dot(p_error);
+        let mut offset = d * Vec3::from(*n);
+        if w.dot(&Vec3::from(*n)) < 0.0 {
+            offset = -offset;
+        }
+        let mut p = self + &offset;
+        for i in 0..3 {
+            if offset[i] > 0.0 {
+                p[i] = next_up(p[i]);
+            } else if offset[i] < 0.0 {
+                p[i] = next_down(p[i]);
+            }
+        }
+        p
     }
 
     pub fn transform(&self, t: &Transform) -> Self {
@@ -68,7 +89,7 @@ impl Point3 {
         Self::new(self.x.abs(), self.y.abs(), self.z.abs())
     }
 
-    pub fn permute(&self, x: u32, y: u32, z: u32) -> Self {
+    pub fn permute(&self, x: usize, y: usize, z: usize) -> Self {
         Self::new(self[x], self[y], self[z])
     }
 
@@ -87,8 +108,6 @@ impl Default for Point3 {
     }
 }
 
-// TYPE CONVERSION
-
 impl From<Vec3> for Point3 {
     fn from(v: Vec3) -> Self {
         Self {
@@ -98,18 +117,6 @@ impl From<Vec3> for Point3 {
         }
     }
 }
-
-impl From<[Float; 3]> for Point3 {
-    fn from(v: [Float; 3]) -> Self {
-        Self {
-            x: v[0],
-            y: v[1],
-            z: v[2],
-        }
-    }
-}
-
-// ADDITION
 
 impl ops::Add for Point3 {
     type Output = Self;
@@ -175,8 +182,6 @@ impl ops::AddAssign<Vec3> for Point3 {
     }
 }
 
-// SUBTRACTION
-
 impl ops::Sub for Point3 {
     type Output = Vec3;
 
@@ -241,8 +246,6 @@ impl ops::SubAssign<Vec3> for Point3 {
     }
 }
 
-// MULTIPLICATION
-
 impl ops::Mul<Float> for Point3 {
     type Output = Self;
 
@@ -291,8 +294,6 @@ impl ops::MulAssign<Float> for Point3 {
     }
 }
 
-// DIVISION
-
 impl ops::Div<Float> for Point3 {
     type Output = Self;
 
@@ -331,9 +332,7 @@ impl ops::DivAssign<Float> for Point3 {
     }
 }
 
-// NEGATION
-
-impl ops::Neg for Point3 {
+impl Neg for Point3 {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -345,7 +344,7 @@ impl ops::Neg for Point3 {
     }
 }
 
-impl ops::Neg for &Point3 {
+impl Neg for &Point3 {
     type Output = Point3;
 
     fn neg(self) -> Self::Output {
@@ -357,18 +356,30 @@ impl ops::Neg for &Point3 {
     }
 }
 
-// INDEXING
-
-impl ops::Index<u32> for Point3 {
+impl Index<usize> for Point3 {
     type Output = Float;
 
-    fn index(&self, index: u32) -> &Self::Output {
-        debug_assert!(index <= 2);
+    fn index(&self, index: usize) -> &Self::Output {
+        debug_assert!(index < 3);
         if index == 0 {
-            return &self.x;
+            &self.x
         } else if index == 1 {
-            return &self.y;
+            &self.y
+        } else {
+            &self.z
         }
-        &self.z
+    }
+}
+
+impl IndexMut<usize> for Point3 {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        debug_assert!(index < 3);
+        if index == 0 {
+            &mut self.x
+        } else if index == 1 {
+            &mut self.y
+        } else {
+            &mut self.z
+        }
     }
 }

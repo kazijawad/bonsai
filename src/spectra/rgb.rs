@@ -3,10 +3,7 @@ use std::ops::{
 };
 
 use crate::{
-    base::spectrum::{
-        rgb_to_xyz, xyz_to_rgb, CoefficientSpectrum, SpectrumType, CIE_LAMBDA, CIE_X, CIE_Y,
-        CIE_Y_INTEGRAL, CIE_Z, NUM_CIE_SAMPLES, RGB, XYZ,
-    },
+    base::spectrum::{rgb_to_xyz, xyz_to_rgb, Spectrum, RGB, XYZ},
     utils::math::Float,
 };
 
@@ -15,56 +12,20 @@ pub struct RGBSpectrum {
     components: [Float; 3],
 }
 
-impl CoefficientSpectrum for RGBSpectrum {
-    const NUM_SAMPLES: usize = 3;
-
-    fn new(v: Float) -> Self {
-        Self {
-            components: [v; Self::NUM_SAMPLES],
-        }
+impl RGBSpectrum {
+    pub fn new(v: Float) -> Self {
+        Self { components: [v; 3] }
     }
+}
 
-    fn from_sampled(lambda: &mut [Float], values: &mut [Float], n: usize) -> Self {
-        // Sort samples if unordered, and use sorted for returned spectrum.
-        if !Self::is_samples_sorted(lambda, n) {
-            let mut lambda_segment: Vec<Float> = vec![];
-            for i in (lambda[0] as usize)..(lambda[n] as usize) {
-                lambda_segment.push(i as Float);
-            }
-
-            let mut values_segment: Vec<Float> = vec![];
-            for i in (values[0] as usize)..(values[n] as usize) {
-                values_segment.push(i as Float);
-            }
-
-            Self::sort_samples(&mut lambda_segment, &mut values_segment, n);
-            return Self::from_sampled(&mut lambda_segment, &mut values_segment, n);
-        }
-
-        let mut xyz: XYZ = [0.0; 3];
-        for i in 0..NUM_CIE_SAMPLES {
-            let value = Self::interpolate_samples(lambda, values, n, CIE_LAMBDA[i]);
-            xyz[0] += value * CIE_X[i];
-            xyz[1] += value * CIE_Y[i];
-            xyz[2] += value * CIE_Z[i];
-        }
-
-        let scale = (CIE_LAMBDA[NUM_CIE_SAMPLES - 1] - CIE_LAMBDA[0])
-            / (CIE_Y_INTEGRAL * (NUM_CIE_SAMPLES as Float));
-        xyz[0] *= scale;
-        xyz[1] *= scale;
-        xyz[2] *= scale;
-
-        Self::from_xyz(&xyz, SpectrumType::Reflectance)
-    }
-
-    fn from_xyz(xyz: &XYZ, spectrum_type: SpectrumType) -> Self {
+impl Spectrum for RGBSpectrum {
+    fn from_xyz(xyz: &XYZ) -> Self {
         let mut rgb = Self::default();
         xyz_to_rgb(xyz, &mut rgb.components);
         rgb
     }
 
-    fn from_rgb(rgb: &RGB, spectrum_type: SpectrumType) -> Self {
+    fn from_rgb(rgb: &RGB) -> Self {
         debug_assert!(!rgb[0].is_nan() && !rgb[1].is_nan() && !rgb[2].is_nan());
         Self {
             components: rgb.clone(),
@@ -72,7 +33,11 @@ impl CoefficientSpectrum for RGBSpectrum {
     }
 
     fn lerp(t: Float, a: &Self, b: &Self) -> Self {
-        (*a) * (1.0 - t) + (*b) * t
+        &(1.0 - t) * a + &t * b
+    }
+
+    fn len(&self) -> usize {
+        self.components.len()
     }
 
     fn sqrt(&self) -> Self {
@@ -87,7 +52,7 @@ impl CoefficientSpectrum for RGBSpectrum {
         }
     }
 
-    fn pow(&self, e: Float) -> Self {
+    fn powf(&self, e: Float) -> Self {
         let r = self[0].powf(e);
         let g = self[1].powf(e);
         let b = self[2].powf(e);
@@ -149,16 +114,12 @@ impl CoefficientSpectrum for RGBSpectrum {
     fn is_nan(&self) -> bool {
         self[0].is_nan() || self[1].is_nan() || self[2].is_nan()
     }
-
-    fn is_initialized(&self) -> bool {
-        true
-    }
 }
 
 impl Default for RGBSpectrum {
     fn default() -> Self {
         Self {
-            components: [0.0; Self::NUM_SAMPLES],
+            components: [0.0; 3],
         }
     }
 }
@@ -528,21 +489,21 @@ impl Index<usize> for RGBSpectrum {
     type Output = Float;
 
     fn index(&self, index: usize) -> &Self::Output {
-        debug_assert!(index < Self::NUM_SAMPLES);
+        debug_assert!(index < 3);
         &self.components[index]
     }
 }
 
 impl IndexMut<usize> for RGBSpectrum {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        debug_assert!(index < Self::NUM_SAMPLES);
+        debug_assert!(index < 3);
         &mut self.components[index]
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{base::spectrum::CoefficientSpectrum, spectra::rgb::RGBSpectrum};
+    use crate::spectra::rgb::RGBSpectrum;
 
     #[test]
     fn add() {

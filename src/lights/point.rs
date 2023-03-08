@@ -2,10 +2,10 @@ use crate::{
     base::{
         interaction::Interaction,
         light::{Light, LightFlag, VisibilityTester},
-        spectrum::Spectrum,
         transform::Transform,
     },
     geometries::{normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3},
+    spectra::rgb::RGBSpectrum,
     utils::math::Float,
 };
 
@@ -14,12 +14,24 @@ pub struct PointLight {
     light_to_world: Transform,
     world_to_light: Transform,
     position: Point3,
-    intensity: Spectrum,
+    intensity: RGBSpectrum,
     flag: LightFlag,
 }
 
+#[derive(Debug)]
+pub struct PointLightDescriptor {
+    pub intensity: RGBSpectrum,
+    pub scale: RGBSpectrum,
+    pub from: Point3,
+}
+
 impl PointLight {
-    pub fn new(light_to_world: Transform, intensity: Spectrum) -> Self {
+    pub fn create(desc: &PointLightDescriptor, light_to_world: Transform) -> Self {
+        let light_to_world = Transform::translate(&Vec3::from(desc.from)) * light_to_world;
+        Self::new(light_to_world, desc.intensity * desc.scale)
+    }
+
+    pub fn new(light_to_world: Transform, intensity: RGBSpectrum) -> Self {
         let world_to_light = light_to_world.inverse();
         let position = Point3::default().transform(&light_to_world);
         Self {
@@ -33,7 +45,7 @@ impl PointLight {
 }
 
 impl Light for PointLight {
-    fn power(&self) -> Spectrum {
+    fn power(&self) -> RGBSpectrum {
         todo!()
     }
 
@@ -43,7 +55,7 @@ impl Light for PointLight {
         wi: &mut Vec3,
         pdf: &mut Float,
         vis: &mut VisibilityTester,
-    ) -> Spectrum {
+    ) -> RGBSpectrum {
         todo!()
     }
 
@@ -60,7 +72,7 @@ impl Light for PointLight {
         light_norm: Normal,
         pdf_pos: &mut Float,
         pdf_dir: &mut Float,
-    ) -> Spectrum {
+    ) -> RGBSpectrum {
         todo!()
     }
 
@@ -70,5 +82,15 @@ impl Light for PointLight {
 
     fn flag(&self) -> LightFlag {
         self.flag
+    }
+}
+
+impl Default for PointLightDescriptor {
+    fn default() -> Self {
+        Self {
+            intensity: RGBSpectrum::new(1.0),
+            scale: RGBSpectrum::new(1.0),
+            from: Point3::new(0.0, 0.0, 0.0),
+        }
     }
 }

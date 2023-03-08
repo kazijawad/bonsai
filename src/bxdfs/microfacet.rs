@@ -4,9 +4,9 @@ use crate::{
         fresnel::{Fresnel, FresnelDielectric},
         material::TransportMode,
         microfacet::MicrofacetDistribution,
-        spectrum::{CoefficientSpectrum, Spectrum},
     },
     geometries::{normal::Normal, point2::Point2, vec3::Vec3},
+    spectra::rgb::RGBSpectrum,
     utils::{
         bxdf::{abs_cos_theta, cos_theta, reflect, refract, same_hemisphere},
         math::Float,
@@ -16,7 +16,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct MicrofacetReflection {
     bxdf_type: BxDFType,
-    r: Spectrum,
+    r: RGBSpectrum,
     distribution: Box<dyn MicrofacetDistribution>,
     fresnel: Box<dyn Fresnel>,
 }
@@ -24,7 +24,7 @@ pub struct MicrofacetReflection {
 #[derive(Debug, Clone)]
 pub struct MicrofactTransmission {
     bxdf_type: BxDFType,
-    t: Spectrum,
+    t: RGBSpectrum,
     distribution: Box<dyn MicrofacetDistribution>,
     eta_a: Float,
     eta_b: Float,
@@ -34,7 +34,7 @@ pub struct MicrofactTransmission {
 
 impl MicrofacetReflection {
     pub fn new(
-        r: Spectrum,
+        r: RGBSpectrum,
         distribution: Box<dyn MicrofacetDistribution>,
         fresnel: Box<dyn Fresnel>,
     ) -> Self {
@@ -49,7 +49,7 @@ impl MicrofacetReflection {
 
 impl MicrofactTransmission {
     pub fn new(
-        t: Spectrum,
+        t: RGBSpectrum,
         distribution: Box<dyn MicrofacetDistribution>,
         eta_a: Float,
         eta_b: Float,
@@ -68,17 +68,17 @@ impl MicrofactTransmission {
 }
 
 impl BxDF for MicrofacetReflection {
-    fn f(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
+    fn f(&self, wo: &Vec3, wi: &Vec3) -> RGBSpectrum {
         let cos_theta_o = abs_cos_theta(wo);
         let cos_theta_i = abs_cos_theta(wi);
         let mut wh = wi + wo;
 
         // Handle degenerate cases for microfacet reflection.
         if cos_theta_i == 0.0 || cos_theta_o == 0.0 {
-            return Spectrum::default();
+            return RGBSpectrum::default();
         }
         if wh.x == 0.0 && wh.y == 0.0 && wh.z == 0.0 {
-            return Spectrum::default();
+            return RGBSpectrum::default();
         }
 
         wh = wh.normalize();
@@ -101,20 +101,20 @@ impl BxDF for MicrofacetReflection {
         sample: &Point2,
         pdf: &mut Float,
         sampled_type: &mut Option<BxDFType>,
-    ) -> Spectrum {
+    ) -> RGBSpectrum {
         // Sample microfacet orientation wh and reflected direction wi.
         if wo.z == 0.0 {
-            return Spectrum::default();
+            return RGBSpectrum::default();
         }
 
         let wh = self.distribution.sample_wh(wo, sample);
         if wo.dot(&wh) < 0.0 {
-            return Spectrum::default();
+            return RGBSpectrum::default();
         }
 
         *wi = reflect(wo, &wh);
         if !same_hemisphere(wo, &wi) {
-            return Spectrum::default();
+            return RGBSpectrum::default();
         }
 
         // Compute PDF of wi for microfacet reflection.
@@ -139,15 +139,15 @@ impl BxDF for MicrofacetReflection {
 }
 
 impl BxDF for MicrofactTransmission {
-    fn f(&self, wo: &Vec3, wi: &Vec3) -> Spectrum {
+    fn f(&self, wo: &Vec3, wi: &Vec3) -> RGBSpectrum {
         if same_hemisphere(wo, wi) {
-            return Spectrum::default();
+            return RGBSpectrum::default();
         }
 
         let cos_theta_o = cos_theta(wo);
         let cos_theta_i = cos_theta(wi);
         if cos_theta_i == 0.0 || cos_theta_o == 0.0 {
-            return Spectrum::default();
+            return RGBSpectrum::default();
         }
 
         // Compute wh from wo and wi for microfacet transmission.
@@ -164,7 +164,7 @@ impl BxDF for MicrofactTransmission {
 
         // Check for same side.
         if wo.dot(&wh) * wi.dot(&wh) > 0.0 {
-            return Spectrum::default();
+            return RGBSpectrum::default();
         }
 
         let f = self.fresnel.evaluate(wo.dot(&wh));
@@ -176,7 +176,7 @@ impl BxDF for MicrofactTransmission {
             1.0
         };
 
-        (Spectrum::new(1.0) - f)
+        (RGBSpectrum::new(1.0) - f)
             * self.t
             * (self.distribution.d(&wh)
                 * self.distribution.g(wo, wi)
@@ -197,14 +197,14 @@ impl BxDF for MicrofactTransmission {
         sample: &Point2,
         pdf: &mut Float,
         sampled_type: &mut Option<BxDFType>,
-    ) -> Spectrum {
+    ) -> RGBSpectrum {
         if wo.z == 0.0 {
-            return Spectrum::default();
+            return RGBSpectrum::default();
         }
 
         let wh = self.distribution.sample_wh(wo, sample);
         if wo.dot(&wh) < 0.0 {
-            return Spectrum::default();
+            return RGBSpectrum::default();
         }
 
         let eta = if cos_theta(wo) > 0.0 {
@@ -214,7 +214,7 @@ impl BxDF for MicrofactTransmission {
         };
 
         if !refract(wo, &Normal::from(wh), eta, wi) {
-            return Spectrum::default();
+            return RGBSpectrum::default();
         }
 
         *pdf = self.pdf(wo, &wi);

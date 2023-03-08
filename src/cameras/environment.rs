@@ -8,19 +8,19 @@ use crate::{
     utils::math::{lerp, Float, PI},
 };
 
-pub struct EnvironmentCamera<'a> {
-    camera_to_world: &'a AnimatedTransform<'a>,
+pub struct EnvironmentCamera {
+    camera_to_world: AnimatedTransform,
     shutter_open: Float,
     shutter_close: Float,
-    film: &'a Film,
+    film: Film,
 }
 
-impl<'a> EnvironmentCamera<'a> {
+impl<'a> EnvironmentCamera {
     pub fn new(
-        camera_to_world: &'a AnimatedTransform,
+        camera_to_world: AnimatedTransform,
         shutter_open: Float,
         shutter_close: Float,
-        film: &'a Film,
+        film: Film,
     ) -> Self {
         Self {
             camera_to_world,
@@ -31,7 +31,7 @@ impl<'a> EnvironmentCamera<'a> {
     }
 }
 
-impl<'a> Camera for EnvironmentCamera<'a> {
+impl Camera for EnvironmentCamera {
     fn generate_ray(&self, sample: &CameraSample, ray: &mut Ray) -> Float {
         // Compute ray direction.
         let theta = PI * sample.film_point.y / self.film.full_resolution.y;
@@ -50,7 +50,7 @@ impl<'a> Camera for EnvironmentCamera<'a> {
         1.0
     }
 
-    fn get_film(&self) -> &Film {
-        self.film
+    fn film(&self) -> &Film {
+        &self.film
     }
 }

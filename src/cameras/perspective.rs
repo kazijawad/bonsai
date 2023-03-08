@@ -13,8 +13,8 @@ use crate::{
     utils::math::{lerp, Float},
 };
 
-pub struct PerspectiveCamera<'a> {
-    camera_to_world: &'a AnimatedTransform<'a>,
+pub struct PerspectiveCamera {
+    camera_to_world: AnimatedTransform,
     camera_to_screen: Transform,
     screen_to_raster: Transform,
     raster_to_screen: Transform,
@@ -25,18 +25,18 @@ pub struct PerspectiveCamera<'a> {
     focal_distance: Float,
     dx_camera: Vec3,
     dy_camera: Vec3,
-    film: &'a Film,
+    film: Film,
 }
 
-impl<'a> PerspectiveCamera<'a> {
+impl PerspectiveCamera {
     pub fn new(
-        camera_to_world: &'a AnimatedTransform,
+        camera_to_world: AnimatedTransform,
         shutter_open: Float,
         shutter_close: Float,
         lens_radius: Float,
         focal_distance: Float,
         fov: Float,
-        film: &'a Film,
+        film: Film,
     ) -> Self {
         let camera_to_screen = Transform::perspective(fov, 1e-2, 1000.0);
 
@@ -88,7 +88,7 @@ impl<'a> PerspectiveCamera<'a> {
     }
 }
 
-impl<'a> Camera for PerspectiveCamera<'a> {
+impl Camera for PerspectiveCamera {
     fn generate_ray(&self, sample: &CameraSample, ray: &mut Ray) -> Float {
         // Compute raster and camera sample positions.
         let film_point = Point3::new(sample.film_point.x, sample.film_point.y, 0.0);
@@ -175,7 +175,7 @@ impl<'a> Camera for PerspectiveCamera<'a> {
         1.0
     }
 
-    fn get_film(&self) -> &Film {
-        self.film
+    fn film(&self) -> &Film {
+        &self.film
     }
 }

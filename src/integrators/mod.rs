@@ -1,1 +1,1 @@
-pub mod sampler;
+pub mod whitted;

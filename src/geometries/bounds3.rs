@@ -142,7 +142,7 @@ impl Bounds3 {
         distance.x * distance.y
     }
 
-    pub fn maximum_extent(&self) -> u32 {
+    pub fn maximum_extent(&self) -> usize {
         let diag = self.diagonal();
         if diag.x > diag.y && diag.x > diag.z {
             0

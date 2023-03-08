@@ -22,13 +22,13 @@ mod utils;
 pub use accelerators::bvh::BVH;
 pub use base::{
     camera::Camera,
-    film::{Film, FilmDescriptor},
+    film::Film,
     filter::Filter,
     integrator::Integrator,
+    light::Light,
     material::Material,
     sampler::Sampler,
     scene::Scene,
-    spectrum::{CoefficientSpectrum, Spectrum},
     texture::{
         CylindricalMapping2D, IdentityMapping3D, PlanarMapping2D, SphericalMapping2D, Texture,
         TextureMapping2D, TextureMapping3D, UVMapping2D,
@@ -50,7 +50,8 @@ pub use geometries::{
     bounds2::Bounds2, bounds3::Bounds3, interval::Interval, mat4::Mat4, normal::Normal,
     point2::Point2, point3::Point3, quaternion::Quaternion, ray::Ray, vec2::Vec2, vec3::Vec3,
 };
-pub use integrators::sampler::SamplerIntegrator;
+pub use integrators::whitted::WhittedIntegrator;
+pub use lights::point::{PointLight, PointLightDescriptor};
 pub use materials::{matte::MatteMaterial, plastic::PlasticMaterial};
 pub use primitives::{geometric::GeometricPrimitive, transformed::TransformedPrimitive};
 pub use samplers::stratified::StratifiedSampler;
@@ -58,7 +59,7 @@ pub use shapes::{
     cone::Cone, cylinder::Cylinder, disk::Disk, hyperboloid::Hyperboloid, paraboloid::Paraboloid,
     sphere::Sphere, triangle::Triangle,
 };
-pub use spectra::{rgb::RGBSpectrum, sampled::SampledSpectrum};
+pub use spectra::rgb::RGBSpectrum;
 pub use textures::{
     checkerboard::Checkerboard2DTexture, constant::ConstantTexture, dots::DotsTexture,
     image::ImageTexture, uv::UVTexture,

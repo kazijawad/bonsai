@@ -136,7 +136,7 @@ impl Vec3 {
         }
     }
 
-    pub fn permute(&self, x: u32, y: u32, z: u32) -> Self {
+    pub fn permute(&self, x: usize, y: usize, z: usize) -> Self {
         Self::new(self[x], self[y], self[z])
     }
 
@@ -154,8 +154,6 @@ impl Default for Vec3 {
         }
     }
 }
-
-// TYPE CONVERSION
 
 impl From<Point3> for Vec3 {
     fn from(point: Point3) -> Self {
@@ -186,8 +184,6 @@ impl From<[Float; 3]> for Vec3 {
         }
     }
 }
-
-// ADDITION
 
 impl ops::Add for Vec3 {
     type Output = Self;
@@ -221,8 +217,6 @@ impl ops::AddAssign for Vec3 {
     }
 }
 
-// SUBTRACTION
-
 impl ops::Sub for Vec3 {
     type Output = Self;
 
@@ -254,8 +248,6 @@ impl ops::SubAssign for Vec3 {
         self.z -= rhs.z;
     }
 }
-
-// MULTIPLICATION
 
 impl ops::Mul<Float> for Vec3 {
     type Output = Self;
@@ -305,8 +297,6 @@ impl ops::MulAssign<Float> for Vec3 {
     }
 }
 
-// DIVISION
-
 impl ops::Div<Float> for Vec3 {
     type Output = Self;
 
@@ -345,8 +335,6 @@ impl ops::DivAssign<Float> for Vec3 {
     }
 }
 
-// NEGATION
-
 impl ops::Neg for Vec3 {
     type Output = Self;
 
@@ -371,18 +359,17 @@ impl ops::Neg for &Vec3 {
     }
 }
 
-// INDEXING
-
-impl ops::Index<u32> for Vec3 {
+impl ops::Index<usize> for Vec3 {
     type Output = Float;
 
-    fn index(&self, index: u32) -> &Self::Output {
-        debug_assert!(index <= 2);
+    fn index(&self, index: usize) -> &Self::Output {
+        debug_assert!(index < 3);
         if index == 0 {
-            return &self.x;
+            &self.x
         } else if index == 1 {
-            return &self.y;
+            &self.y
+        } else {
+            &self.z
         }
-        &self.z
     }
 }
