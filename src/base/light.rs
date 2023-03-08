@@ -3,6 +3,7 @@ use std::fmt::Debug;
 use crate::{
     base::{interaction::Interaction, primitive::Primitive, scene::Scene},
     geometries::{normal::Normal, point2::Point2, ray::Ray, ray::RayDifferential, vec3::Vec3},
+    interactions::base::BaseInteraction,
     spectra::rgb::RGBSpectrum,
     utils::math::Float,
 };
@@ -23,10 +24,10 @@ pub trait Light: Debug + Send + Sync {
     fn sample_li(
         &self,
         it: &dyn Interaction,
+        u: &Point2,
         wi: &mut Vec3,
         pdf: &mut Float,
-        vis: &mut VisibilityTester,
-    ) -> RGBSpectrum;
+    ) -> (RGBSpectrum, VisibilityTester);
 
     fn pdf_li(&self, it: &dyn Interaction, wi: &Vec3) -> Float;
 
@@ -40,7 +41,7 @@ pub trait Light: Debug + Send + Sync {
         u2: &Point2,
         time: Float,
         ray: &mut Ray,
-        light_norm: Normal,
+        light_norm: &mut Normal,
         pdf_pos: &mut Float,
         pdf_dir: &mut Float,
     ) -> RGBSpectrum;
@@ -62,16 +63,16 @@ pub trait Light: Debug + Send + Sync {
 }
 
 pub struct VisibilityTester {
-    pub p0: Box<dyn Interaction>,
-    pub p1: Box<dyn Interaction>,
+    pub p0: BaseInteraction,
+    pub p1: BaseInteraction,
 }
 
 impl VisibilityTester {
-    pub fn new(p0: Box<dyn Interaction>, p1: Box<dyn Interaction>) -> Self {
+    pub fn new(p0: BaseInteraction, p1: BaseInteraction) -> Self {
         Self { p0, p1 }
     }
 
     pub fn is_unoccluded(&self, scene: &Scene) -> bool {
-        !scene.intersect_test(&self.p0.spawn_ray_to_it(self.p1.as_ref()))
+        !scene.intersect_test(&self.p0.spawn_ray_to_it(&self.p1))
     }
 }

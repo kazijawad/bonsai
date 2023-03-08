@@ -95,13 +95,13 @@ impl TextureMapping2D for UVMapping2D {
 
 impl TextureMapping2D for SphericalMapping2D {
     fn map(&self, si: &SurfaceInteraction, dstdx: &mut Vec2, dstdy: &mut Vec2) -> Point2 {
-        let st = self.sphere(&si.p);
+        let st = self.sphere(&si.base.p);
 
         // Compute texture coordinate differentials for (u,v) mapping.
         const DELTA: Float = 0.1;
-        let st_delta_x = self.sphere(&(si.p + DELTA * si.dpdx));
+        let st_delta_x = self.sphere(&(si.base.p + DELTA * si.dpdx));
         *dstdx = (st_delta_x - st) / DELTA;
-        let st_delta_y = self.sphere(&(si.p + DELTA * si.dpdy));
+        let st_delta_y = self.sphere(&(si.base.p + DELTA * si.dpdy));
         *dstdy = (st_delta_y - st) / DELTA;
 
         // Handle mapping discontinuity for coordinate differentials.
@@ -122,13 +122,13 @@ impl TextureMapping2D for SphericalMapping2D {
 
 impl TextureMapping2D for CylindricalMapping2D {
     fn map(&self, si: &SurfaceInteraction, dstdx: &mut Vec2, dstdy: &mut Vec2) -> Point2 {
-        let st = self.cylinder(&si.p);
+        let st = self.cylinder(&si.base.p);
 
         // Compute texture coordinate differentials for (u,v) mapping.
         const DELTA: Float = 0.1;
-        let st_delta_x = self.cylinder(&(si.p + DELTA * si.dpdx));
+        let st_delta_x = self.cylinder(&(si.base.p + DELTA * si.dpdx));
         *dstdx = (st_delta_x - st) / DELTA;
-        let st_delta_y = self.cylinder(&(si.p + DELTA * si.dpdy));
+        let st_delta_y = self.cylinder(&(si.base.p + DELTA * si.dpdy));
         *dstdy = (st_delta_y - st) / DELTA;
 
         // Handle mapping discontinuity for coordinate differentials.
@@ -149,7 +149,7 @@ impl TextureMapping2D for CylindricalMapping2D {
 
 impl TextureMapping2D for PlanarMapping2D {
     fn map(&self, si: &SurfaceInteraction, dstdx: &mut Vec2, dstdy: &mut Vec2) -> Point2 {
-        let v = Vec3::from(si.p);
+        let v = Vec3::from(si.base.p);
         *dstdx = Vec2::new(si.dpdx.dot(&self.vs), si.dpdx.dot(&self.vt));
         *dstdy = Vec2::new(si.dpdy.dot(&self.vs), si.dpdy.dot(&self.vt));
         Point2::new(self.ds + v.dot(&self.vs), self.dt + v.dot(&self.vt))
@@ -160,6 +160,6 @@ impl TextureMapping3D for IdentityMapping3D {
     fn map(&self, si: &SurfaceInteraction, dpdx: &mut Vec3, dpdy: &mut Vec3) -> Point3 {
         *dpdx = self.world_to_texture.transform_vec(&si.dpdx);
         *dpdy = self.world_to_texture.transform_vec(&si.dpdy);
-        si.p.transform(&self.world_to_texture)
+        si.base.p.transform(&self.world_to_texture)
     }
 }

@@ -32,7 +32,7 @@ impl BSDF {
         Self {
             eta,
             ns,
-            ng: si.n,
+            ng: si.base.n,
             ss,
             ts: Vec3::from(ns).cross(&ss),
             bxdfs,

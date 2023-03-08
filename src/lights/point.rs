@@ -5,8 +5,12 @@ use crate::{
         transform::Transform,
     },
     geometries::{normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3},
+    interactions::base::BaseInteraction,
     spectra::rgb::RGBSpectrum,
-    utils::math::Float,
+    utils::{
+        math::{Float, PI},
+        sampling::{uniform_sample_sphere, uniform_sphere_pdf},
+    },
 };
 
 #[derive(Debug, Clone)]
@@ -46,21 +50,29 @@ impl PointLight {
 
 impl Light for PointLight {
     fn power(&self) -> RGBSpectrum {
-        todo!()
+        4.0 * PI * self.intensity
     }
 
     fn sample_li(
         &self,
         it: &dyn Interaction,
+        u: &Point2,
         wi: &mut Vec3,
         pdf: &mut Float,
-        vis: &mut VisibilityTester,
-    ) -> RGBSpectrum {
-        todo!()
+    ) -> (RGBSpectrum, VisibilityTester) {
+        *wi = (self.position - it.position()).normalize();
+        *pdf = 1.0;
+        (
+            self.intensity / self.position.distance_squared(&it.position()),
+            VisibilityTester::new(
+                BaseInteraction::new(&it.position(), it.time()),
+                BaseInteraction::new(&self.position, it.time()),
+            ),
+        )
     }
 
     fn pdf_li(&self, it: &dyn Interaction, wi: &Vec3) -> Float {
-        todo!()
+        0.0
     }
 
     fn sample_le(
@@ -69,15 +81,25 @@ impl Light for PointLight {
         u2: &Point2,
         time: Float,
         ray: &mut Ray,
-        light_norm: Normal,
+        light_norm: &mut Normal,
         pdf_pos: &mut Float,
         pdf_dir: &mut Float,
     ) -> RGBSpectrum {
-        todo!()
+        *ray = Ray::new(
+            &self.position,
+            &uniform_sample_sphere(u1),
+            Float::INFINITY,
+            time,
+        );
+        *light_norm = Normal::from(ray.direction);
+        *pdf_pos = 1.0;
+        *pdf_dir = uniform_sphere_pdf();
+        self.intensity
     }
 
     fn pdf_le(&self, ray: &Ray, light_norm: Normal, pdf_pos: &mut Float, pdf_dir: &mut Float) {
-        todo!()
+        *pdf_pos = 0.0;
+        *pdf_dir = uniform_sphere_pdf();
     }
 
     fn flag(&self) -> LightFlag {

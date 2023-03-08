@@ -41,3 +41,14 @@ pub fn concentric_sample_disk(u: &Point2) -> Point2 {
 pub fn uniform_hemisphere_pdf() -> Float {
     (1.0 / PI) / 2.0
 }
+
+pub fn uniform_sample_sphere(u: &Point2) -> Vec3 {
+    let z = 1.0 - 2.0 * u.x;
+    let r = Float::max(0.0, 1.0 - z * z).sqrt();
+    let phi = 2.0 * PI * u.y;
+    Vec3::new(r * phi.cos(), r * phi.sin(), z)
+}
+
+pub fn uniform_sphere_pdf() -> Float {
+    1.0 / (4.0 * PI)
+}

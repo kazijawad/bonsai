@@ -1,4 +1,6 @@
-use std::ops::{self, Index, IndexMut, Neg};
+use std::ops::{
+    Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign,
+};
 
 use crate::{
     base::transform::Transform,
@@ -118,7 +120,7 @@ impl From<Vec3> for Point3 {
     }
 }
 
-impl ops::Add for Point3 {
+impl Add for Point3 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -130,7 +132,7 @@ impl ops::Add for Point3 {
     }
 }
 
-impl ops::Add for &Point3 {
+impl Add for &Point3 {
     type Output = Point3;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -142,7 +144,7 @@ impl ops::Add for &Point3 {
     }
 }
 
-impl ops::Add<Vec3> for Point3 {
+impl Add<Vec3> for Point3 {
     type Output = Self;
 
     fn add(self, rhs: Vec3) -> Self::Output {
@@ -154,7 +156,7 @@ impl ops::Add<Vec3> for Point3 {
     }
 }
 
-impl ops::Add<&Vec3> for &Point3 {
+impl Add<&Vec3> for &Point3 {
     type Output = Point3;
 
     fn add(self, rhs: &Vec3) -> Self::Output {
@@ -166,7 +168,7 @@ impl ops::Add<&Vec3> for &Point3 {
     }
 }
 
-impl ops::AddAssign for Point3 {
+impl AddAssign for Point3 {
     fn add_assign(&mut self, rhs: Self) {
         self.x += rhs.x;
         self.y += rhs.y;
@@ -174,7 +176,7 @@ impl ops::AddAssign for Point3 {
     }
 }
 
-impl ops::AddAssign<Vec3> for Point3 {
+impl AddAssign<Vec3> for Point3 {
     fn add_assign(&mut self, rhs: Vec3) {
         self.x += rhs.x;
         self.y += rhs.y;
@@ -182,7 +184,7 @@ impl ops::AddAssign<Vec3> for Point3 {
     }
 }
 
-impl ops::Sub for Point3 {
+impl Sub for Point3 {
     type Output = Vec3;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -194,7 +196,7 @@ impl ops::Sub for Point3 {
     }
 }
 
-impl ops::Sub for &Point3 {
+impl Sub for &Point3 {
     type Output = Vec3;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -206,7 +208,7 @@ impl ops::Sub for &Point3 {
     }
 }
 
-impl ops::Sub<Vec3> for Point3 {
+impl Sub<Vec3> for Point3 {
     type Output = Self;
 
     fn sub(self, rhs: Vec3) -> Self::Output {
@@ -218,7 +220,7 @@ impl ops::Sub<Vec3> for Point3 {
     }
 }
 
-impl ops::Sub<&Vec3> for &Point3 {
+impl Sub<&Vec3> for &Point3 {
     type Output = Point3;
 
     fn sub(self, rhs: &Vec3) -> Self::Output {
@@ -230,7 +232,7 @@ impl ops::Sub<&Vec3> for &Point3 {
     }
 }
 
-impl ops::SubAssign for Point3 {
+impl SubAssign for Point3 {
     fn sub_assign(&mut self, rhs: Self) {
         self.x -= rhs.x;
         self.y -= rhs.y;
@@ -238,7 +240,7 @@ impl ops::SubAssign for Point3 {
     }
 }
 
-impl ops::SubAssign<Vec3> for Point3 {
+impl SubAssign<Vec3> for Point3 {
     fn sub_assign(&mut self, rhs: Vec3) {
         self.x -= rhs.x;
         self.y -= rhs.y;
@@ -246,7 +248,7 @@ impl ops::SubAssign<Vec3> for Point3 {
     }
 }
 
-impl ops::Mul<Float> for Point3 {
+impl Mul<Float> for Point3 {
     type Output = Self;
 
     fn mul(self, rhs: Float) -> Self::Output {
@@ -258,7 +260,7 @@ impl ops::Mul<Float> for Point3 {
     }
 }
 
-impl ops::Mul<Float> for &Point3 {
+impl Mul<Float> for &Point3 {
     type Output = Point3;
 
     fn mul(self, rhs: Float) -> Self::Output {
@@ -270,7 +272,7 @@ impl ops::Mul<Float> for &Point3 {
     }
 }
 
-impl ops::Mul<Point3> for Float {
+impl Mul<Point3> for Float {
     type Output = Point3;
 
     fn mul(self, rhs: Point3) -> Self::Output {
@@ -278,7 +280,7 @@ impl ops::Mul<Point3> for Float {
     }
 }
 
-impl ops::Mul<&Point3> for Float {
+impl Mul<&Point3> for Float {
     type Output = Point3;
 
     fn mul(self, rhs: &Point3) -> Self::Output {
@@ -286,7 +288,7 @@ impl ops::Mul<&Point3> for Float {
     }
 }
 
-impl ops::MulAssign<Float> for Point3 {
+impl MulAssign<Float> for Point3 {
     fn mul_assign(&mut self, rhs: Float) {
         self.x *= rhs;
         self.y *= rhs;
@@ -294,7 +296,7 @@ impl ops::MulAssign<Float> for Point3 {
     }
 }
 
-impl ops::Div<Float> for Point3 {
+impl Div<Float> for Point3 {
     type Output = Self;
 
     fn div(self, rhs: Float) -> Self::Output {
@@ -308,7 +310,7 @@ impl ops::Div<Float> for Point3 {
     }
 }
 
-impl ops::Div<Float> for &Point3 {
+impl Div<Float> for &Point3 {
     type Output = Point3;
 
     fn div(self, rhs: Float) -> Self::Output {
@@ -322,7 +324,7 @@ impl ops::Div<Float> for &Point3 {
     }
 }
 
-impl ops::DivAssign<Float> for Point3 {
+impl DivAssign<Float> for Point3 {
     fn div_assign(&mut self, rhs: Float) {
         debug_assert!(rhs != 0.0);
         let inverse = 1.0 / rhs;

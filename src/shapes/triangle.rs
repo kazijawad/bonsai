@@ -124,7 +124,7 @@ impl<'a> Shape for Triangle<'a> {
         &self,
         ray: &Ray,
         t_hit: &mut Float,
-        interaction: &mut SurfaceInteraction,
+        it: &mut SurfaceInteraction,
         include_alpha: bool,
     ) -> bool {
         // Get triangle vertices.
@@ -291,7 +291,7 @@ impl<'a> Shape for Triangle<'a> {
         }
 
         // Fill in interaction from triangle hit.
-        *interaction = SurfaceInteraction::new(
+        *it = SurfaceInteraction::new(
             p_hit,
             p_error,
             uv_hit,
@@ -307,12 +307,12 @@ impl<'a> Shape for Triangle<'a> {
 
         // Override surface normals in interaction for triangle.
         let new_normal = Normal::from(dp02.cross(&dp12).normalize());
-        interaction.n = new_normal;
-        interaction.shading.n = new_normal;
+        it.base.n = new_normal;
+        it.shading.n = new_normal;
         if self.reverse_orientation ^ self.transform_swaps_handedness {
-            let new_normal = -interaction.n;
-            interaction.n = new_normal;
-            interaction.shading.n = new_normal;
+            let new_normal = -it.base.n;
+            it.base.n = new_normal;
+            it.shading.n = new_normal;
         }
 
         if self.mesh.normals.len() > 0 || self.mesh.tangents.len() > 0 {
@@ -324,10 +324,10 @@ impl<'a> Shape for Triangle<'a> {
                 if new_normal.length_squared() > 0.0 {
                     new_normal.normalize()
                 } else {
-                    interaction.n
+                    it.base.n
                 }
             } else {
-                interaction.n
+                it.base.n
             };
 
             // Compute shading tangent for triangle.
@@ -338,10 +338,10 @@ impl<'a> Shape for Triangle<'a> {
                 if new_tangent.length_squared() > 0.0 {
                     new_tangent.normalize()
                 } else {
-                    interaction.dpdu.normalize()
+                    it.dpdu.normalize()
                 }
             } else {
-                interaction.dpdu.normalize()
+                it.dpdu.normalize()
             };
 
             // Compute shading bitangent for triangle and adjust shading tangent.
@@ -401,13 +401,7 @@ impl<'a> Shape for Triangle<'a> {
             if self.reverse_orientation {
                 shading_bitangent = -shading_bitangent;
             }
-            interaction.set_shading_geometry(
-                &shading_tangent,
-                &shading_bitangent,
-                &dndu,
-                &dndv,
-                true,
-            );
+            it.set_shading_geometry(&shading_tangent, &shading_bitangent, &dndu, &dndv, true);
         }
 
         *t_hit = t;

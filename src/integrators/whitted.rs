@@ -1,8 +1,8 @@
 use crate::{
     base::{
-        camera::Camera, film::SampledPixel, integrator::Integrator, interaction::Interaction,
-        material::TransportMode, primitive::Primitive, sampler::Sampler, scene::Scene,
-        spectrum::Spectrum,
+        bxdf::BSDF_ALL, camera::Camera, film::SampledPixel, integrator::Integrator,
+        interaction::Interaction, material::TransportMode, primitive::Primitive, sampler::Sampler,
+        scene::Scene, spectrum::Spectrum,
     },
     geometries::{
         point2::Point2,
@@ -28,12 +28,32 @@ impl WhittedIntegrator {
             max_depth,
         }
     }
+
+    fn specular_reflect(
+        &self,
+        ray: &RayDifferential,
+        si: &SurfaceInteraction,
+        scene: &Scene,
+        depth: u32,
+    ) -> RGBSpectrum {
+        todo!()
+    }
+
+    fn specular_transmit(
+        &self,
+        ray: &RayDifferential,
+        si: &SurfaceInteraction,
+        scene: &Scene,
+        depth: u32,
+    ) -> RGBSpectrum {
+        todo!()
+    }
 }
 
 impl Integrator for WhittedIntegrator {
     fn preprocess(&self, scene: &Scene) {}
 
-    fn li(&self, diff: &RayDifferential, scene: &Scene, depth: u32) -> RGBSpectrum {
+    fn li(&mut self, diff: &RayDifferential, scene: &Scene, depth: u32) -> RGBSpectrum {
         let mut radiance = RGBSpectrum::default();
 
         // Find closest ray intersection or return background radiance.
@@ -49,7 +69,7 @@ impl Integrator for WhittedIntegrator {
 
         // Initialize common variables for integrator.
         let n = si.shading.n;
-        let wo = si.wo;
+        let wo = si.base.wo;
 
         // Compute scattering functions for surface interaction.
         si.compute_scattering_functions(&diff, scene, TransportMode::Radiance, false);
@@ -63,14 +83,24 @@ impl Integrator for WhittedIntegrator {
 
         // Add contribution of each light source.
         for light in scene.lights.iter() {
-            let wi = Vec3::default();
-            let pdf = 0.0;
-            todo!()
+            let mut wi = Vec3::default();
+            let mut pdf = 0.0;
+
+            let (li, visibility) = light.sample_li(&si, &self.sampler.get_2d(), &mut wi, &mut pdf);
+            if li.is_black() || pdf == 0.0 {
+                continue;
+            }
+
+            let f = si.bsdf.as_ref().unwrap().f(&wo, &wi, BSDF_ALL);
+            if !f.is_black() && visibility.is_unoccluded(scene) {
+                radiance += f * li * wi.abs_dot(&Vec3::from(n)) / pdf;
+            }
         }
 
         if depth + 1 < self.max_depth {
             // Trace rays for specular reflection and refraction.
-            todo!()
+            radiance += self.specular_reflect(&diff, &si, scene, depth);
+            radiance += self.specular_transmit(&diff, &si, scene, depth);
         }
 
         radiance
