@@ -4,12 +4,7 @@ use crate::{
         film::Film,
         transform::{AnimatedTransform, Transform},
     },
-    geometries::{
-        bounds2::Bounds2,
-        point3::Point3,
-        ray::{Ray, RayDifferential},
-        vec3::Vec3,
-    },
+    geometries::{bounds2::Bounds2, point3::Point3, ray::Ray, vec3::Vec3},
     utils::math::{lerp, Float},
 };
 
@@ -100,16 +95,16 @@ impl Camera for OrthographicCamera {
         }
 
         ray.time = lerp(sample.time, self.shutter_open, self.shutter_close);
-        *ray = self.camera_to_world.transform_ray(&ray);
+        *ray = ray.animated_transform(&self.camera_to_world);
 
         1.0
     }
 
-    fn generate_ray_differential(&self, sample: &CameraSample, r: &mut RayDifferential) -> Float {
+    fn generate_ray_differential(&self, sample: &CameraSample, ray: &mut Ray) -> Float {
         // Compute raster and camera sample positions.
         let film_point = Point3::new(sample.film_point.x, sample.film_point.y, 0.0);
         let camera_point = film_point.transform(&self.raster_to_camera);
-        *r = RayDifferential::new(
+        *ray = Ray::new(
             &camera_point,
             &Vec3::new(0.0, 0.0, 1.0),
             Float::INFINITY,
@@ -122,37 +117,37 @@ impl Camera for OrthographicCamera {
             let lens_point = self.lens_radius * sample.lens_point.concentric_disk_sample();
 
             // Compute point on plane of focus.
-            let focus_t = self.focal_distance / r.ray.direction.z;
-            let focus_point = r.ray.at(focus_t);
+            let focus_t = self.focal_distance / ray.direction.z;
+            let focus_point = ray.at(focus_t);
 
             // Update ray for effect of lens.
-            r.ray.origin = Point3::new(lens_point.x, lens_point.y, 0.0);
-            r.ray.direction = (focus_point - r.ray.origin).normalize();
+            ray.origin = Point3::new(lens_point.x, lens_point.y, 0.0);
+            ray.direction = (focus_point - ray.origin).normalize();
         }
 
         // Compute ray differentials.
         if self.lens_radius > 0.0 {
             // Sample point on lens.
             let lens_point = self.lens_radius * sample.lens_point.concentric_disk_sample();
-            let focus_t = self.focal_distance / r.ray.direction.z;
+            let focus_t = self.focal_distance / ray.direction.z;
 
             let focus_point = camera_point + self.dx_camera + (focus_t * Vec3::new(0.0, 0.0, 1.0));
-            r.rx_origin = Point3::new(lens_point.x, lens_point.y, 0.0);
-            r.rx_direction = (focus_point - r.rx_origin).normalize();
+            ray.rx_origin = Point3::new(lens_point.x, lens_point.y, 0.0);
+            ray.rx_direction = (focus_point - ray.rx_origin).normalize();
 
             let focus_point = camera_point + self.dy_camera + (focus_t * Vec3::new(0.0, 0.0, 1.0));
-            r.ry_origin = Point3::new(lens_point.x, lens_point.y, 0.0);
-            r.ry_direction = (focus_point - r.ry_origin).normalize();
+            ray.ry_origin = Point3::new(lens_point.x, lens_point.y, 0.0);
+            ray.ry_direction = (focus_point - ray.ry_origin).normalize();
         } else {
-            r.rx_origin = r.ray.origin + self.dx_camera;
-            r.ry_origin = r.ray.origin + self.dy_camera;
-            r.rx_direction = r.ray.direction;
-            r.ry_direction = r.ray.direction;
+            ray.rx_origin = ray.origin + self.dx_camera;
+            ray.ry_origin = ray.origin + self.dy_camera;
+            ray.rx_direction = ray.direction;
+            ray.ry_direction = ray.direction;
         }
 
-        r.ray.time = lerp(sample.time, self.shutter_open, self.shutter_close);
-        r.ray = self.camera_to_world.transform_ray(&r.ray);
-        r.has_differentials = true;
+        ray.time = lerp(sample.time, self.shutter_open, self.shutter_close);
+        *ray = ray.animated_transform(&self.camera_to_world);
+        ray.has_differentials = true;
 
         1.0
     }

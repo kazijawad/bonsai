@@ -2,14 +2,8 @@ use std::{cmp::Ordering, ops};
 
 use crate::{
     geometries::{
-        bounds3::Bounds3,
-        interval::Interval,
-        mat4::Mat4,
-        normal::Normal,
-        point3::Point3,
-        quaternion::Quaternion,
-        ray::{Ray, RayDifferential},
-        vec3::Vec3,
+        bounds3::Bounds3, interval::Interval, mat4::Mat4, normal::Normal, point3::Point3,
+        quaternion::Quaternion, vec3::Vec3,
     },
     utils::math::{self, Float},
 };
@@ -22,12 +16,12 @@ pub struct Transform {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct AnimatedTransform {
-    start_transform: Transform,
-    end_transform: Transform,
-    start_time: Float,
-    end_time: Float,
-    is_animated: bool,
-    has_rotation: bool,
+    pub start_transform: Transform,
+    pub end_transform: Transform,
+    pub start_time: Float,
+    pub end_time: Float,
+    pub is_animated: bool,
+    pub has_rotation: bool,
     translation: Option<Vec<Vec3>>,
     rotation: Option<Vec<Quaternion>>,
     scale: Option<Vec<Mat4>>,
@@ -213,52 +207,6 @@ impl Transform {
             self.m_inverse.m[0][1] * x + self.m_inverse.m[1][1] * y + self.m_inverse.m[2][1] * z,
             self.m_inverse.m[0][2] * x + self.m_inverse.m[1][2] * y + self.m_inverse.m[2][2] * z,
         )
-    }
-
-    pub fn transform_ray(&self, r: &Ray) -> Ray {
-        let mut origin_error = Vec3::default();
-        let mut origin = self.transform_point_with_error(&r.origin, &mut origin_error);
-
-        let direction = self.transform_vec(&r.direction);
-        // Offset ray origin to edge of error bounds and compute max.
-        let length_squared = direction.length_squared();
-        let mut t_max = r.t_max;
-
-        if length_squared > 0.0 {
-            let dt = direction.abs().dot(&origin_error) / length_squared;
-            origin += direction * dt;
-            t_max -= dt;
-        }
-
-        Ray::new(&origin, &direction, t_max, r.time)
-    }
-
-    pub fn transform_ray_with_error(
-        &self,
-        r: &Ray,
-        origin_error: &mut Vec3,
-        direction_error: &mut Vec3,
-    ) -> Ray {
-        let mut origin = self.transform_point_with_error(&r.origin, origin_error);
-        let direction = self.transform_vec_with_error(&r.direction, direction_error);
-        let t_max = r.t_max;
-        let length_squared = direction.length_squared();
-        if length_squared > 0.0 {
-            let dt = direction.abs().dot(&origin_error) / length_squared;
-            origin += direction * dt;
-        }
-        Ray::new(&origin, &direction, t_max, r.time)
-    }
-
-    pub fn transform_ray_differential(&self, r: &RayDifferential) -> RayDifferential {
-        let tr = self.transform_ray(&Ray::from(r.clone()));
-        let mut ret = RayDifferential::new(&tr.origin, &tr.direction, tr.t_max, tr.time);
-        ret.has_differentials = r.has_differentials;
-        ret.rx_origin = r.rx_origin.transform(self);
-        ret.ry_origin = r.ry_origin.transform(self);
-        ret.rx_direction = self.transform_vec(&r.rx_direction);
-        ret.ry_direction = self.transform_vec(&r.ry_direction);
-        ret
     }
 
     pub fn transform_bounds(&self, b: &Bounds3) -> Bounds3 {
@@ -1700,30 +1648,6 @@ impl AnimatedTransform {
                 * Transform::from(rotate)
                 * Transform::new(scaling, scaling_inverse)),
         );
-    }
-
-    pub fn transform_ray(&self, r: &Ray) -> Ray {
-        if !self.is_animated || r.time <= self.start_time {
-            self.start_transform.transform_ray(r)
-        } else if r.time >= self.end_time {
-            self.end_transform.transform_ray(r)
-        } else {
-            let mut t = Transform::default();
-            self.interpolate(r.time, &mut t);
-            t.transform_ray(r)
-        }
-    }
-
-    pub fn transform_ray_differential(&self, r: &RayDifferential) -> RayDifferential {
-        if !self.is_animated || r.ray.time <= self.start_time {
-            self.start_transform.transform_ray_differential(r)
-        } else if r.ray.time >= self.end_time {
-            self.end_transform.transform_ray_differential(r)
-        } else {
-            let mut t = Transform::default();
-            self.interpolate(r.ray.time, &mut t);
-            t.transform_ray_differential(r)
-        }
     }
 
     pub fn transform_point(&self, p: &Point3, time: Float) -> Point3 {

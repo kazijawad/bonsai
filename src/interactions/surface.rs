@@ -3,13 +3,7 @@ use crate::{
         bsdf::BSDF, interaction::Interaction, material::TransportMode, primitive::Primitive,
         transform::Transform,
     },
-    geometries::{
-        normal::Normal,
-        point2::Point2,
-        point3::Point3,
-        ray::{Ray, RayDifferential},
-        vec3::Vec3,
-    },
+    geometries::{normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3},
     interactions::base::BaseInteraction,
     spectra::rgb::RGBSpectrum,
     utils::math::{solve_linear_system_2x2, Float},
@@ -117,7 +111,7 @@ impl SurfaceInteraction {
 
     pub fn compute_scattering_functions(
         &mut self,
-        ray: &RayDifferential,
+        ray: &Ray,
         primitive: &dyn Primitive,
         mode: TransportMode,
         allow_multiple_lobes: bool,
@@ -126,7 +120,7 @@ impl SurfaceInteraction {
         primitive.compute_scattering_functions(self, mode, allow_multiple_lobes);
     }
 
-    pub fn compute_differentials(&mut self, ray: &RayDifferential) {
+    pub fn compute_differentials(&mut self, ray: &Ray) {
         let mut fail = || {
             self.dudx = 0.0;
             self.dvdx = 0.0;

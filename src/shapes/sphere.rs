@@ -72,8 +72,8 @@ impl<'a> Shape for Sphere<'a> {
         // Transform ray to object space.
         let mut origin_error = Vec3::default();
         let mut direction_error = Vec3::default();
-        let ray = self.world_to_object.transform_ray_with_error(
-            r,
+        let ray = r.transform_with_error(
+            self.world_to_object,
             &mut origin_error,
             &mut direction_error,
         );
@@ -233,8 +233,8 @@ impl<'a> Shape for Sphere<'a> {
         // Transform ray to object space.
         let mut origin_error = Vec3::default();
         let mut direction_error = Vec3::default();
-        let ray = self.world_to_object.transform_ray_with_error(
-            r,
+        let ray = r.transform_with_error(
+            self.world_to_object,
             &mut origin_error,
             &mut direction_error,
         );

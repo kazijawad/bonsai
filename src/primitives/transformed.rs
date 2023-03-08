@@ -34,7 +34,7 @@ impl<'a> Primitive for TransformedPrimitive<'a> {
         // Compute ray after transformation applied by primitive_to_world.
         self.primitive_to_world
             .interpolate(r.time, &mut interpolated_primitive_to_world);
-        let mut ray = interpolated_primitive_to_world.inverse().transform_ray(r);
+        let mut ray = r.transform(&interpolated_primitive_to_world.inverse());
         if !self.primitive.intersect(&mut ray, si) {
             return false;
         }
@@ -54,7 +54,7 @@ impl<'a> Primitive for TransformedPrimitive<'a> {
             .interpolate(r.time, &mut interpolated_primitive_to_world);
         let interpolated_world_to_primitive = interpolated_primitive_to_world.inverse();
         self.primitive
-            .intersect_test(&interpolated_world_to_primitive.transform_ray(r))
+            .intersect_test(&r.transform(&interpolated_world_to_primitive))
     }
 
     fn compute_scattering_functions(

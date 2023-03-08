@@ -4,11 +4,7 @@ use crate::{
         interaction::Interaction, material::TransportMode, primitive::Primitive, sampler::Sampler,
         scene::Scene, spectrum::Spectrum,
     },
-    geometries::{
-        point2::Point2,
-        ray::{Ray, RayDifferential},
-        vec3::Vec3,
-    },
+    geometries::{point2::Point2, ray::Ray, vec3::Vec3},
     interactions::surface::SurfaceInteraction,
     spectra::rgb::RGBSpectrum,
     utils::math::Float,
@@ -31,7 +27,7 @@ impl WhittedIntegrator {
 
     fn specular_reflect(
         &self,
-        ray: &RayDifferential,
+        ray: &Ray,
         si: &SurfaceInteraction,
         scene: &Scene,
         depth: u32,
@@ -41,7 +37,7 @@ impl WhittedIntegrator {
 
     fn specular_transmit(
         &self,
-        ray: &RayDifferential,
+        ray: &Ray,
         si: &SurfaceInteraction,
         scene: &Scene,
         depth: u32,
@@ -53,29 +49,26 @@ impl WhittedIntegrator {
 impl Integrator for WhittedIntegrator {
     fn preprocess(&self, scene: &Scene) {}
 
-    fn li(&mut self, diff: &RayDifferential, scene: &Scene, depth: u32) -> RGBSpectrum {
+    fn li(&mut self, ray: &mut Ray, scene: &Scene, depth: u32) -> RGBSpectrum {
         let mut radiance = RGBSpectrum::default();
 
         // Find closest ray intersection or return background radiance.
-        let mut ray = Ray::from(diff.clone());
         let mut si = SurfaceInteraction::default();
-        if !scene.intersect(&mut ray, &mut si) {
+        if !scene.intersect(ray, &mut si) {
             for light in scene.lights.iter() {
-                radiance += light.le(diff);
+                radiance += light.le(ray);
             }
             return radiance;
         }
-        let diff = RayDifferential::from(ray);
 
         // Initialize common variables for integrator.
         let n = si.shading.n;
         let wo = si.base.wo;
 
         // Compute scattering functions for surface interaction.
-        si.compute_scattering_functions(&diff, scene, TransportMode::Radiance, false);
+        si.compute_scattering_functions(ray, scene, TransportMode::Radiance, false);
         if si.bsdf.is_none() {
-            let diff = RayDifferential::from(si.spawn_ray(&diff.ray.direction));
-            return self.li(&diff, scene, depth);
+            return self.li(&mut si.spawn_ray(&ray.direction), scene, depth);
         }
 
         // Compute emitted light if ray hit an area light source.
@@ -99,8 +92,8 @@ impl Integrator for WhittedIntegrator {
 
         if depth + 1 < self.max_depth {
             // Trace rays for specular reflection and refraction.
-            radiance += self.specular_reflect(&diff, &si, scene, depth);
-            radiance += self.specular_transmit(&diff, &si, scene, depth);
+            radiance += self.specular_reflect(&ray, &si, scene, depth);
+            radiance += self.specular_transmit(&ray, &si, scene, depth);
         }
 
         radiance
@@ -121,7 +114,7 @@ impl Integrator for WhittedIntegrator {
                     let camera_sample = self.sampler.get_camera_sample(&pixel);
 
                     // Generate camera ray for current sample.
-                    let mut ray = RayDifferential::default();
+                    let mut ray = Ray::default();
                     let ray_weight = self
                         .camera
                         .generate_ray_differential(&camera_sample, &mut ray);
@@ -131,7 +124,7 @@ impl Integrator for WhittedIntegrator {
 
                     // Evaluate radiance along camera ray.
                     let mut radiance = if ray_weight > 0.0 {
-                        self.li(&ray, scene, 0)
+                        self.li(&mut ray, scene, 0)
                     } else {
                         RGBSpectrum::default()
                     };

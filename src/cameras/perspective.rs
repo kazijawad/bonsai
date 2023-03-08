@@ -4,12 +4,7 @@ use crate::{
         film::Film,
         transform::{AnimatedTransform, Transform},
     },
-    geometries::{
-        bounds2::Bounds2,
-        point3::Point3,
-        ray::{Ray, RayDifferential},
-        vec3::Vec3,
-    },
+    geometries::{bounds2::Bounds2, point3::Point3, ray::Ray, vec3::Vec3},
     utils::math::{lerp, Float},
 };
 
@@ -115,16 +110,16 @@ impl Camera for PerspectiveCamera {
         }
 
         ray.time = lerp(sample.time, self.shutter_open, self.shutter_close);
-        *ray = self.camera_to_world.transform_ray(&ray);
+        *ray = ray.animated_transform(&self.camera_to_world);
 
         1.0
     }
 
-    fn generate_ray_differential(&self, sample: &CameraSample, r: &mut RayDifferential) -> Float {
+    fn generate_ray_differential(&self, sample: &CameraSample, ray: &mut Ray) -> Float {
         // Compute raster and camera sample positions.
         let film_point = Point3::new(sample.film_point.x, sample.film_point.y, 0.0);
         let camera_point = film_point.transform(&self.raster_to_camera);
-        *r = RayDifferential::new(
+        *ray = Ray::new(
             &Point3::default(),
             &Vec3::from(camera_point).normalize(),
             Float::INFINITY,
@@ -137,12 +132,12 @@ impl Camera for PerspectiveCamera {
             let lens_point = self.lens_radius * sample.lens_point.concentric_disk_sample();
 
             // Compute point on plane of focus.
-            let focus_t = self.focal_distance / r.ray.direction.z;
-            let focus_point = r.ray.at(focus_t);
+            let focus_t = self.focal_distance / ray.direction.z;
+            let focus_point = ray.at(focus_t);
 
             // Update ray for effect of lens.
-            r.ray.origin = Point3::new(lens_point.x, lens_point.y, 0.0);
-            r.ray.direction = (focus_point - r.ray.origin).normalize();
+            ray.origin = Point3::new(lens_point.x, lens_point.y, 0.0);
+            ray.direction = (focus_point - ray.origin).normalize();
         }
 
         // Compute offset rays for ray differentials.
@@ -153,24 +148,24 @@ impl Camera for PerspectiveCamera {
             let dx = Vec3::from(camera_point + self.dx_camera).normalize();
             let focus_t = self.focal_distance / dx.z;
             let focus_point = Point3::default() + (focus_t * dx);
-            r.rx_origin = Point3::new(lens_point.x, lens_point.y, 0.0);
-            r.rx_direction = (focus_point - r.rx_origin).normalize();
+            ray.rx_origin = Point3::new(lens_point.x, lens_point.y, 0.0);
+            ray.rx_direction = (focus_point - ray.rx_origin).normalize();
 
             let dy = Vec3::from(camera_point + self.dy_camera).normalize();
             let focus_t = self.focal_distance / dy.z;
             let focus_point = Point3::default() + (focus_t * dy);
-            r.ry_origin = Point3::new(lens_point.x, lens_point.y, 0.0);
-            r.ry_direction = (focus_point - r.ry_origin).normalize();
+            ray.ry_origin = Point3::new(lens_point.x, lens_point.y, 0.0);
+            ray.ry_direction = (focus_point - ray.ry_origin).normalize();
         } else {
-            r.rx_origin = r.ray.origin;
-            r.ry_origin = r.ray.origin;
-            r.rx_direction = (Vec3::from(camera_point) + self.dx_camera).normalize();
-            r.ry_direction = (Vec3::from(camera_point) + self.dy_camera).normalize();
+            ray.rx_origin = ray.origin;
+            ray.ry_origin = ray.origin;
+            ray.rx_direction = (Vec3::from(camera_point) + self.dx_camera).normalize();
+            ray.ry_direction = (Vec3::from(camera_point) + self.dy_camera).normalize();
         }
 
-        r.ray.time = lerp(sample.time, self.shutter_open, self.shutter_close);
-        r.ray = self.camera_to_world.transform_ray(&r.ray);
-        r.has_differentials = true;
+        ray.time = lerp(sample.time, self.shutter_open, self.shutter_close);
+        *ray = ray.animated_transform(&self.camera_to_world);
+        ray.has_differentials = true;
 
         1.0
     }

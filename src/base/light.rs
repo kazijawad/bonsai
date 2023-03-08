@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use crate::{
     base::{interaction::Interaction, primitive::Primitive, scene::Scene},
-    geometries::{normal::Normal, point2::Point2, ray::Ray, ray::RayDifferential, vec3::Vec3},
+    geometries::{normal::Normal, point2::Point2, ray::Ray, vec3::Vec3},
     interactions::base::BaseInteraction,
     spectra::rgb::RGBSpectrum,
     utils::math::Float,
@@ -31,7 +31,7 @@ pub trait Light: Debug + Send + Sync {
 
     fn pdf_li(&self, it: &dyn Interaction, wi: &Vec3) -> Float;
 
-    fn le(&self, ray: &RayDifferential) -> RGBSpectrum {
+    fn le(&self, ray: &Ray) -> RGBSpectrum {
         RGBSpectrum::default()
     }
 

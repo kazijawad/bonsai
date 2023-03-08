@@ -36,7 +36,8 @@ impl Camera for EnvironmentCamera {
         // Compute ray direction.
         let theta = PI * sample.film_point.y / self.film.full_resolution.y;
         let phi = 2.0 * PI * sample.film_point.x / self.film.full_resolution.x;
-        *ray = self.camera_to_world.transform_ray(&Ray::new(
+
+        *ray = Ray::new(
             &Point3::default(),
             &Vec3::new(
                 theta.sin() * phi.cos(),
@@ -45,7 +46,8 @@ impl Camera for EnvironmentCamera {
             ),
             Float::INFINITY,
             lerp(sample.time, self.shutter_open, self.shutter_close),
-        ));
+        )
+        .animated_transform(&self.camera_to_world);
 
         1.0
     }
