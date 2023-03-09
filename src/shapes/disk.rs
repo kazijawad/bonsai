@@ -1,15 +1,20 @@
+use std::sync::Arc;
+
 use crate::{
     base::{interaction::Interaction, shape::Shape, transform::Transform},
     geometries::{
         bounds3::Bounds3, normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3,
     },
-    interactions::surface::SurfaceInteraction,
-    utils::math::{Float, PI},
+    interactions::{base::BaseInteraction, surface::SurfaceInteraction},
+    utils::{
+        math::{Float, PI},
+        sampling::concentric_sample_disk,
+    },
 };
 
-pub struct Disk<'a> {
-    object_to_world: &'a Transform,
-    world_to_object: &'a Transform,
+pub struct Disk {
+    object_to_world: Arc<Transform>,
+    world_to_object: Arc<Transform>,
     reverse_orientation: bool,
     transform_swaps_handedness: bool,
     height: Float,
@@ -18,10 +23,10 @@ pub struct Disk<'a> {
     phi_max: Float,
 }
 
-impl<'a> Disk<'a> {
+impl Disk {
     pub fn new(
-        object_to_world: &'a Transform,
-        world_to_object: &'a Transform,
+        object_to_world: Arc<Transform>,
+        world_to_object: Arc<Transform>,
         reverse_orientation: bool,
         height: Float,
         radius: Float,
@@ -43,7 +48,7 @@ impl<'a> Disk<'a> {
     }
 }
 
-impl<'a> Shape for Disk<'a> {
+impl Shape for Disk {
     fn object_bound(&self) -> Bounds3 {
         Bounds3::new(
             &Point3::new(-self.radius, -self.radius, self.height),
@@ -66,7 +71,7 @@ impl<'a> Shape for Disk<'a> {
         let mut origin_error = Vec3::default();
         let mut direction_error = Vec3::default();
         let ray = r.transform_with_error(
-            self.world_to_object,
+            &self.world_to_object,
             &mut origin_error,
             &mut direction_error,
         );
@@ -125,7 +130,7 @@ impl<'a> Shape for Disk<'a> {
             self.reverse_orientation,
             self.transform_swaps_handedness,
         )
-        .transform(self.object_to_world);
+        .transform(&self.object_to_world);
 
         // Update hit for quadric intersection.
         *t_hit = Float::from(t_shape_hit);
@@ -138,7 +143,7 @@ impl<'a> Shape for Disk<'a> {
         let mut origin_error = Vec3::default();
         let mut direction_error = Vec3::default();
         let ray = r.transform_with_error(
-            self.world_to_object,
+            &self.world_to_object,
             &mut origin_error,
             &mut direction_error,
         );
@@ -172,31 +177,38 @@ impl<'a> Shape for Disk<'a> {
     }
 
     fn sample(&self, u: &Point2, pdf: &mut Float) -> Box<dyn Interaction> {
-        todo!()
-    }
+        let disk_point = concentric_sample_disk(u);
+        let object_point = Point3::new(
+            disk_point.x * self.radius,
+            disk_point.y * self.radius,
+            self.height,
+        );
 
-    fn sample_from_ref(
-        &self,
-        reference: Box<dyn Interaction>,
-        u: &Point2,
-        pdf: &mut Float,
-    ) -> Box<dyn Interaction> {
-        todo!()
-    }
+        let mut n = self
+            .object_to_world
+            .transform_normal(&Normal::new(0.0, 0.0, 1.0))
+            .normalize();
+        if self.reverse_orientation {
+            n *= -1.0;
+        }
 
-    fn pdf(&self, interaction: Box<dyn Interaction>) -> Float {
-        todo!()
-    }
+        let mut p_error = Vec3::default();
+        let p = self.object_to_world.transform_point_with_point_error(
+            &object_point,
+            &Vec3::default(),
+            &mut p_error,
+        );
 
-    fn pdf_from_ref(&self, reference: Box<dyn Interaction>, wi: &Vec3) -> Float {
-        todo!()
+        *pdf = 1.0 / self.area();
+
+        let mut it = Box::new(BaseInteraction::new(&p, 0.0));
+        it.n = n;
+        it.p_error = p_error;
+
+        it
     }
 
     fn area(&self) -> Float {
         self.phi_max * 0.5 * (self.radius * self.radius - self.inner_radius * self.inner_radius)
-    }
-
-    fn solid_angle(&self, p: &Point3, n_samples: u32) -> Float {
-        todo!()
     }
 }

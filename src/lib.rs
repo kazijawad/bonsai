@@ -55,7 +55,7 @@ pub use lights::point::{PointLight, PointLightDescriptor};
 pub use materials::{matte::MatteMaterial, plastic::PlasticMaterial};
 pub use primitives::{geometric::GeometricPrimitive, transformed::TransformedPrimitive};
 pub use samplers::stratified::StratifiedSampler;
-pub use shapes::{cone::Cone, cylinder::Cylinder, disk::Disk, sphere::Sphere, triangle::Triangle};
+pub use shapes::{cone::Cone, cylinder::Cylinder, disk::Disk, sphere::Sphere};
 pub use spectra::rgb::RGBSpectrum;
 pub use textures::{
     checkerboard::Checkerboard2DTexture, constant::ConstantTexture, dots::DotsTexture,

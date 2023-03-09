@@ -1,18 +1,20 @@
+use std::sync::Arc;
+
 use crate::{
     base::{interaction::Interaction, shape::Shape, transform::Transform},
     geometries::{
         bounds3::Bounds3, normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3,
     },
-    interactions::surface::SurfaceInteraction,
+    interactions::{base::BaseInteraction, surface::SurfaceInteraction},
     utils::{
         efloat::EFloat,
-        math::{gamma, Float, PI},
+        math::{gamma, lerp, Float, PI},
     },
 };
 
-pub struct Cylinder<'a> {
-    object_to_world: &'a Transform,
-    world_to_object: &'a Transform,
+pub struct Cylinder {
+    object_to_world: Arc<Transform>,
+    world_to_object: Arc<Transform>,
     reverse_orientation: bool,
     transform_swaps_handedness: bool,
     radius: Float,
@@ -21,10 +23,10 @@ pub struct Cylinder<'a> {
     phi_max: Float,
 }
 
-impl<'a> Cylinder<'a> {
+impl Cylinder {
     pub fn new(
-        object_to_world: &'a Transform,
-        world_to_object: &'a Transform,
+        object_to_world: Arc<Transform>,
+        world_to_object: Arc<Transform>,
         reverse_orientation: bool,
         radius: Float,
         z_min: Float,
@@ -46,7 +48,7 @@ impl<'a> Cylinder<'a> {
     }
 }
 
-impl<'a> Shape for Cylinder<'a> {
+impl Shape for Cylinder {
     fn object_bound(&self) -> Bounds3 {
         Bounds3::new(
             &Point3::new(-self.radius, -self.radius, self.z_min),
@@ -69,7 +71,7 @@ impl<'a> Shape for Cylinder<'a> {
         let mut origin_error = Vec3::default();
         let mut direction_error = Vec3::default();
         let ray = r.transform_with_error(
-            self.world_to_object,
+            &self.world_to_object,
             &mut origin_error,
             &mut direction_error,
         );
@@ -191,7 +193,7 @@ impl<'a> Shape for Cylinder<'a> {
             self.reverse_orientation,
             self.transform_swaps_handedness,
         )
-        .transform(self.object_to_world);
+        .transform(&self.object_to_world);
 
         // Update hit for quadric intersection.
         *t_hit = Float::from(t_shape_hit);
@@ -204,7 +206,7 @@ impl<'a> Shape for Cylinder<'a> {
         let mut origin_error = Vec3::default();
         let mut direction_error = Vec3::default();
         let ray = r.transform_with_error(
-            self.world_to_object,
+            &self.world_to_object,
             &mut origin_error,
             &mut direction_error,
         );
@@ -280,31 +282,42 @@ impl<'a> Shape for Cylinder<'a> {
     }
 
     fn sample(&self, u: &Point2, pdf: &mut Float) -> Box<dyn Interaction> {
-        todo!()
-    }
+        let z = lerp(u.x, self.z_min, self.z_max);
+        let phi = u.y * self.phi_max;
+        let mut object_point = Point3::new(self.radius * phi.cos(), self.radius * phi.sin(), z);
 
-    fn sample_from_ref(
-        &self,
-        reference: Box<dyn Interaction>,
-        u: &Point2,
-        pdf: &mut Float,
-    ) -> Box<dyn Interaction> {
-        todo!()
-    }
+        let mut n = self.object_to_world.transform_normal(&Normal::new(
+            object_point.x,
+            object_point.y,
+            0.0,
+        ));
+        if self.reverse_orientation {
+            n *= -1.0;
+        }
 
-    fn pdf(&self, interaction: Box<dyn Interaction>) -> Float {
-        todo!()
-    }
+        // Reproject point to cylinder surface and compute error.
+        let hit_radius = (object_point.x * object_point.x + object_point.y * object_point.y).sqrt();
+        object_point.x *= self.radius / hit_radius;
+        object_point.y *= self.radius / hit_radius;
 
-    fn pdf_from_ref(&self, reference: Box<dyn Interaction>, wi: &Vec3) -> Float {
-        todo!()
+        let object_point_error = gamma(3.0) * Vec3::new(object_point.x, object_point.y, 0.0).abs();
+        let mut p_error = Vec3::default();
+        let p = self.object_to_world.transform_point_with_point_error(
+            &object_point,
+            &object_point_error,
+            &mut p_error,
+        );
+
+        *pdf = 1.0 / self.area();
+
+        let mut it = Box::new(BaseInteraction::new(&p, 0.0));
+        it.n = n;
+        it.p_error = p_error;
+
+        it
     }
 
     fn area(&self) -> Float {
         (self.z_max - self.z_min) * self.radius * self.phi_max
-    }
-
-    fn solid_angle(&self, p: &Point3, n_samples: u32) -> Float {
-        todo!()
     }
 }

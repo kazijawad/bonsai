@@ -38,6 +38,10 @@ pub fn concentric_sample_disk(u: &Point2) -> Point2 {
     r * Point2::new(theta.cos(), theta.sin())
 }
 
+pub fn uniform_cone_pdf(cos_theta_max: Float) -> Float {
+    1.0 / (2.0 * PI * (1.0 - cos_theta_max))
+}
+
 pub fn uniform_hemisphere_pdf() -> Float {
     (1.0 / PI) / 2.0
 }

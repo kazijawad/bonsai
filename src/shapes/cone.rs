@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     base::{interaction::Interaction, shape::Shape, transform::Transform},
     geometries::{
@@ -10,9 +12,9 @@ use crate::{
     },
 };
 
-pub struct Cone<'a> {
-    object_to_world: &'a Transform,
-    world_to_object: &'a Transform,
+pub struct Cone {
+    object_to_world: Arc<Transform>,
+    world_to_object: Arc<Transform>,
     reverse_orientation: bool,
     transform_swaps_handedness: bool,
     height: Float,
@@ -20,10 +22,10 @@ pub struct Cone<'a> {
     phi_max: Float,
 }
 
-impl<'a> Cone<'a> {
+impl Cone {
     pub fn new(
-        object_to_world: &'a Transform,
-        world_to_object: &'a Transform,
+        object_to_world: Arc<Transform>,
+        world_to_object: Arc<Transform>,
         reverse_orientation: bool,
         height: Float,
         radius: Float,
@@ -43,7 +45,7 @@ impl<'a> Cone<'a> {
     }
 }
 
-impl<'a> Shape for Cone<'a> {
+impl Shape for Cone {
     fn object_bound(&self) -> Bounds3 {
         Bounds3::new(
             &Point3::new(-self.radius, -self.radius, 0.0),
@@ -57,16 +59,16 @@ impl<'a> Shape for Cone<'a> {
 
     fn intersect(
         &self,
-        r: &Ray,
+        ray: &Ray,
         t_hit: &mut Float,
         interaction: &mut SurfaceInteraction,
-        _include_alpha: bool,
+        include_alpha: bool,
     ) -> bool {
         // Transform ray to object space.
         let mut origin_error = Vec3::default();
         let mut direction_error = Vec3::default();
-        let ray = r.transform_with_error(
-            self.world_to_object,
+        let ray = ray.transform_with_error(
+            &self.world_to_object,
             &mut origin_error,
             &mut direction_error,
         );
@@ -191,7 +193,7 @@ impl<'a> Shape for Cone<'a> {
             self.reverse_orientation,
             self.transform_swaps_handedness,
         )
-        .transform(self.object_to_world);
+        .transform(&self.object_to_world);
 
         // Update hit for quadric intersection.
         *t_hit = Float::from(t_shape_hit);
@@ -204,7 +206,7 @@ impl<'a> Shape for Cone<'a> {
         let mut origin_error = Vec3::default();
         let mut direction_error = Vec3::default();
         let ray = r.transform_with_error(
-            self.world_to_object,
+            &self.world_to_object,
             &mut origin_error,
             &mut direction_error,
         );
@@ -276,24 +278,7 @@ impl<'a> Shape for Cone<'a> {
     }
 
     fn sample(&self, u: &Point2, pdf: &mut Float) -> Box<dyn Interaction> {
-        todo!()
-    }
-
-    fn sample_from_ref(
-        &self,
-        reference: Box<dyn Interaction>,
-        u: &Point2,
-        pdf: &mut Float,
-    ) -> Box<dyn Interaction> {
-        todo!()
-    }
-
-    fn pdf(&self, interaction: Box<dyn Interaction>) -> Float {
-        todo!()
-    }
-
-    fn pdf_from_ref(&self, reference: Box<dyn Interaction>, wi: &Vec3) -> Float {
-        todo!()
+        unimplemented!();
     }
 
     fn area(&self) -> Float {
@@ -301,9 +286,5 @@ impl<'a> Shape for Cone<'a> {
             * ((self.height * self.height) + (self.radius * self.radius)).sqrt()
             * self.phi_max
             / 2.0
-    }
-
-    fn solid_angle(&self, p: &Point3, n_samples: u32) -> Float {
-        todo!()
     }
 }

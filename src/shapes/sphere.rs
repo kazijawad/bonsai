@@ -1,18 +1,21 @@
+use std::sync::Arc;
+
 use crate::{
     base::{interaction::Interaction, shape::Shape, transform::Transform},
     geometries::{
         bounds3::Bounds3, normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3,
     },
-    interactions::surface::SurfaceInteraction,
+    interactions::{base::BaseInteraction, surface::SurfaceInteraction},
     utils::{
         efloat::EFloat,
         math::{gamma, Float, PI},
+        sampling::{uniform_cone_pdf, uniform_sample_sphere},
     },
 };
 
-pub struct Sphere<'a> {
-    object_to_world: &'a Transform,
-    world_to_object: &'a Transform,
+pub struct Sphere {
+    object_to_world: Arc<Transform>,
+    world_to_object: Arc<Transform>,
     reverse_orientation: bool,
     transform_swaps_handedness: bool,
     radius: Float,
@@ -23,10 +26,10 @@ pub struct Sphere<'a> {
     phi_max: Float,
 }
 
-impl<'a> Sphere<'a> {
+impl Sphere {
     pub fn new(
-        object_to_world: &'a Transform,
-        world_to_object: &'a Transform,
+        object_to_world: Arc<Transform>,
+        world_to_object: Arc<Transform>,
         reverse_orientation: bool,
         radius: Float,
         z_min: Float,
@@ -50,7 +53,7 @@ impl<'a> Sphere<'a> {
     }
 }
 
-impl<'a> Shape for Sphere<'a> {
+impl Shape for Sphere {
     fn object_bound(&self) -> Bounds3 {
         Bounds3::new(
             &Point3::new(-self.radius, -self.radius, self.z_min),
@@ -73,7 +76,7 @@ impl<'a> Shape for Sphere<'a> {
         let mut origin_error = Vec3::default();
         let mut direction_error = Vec3::default();
         let ray = r.transform_with_error(
-            self.world_to_object,
+            &self.world_to_object,
             &mut origin_error,
             &mut direction_error,
         );
@@ -221,7 +224,7 @@ impl<'a> Shape for Sphere<'a> {
             self.reverse_orientation,
             self.transform_swaps_handedness,
         )
-        .transform(self.object_to_world);
+        .transform(&self.object_to_world);
 
         // Update hit for quadric intersection.
         *t_hit = Float::from(t_shape_hit);
@@ -234,7 +237,7 @@ impl<'a> Shape for Sphere<'a> {
         let mut origin_error = Vec3::default();
         let mut direction_error = Vec3::default();
         let ray = r.transform_with_error(
-            self.world_to_object,
+            &self.world_to_object,
             &mut origin_error,
             &mut direction_error,
         );
@@ -321,7 +324,31 @@ impl<'a> Shape for Sphere<'a> {
     }
 
     fn sample(&self, u: &Point2, pdf: &mut Float) -> Box<dyn Interaction> {
-        todo!()
+        let mut object = Point3::default() + self.radius * uniform_sample_sphere(u);
+
+        let mut n = self.object_to_world.transform_normal(&Normal::from(object));
+        if self.reverse_orientation {
+            n *= -1.0;
+        }
+
+        // Reproject to sphere surface and compute error.
+        object *= self.radius / object.distance(&Point3::default());
+        let object_error = gamma(5.0) * Vec3::from(object.abs());
+
+        let mut p_error = Vec3::default();
+        let p = self.object_to_world.transform_point_with_point_error(
+            &object,
+            &object_error,
+            &mut p_error,
+        );
+
+        *pdf = 1.0 / self.area();
+
+        let mut it = Box::new(BaseInteraction::new(&p, 0.0));
+        it.n = n;
+        it.p_error = p_error;
+
+        it
     }
 
     fn sample_from_ref(
@@ -330,22 +357,43 @@ impl<'a> Shape for Sphere<'a> {
         u: &Point2,
         pdf: &mut Float,
     ) -> Box<dyn Interaction> {
-        todo!()
-    }
-
-    fn pdf(&self, interaction: Box<dyn Interaction>) -> Float {
-        todo!()
+        unimplemented!()
     }
 
     fn pdf_from_ref(&self, reference: Box<dyn Interaction>, wi: &Vec3) -> Float {
-        todo!()
+        let center = Point3::default().transform(&self.object_to_world);
+
+        // Return uniform PDF if point is inside sphere.
+        let origin = reference.position().offset_ray_origin(
+            &reference.position_error(),
+            &reference.normal(),
+            &(center - reference.position()),
+        );
+        if origin.distance_squared(&center) <= self.radius * self.radius {
+            return Shape::pdf_from_ref(self, reference, wi);
+        }
+
+        // Compute general sphere PDF.
+        let sin_theta_2 =
+            self.radius * self.radius / reference.position().distance_squared(&center);
+        let cos_theta_max = Float::max(0.0, 1.0 - sin_theta_2).sqrt();
+
+        uniform_cone_pdf(cos_theta_max)
     }
 
     fn area(&self) -> Float {
         self.phi_max * self.radius * (self.z_max - self.z_min)
     }
 
-    fn solid_angle(&self, p: &Point3, n_samples: u32) -> Float {
-        todo!()
+    fn solid_angle(&self, p: &Point3, num_samples: u32) -> Float {
+        let center = Point3::default().transform(&self.object_to_world);
+        if p.distance_squared(&center) <= self.radius * self.radius {
+            return 4.0 * PI;
+        }
+
+        let sin_theta_2 = self.radius * self.radius / p.distance_squared(&center);
+        let cos_theta = Float::max(0.0, 1.0 - sin_theta_2).sqrt();
+
+        2.0 * PI * (1.0 - cos_theta)
     }
 }

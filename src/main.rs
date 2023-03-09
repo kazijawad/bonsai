@@ -14,12 +14,12 @@ fn main() {
         Float::INFINITY,
     );
 
-    let object_to_world = Transform::default();
-    let world_to_object = object_to_world.inverse();
+    let object_to_world = Arc::new(Transform::default());
+    let world_to_object = Arc::new(object_to_world.inverse());
 
     let sphere = Sphere::new(
-        &object_to_world,
-        &world_to_object,
+        object_to_world,
+        world_to_object,
         false,
         0.25,
         -1.0,
@@ -43,14 +43,15 @@ fn main() {
 
     let scene = Scene::new(&aggregate, vec![point_light]);
 
-    let camera_transform = Transform::look_at(
+    let camera_transform = Arc::new(Transform::look_at(
         &Point3::new(0.0, 0.0, 3.0),
         &Point3::default(),
         &Vec3::new(0.0, 1.0, 0.0),
-    );
-
+    ));
+    let camera_to_world =
+        AnimatedTransform::new(camera_transform.clone(), 0.0, camera_transform, 1.0);
     let camera = Box::new(PerspectiveCamera::new(
-        AnimatedTransform::new(camera_transform.clone(), 0.0, camera_transform, 1.0),
+        camera_to_world,
         0.0,
         1.0,
         0.0,
