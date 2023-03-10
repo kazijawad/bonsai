@@ -43,14 +43,26 @@ impl Interaction for BaseInteraction {
     }
 
     fn spawn_ray(&self, direction: &Vec3) -> Ray {
-        panic!("BaseInteraction::spawn_ray should not be called");
+        let origin = self.p.offset_ray_origin(&self.p_error, &self.n, direction);
+        Ray::new(&origin, direction, 1.0 - 0.0001, self.time)
     }
 
     fn spawn_ray_to_point(&self, point: Point3) -> Ray {
-        panic!("BaseInteraction::spawn_ray_to_point should not be called");
+        let direction = point - self.p;
+        let origin = self.p.offset_ray_origin(&self.p_error, &self.n, &direction);
+        Ray::new(&origin, &direction, 1.0 - 0.0001, self.time)
     }
 
     fn spawn_ray_to_it(&self, it: &dyn Interaction) -> Ray {
-        panic!("BaseInteraction::spawn_ray_to_it should not be called");
+        let origin = self
+            .p
+            .offset_ray_origin(&self.p_error, &self.n, &(it.position() - self.p));
+        let target = it.position().offset_ray_origin(
+            &it.position_error(),
+            &it.normal(),
+            &(origin - it.position()),
+        );
+        let direction = target - origin;
+        Ray::new(&origin, &direction, 1.0 - 0.0001, self.time)
     }
 }

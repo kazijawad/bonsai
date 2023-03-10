@@ -1,15 +1,18 @@
-use std::mem;
+use std::{mem, sync::Arc};
 
 use itertools::partition;
 
 use crate::{
-    base::{material::TransportMode, primitive::Primitive},
+    base::{
+        material::{Material, TransportMode},
+        primitive::Primitive,
+    },
     geometries::{bounds3::Bounds3, point3::Point3, ray::Ray, vec3::Vec3},
     interactions::surface::SurfaceInteraction,
 };
 
-pub struct BVH<'a> {
-    primitives: Vec<&'a dyn Primitive>,
+pub struct BVH {
+    primitives: Vec<Arc<dyn Primitive>>,
     max_primitives_in_node: u32,
     nodes: Vec<LinearBVHNode>,
 }
@@ -48,8 +51,8 @@ struct BucketInfo {
     bounds: Bounds3,
 }
 
-impl<'a> BVH<'a> {
-    pub fn new(primitives: Vec<&'a dyn Primitive>, max_primitives_in_node: u32) -> Self {
+impl BVH {
+    pub fn new(primitives: Vec<Arc<dyn Primitive>>, max_primitives_in_node: u32) -> Self {
         let mut bvh = Self {
             primitives,
             max_primitives_in_node: max_primitives_in_node.min(255),
@@ -67,7 +70,7 @@ impl<'a> BVH<'a> {
 
         // Build BVH tree for primitives.
         let mut total_nodes = 0;
-        let mut ordered_primitives: Vec<&'a dyn Primitive> =
+        let mut ordered_primitives: Vec<Arc<dyn Primitive>> =
             Vec::with_capacity(bvh.primitives.len());
         let root = bvh.recursive_build(
             &mut primitive_info,
@@ -94,7 +97,7 @@ impl<'a> BVH<'a> {
         start: usize,
         end: usize,
         total_nodes: &mut u32,
-        ordered_primitives: &mut Vec<&'a dyn Primitive>,
+        ordered_primitives: &mut Vec<Arc<dyn Primitive>>,
     ) -> BVHBuildNode {
         let mut node = BVHBuildNode::default();
         *total_nodes += 1;
@@ -111,7 +114,7 @@ impl<'a> BVH<'a> {
             let first_primitive_offset = ordered_primitives.len();
             for i in start..end {
                 let primitive_index = primitive_info[i].primitive_index;
-                ordered_primitives.push(self.primitives[primitive_index]);
+                ordered_primitives.push(self.primitives[primitive_index].clone());
             }
             node.init_leaf(first_primitive_offset, num_primitives, &bounds);
             return node;
@@ -130,7 +133,7 @@ impl<'a> BVH<'a> {
                 let first_primitive_offset = ordered_primitives.len();
                 for i in start..end {
                     let primitive_index = primitive_info[i].primitive_index;
-                    ordered_primitives.push(self.primitives[primitive_index]);
+                    ordered_primitives.push(self.primitives[primitive_index].clone());
                 }
                 node.init_leaf(first_primitive_offset, num_primitives, &bounds);
                 return node;
@@ -210,7 +213,7 @@ impl<'a> BVH<'a> {
                         let first_primitive_offset = ordered_primitives.len();
                         for i in start..end {
                             let primitive_index = primitive_info[i].primitive_index;
-                            ordered_primitives.push(self.primitives[primitive_index]);
+                            ordered_primitives.push(self.primitives[primitive_index].clone());
                         }
                         node.init_leaf(first_primitive_offset, num_primitives, &bounds);
                         return node;
@@ -256,7 +259,7 @@ impl<'a> BVH<'a> {
     }
 }
 
-impl<'a> Primitive for BVH<'a> {
+impl Primitive for BVH {
     fn world_bound(&self) -> Bounds3 {
         if !self.nodes.is_empty() {
             self.nodes[0].bounds
@@ -397,6 +400,10 @@ impl<'a> Primitive for BVH<'a> {
         allow_multiple_lobes: bool,
     ) {
         panic!("Aggregate::compute_scattering_function should not be called")
+    }
+
+    fn material(&self) -> Option<&dyn Material> {
+        None
     }
 }
 

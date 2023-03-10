@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     base::{
         material::{Material, TransportMode},
@@ -9,18 +11,19 @@ use crate::{
     utils::math::Float,
 };
 
-pub struct GeometricPrimitive<'a> {
-    pub shape: &'a dyn Shape,
-    pub material: &'a dyn Material,
+#[derive(Clone)]
+pub struct GeometricPrimitive {
+    pub shape: Arc<dyn Shape>,
+    pub material: Arc<dyn Material>,
 }
 
-impl<'a> GeometricPrimitive<'a> {
-    pub fn new(shape: &'a dyn Shape, material: &'a dyn Material) -> Self {
+impl GeometricPrimitive {
+    pub fn new(shape: Arc<dyn Shape>, material: Arc<dyn Material>) -> Self {
         Self { shape, material }
     }
 }
 
-impl<'a> Primitive for GeometricPrimitive<'a> {
+impl Primitive for GeometricPrimitive {
     fn world_bound(&self) -> Bounds3 {
         self.shape.world_bound()
     }
@@ -31,6 +34,7 @@ impl<'a> Primitive for GeometricPrimitive<'a> {
             return false;
         }
         ray.t_max = t_hit;
+        si.primitive = Some(Arc::new(self.clone()));
         true
     }
 
@@ -46,5 +50,9 @@ impl<'a> Primitive for GeometricPrimitive<'a> {
     ) {
         self.material
             .compute_scattering_functions(si, mode, allow_multiple_lobes);
+    }
+
+    fn material(&self) -> Option<&dyn Material> {
+        Some(self.material.as_ref())
     }
 }

@@ -8,7 +8,7 @@ use crate::{
     spectra::rgb::RGBSpectrum,
     utils::{
         bxdf::{abs_cos_theta, cos_theta, fresnel_dielectric, reflect, refract, same_hemisphere},
-        math::{Float, ONE_MINUS_EPSILON, PI},
+        math::{Float, PI},
         sampling::cosine_sample_hemisphere,
     },
 };
@@ -136,6 +136,10 @@ impl BxDF for FresnelSpecular {
     fn matches_flags(&self, t: BxDFType) -> bool {
         (self.bxdf_type & t) == self.bxdf_type
     }
+
+    fn bxdf_type(&self) -> BxDFType {
+        self.bxdf_type
+    }
 }
 
 impl BxDF for FresnelBlend {
@@ -172,7 +176,7 @@ impl BxDF for FresnelBlend {
     ) -> RGBSpectrum {
         let mut sample = sample.clone();
         if sample.x < 0.5 {
-            sample.x = (2.0 * sample[0]).min(ONE_MINUS_EPSILON);
+            sample.x = (2.0 * sample[0]).min(1.0 - Float::EPSILON);
 
             // Cosine-sample the hemisphere, flipping the direction if necessary.
             *wi = cosine_sample_hemisphere(&sample);
@@ -180,7 +184,7 @@ impl BxDF for FresnelBlend {
                 wi.z *= -1.0;
             }
         } else {
-            sample.x = (2.0 * (sample.x - 0.5)).min(ONE_MINUS_EPSILON);
+            sample.x = (2.0 * (sample.x - 0.5)).min(1.0 - Float::EPSILON);
 
             // Sample microfacet orientation wh and reflected direction wi.
             let wh = self.distribution.sample_wh(wo, &sample);
@@ -208,5 +212,9 @@ impl BxDF for FresnelBlend {
 
     fn matches_flags(&self, t: BxDFType) -> bool {
         (self.bxdf_type & t) == self.bxdf_type
+    }
+
+    fn bxdf_type(&self) -> BxDFType {
+        self.bxdf_type
     }
 }

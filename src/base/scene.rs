@@ -3,22 +3,22 @@ use std::sync::Arc;
 use crate::{
     base::{
         light::{Light, LightFlag},
-        material::TransportMode,
+        material::{Material, TransportMode},
         primitive::Primitive,
     },
     geometries::{bounds3::Bounds3, ray::Ray},
     interactions::surface::SurfaceInteraction,
 };
 
-pub struct Scene<'a> {
+pub struct Scene {
     pub lights: Vec<Arc<dyn Light>>,
     pub infinite_lights: Vec<Arc<dyn Light>>,
-    aggregate: &'a dyn Primitive,
+    aggregate: Box<dyn Primitive>,
     bounds: Bounds3,
 }
 
-impl<'a> Scene<'a> {
-    pub fn new(aggregate: &'a dyn Primitive, lights: Vec<Arc<dyn Light>>) -> Self {
+impl Scene {
+    pub fn new(aggregate: Box<dyn Primitive>, lights: Vec<Arc<dyn Light>>) -> Self {
         let bounds = aggregate.world_bound();
         let mut scene = Self {
             bounds,
@@ -38,7 +38,7 @@ impl<'a> Scene<'a> {
     }
 }
 
-impl<'a> Primitive for Scene<'a> {
+impl Primitive for Scene {
     fn world_bound(&self) -> Bounds3 {
         self.bounds
     }
@@ -58,5 +58,9 @@ impl<'a> Primitive for Scene<'a> {
         allow_multiple_lobes: bool,
     ) {
         panic!("Scene::compute_scattering_function should not be called")
+    }
+
+    fn material(&self) -> Option<&dyn Material> {
+        None
     }
 }

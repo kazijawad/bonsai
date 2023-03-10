@@ -1,7 +1,4 @@
-use crate::utils::{
-    math::{Float, ONE_MINUS_EPSILON},
-    primes::PRIMES,
-};
+use crate::utils::{math::Float, primes::PRIMES};
 
 pub fn radical_inverse(base_index: usize, mut a: u64) -> Float {
     let base = PRIMES[base_index];
@@ -19,5 +16,8 @@ pub fn radical_inverse(base_index: usize, mut a: u64) -> Float {
         inverse_base_m *= inverse_base;
         a = next;
     }
-    Float::min(reversed_digits as Float * inverse_base_m, ONE_MINUS_EPSILON)
+    Float::min(
+        reversed_digits as Float * inverse_base_m,
+        1.0 - Float::EPSILON,
+    )
 }

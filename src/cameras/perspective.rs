@@ -11,9 +11,9 @@ use crate::{
 pub struct PerspectiveCamera {
     camera_to_world: AnimatedTransform,
     camera_to_screen: Transform,
+    raster_to_camera: Transform,
     screen_to_raster: Transform,
     raster_to_screen: Transform,
-    raster_to_camera: Transform,
     shutter_open: Float,
     shutter_close: Float,
     lens_radius: Float,
@@ -62,9 +62,9 @@ impl PerspectiveCamera {
         let raster_to_camera = &camera_to_screen.inverse() * &raster_to_screen;
 
         // Compute differential changes in origin for perspective camera rays.
-        let origin_point = Point3::default().transform(&raster_to_camera);
-        let dx_camera = Point3::new(1.0, 0.0, 0.0).transform(&raster_to_camera) - origin_point;
-        let dy_camera = Point3::new(0.0, 1.0, 0.0).transform(&raster_to_camera) - origin_point;
+        let origin = Point3::default().transform(&raster_to_camera);
+        let dx_camera = Point3::new(1.0, 0.0, 0.0).transform(&raster_to_camera) - origin;
+        let dy_camera = Point3::new(0.0, 1.0, 0.0).transform(&raster_to_camera) - origin;
 
         Self {
             camera_to_world,
@@ -86,11 +86,11 @@ impl PerspectiveCamera {
 impl Camera for PerspectiveCamera {
     fn generate_ray(&self, sample: &CameraSample, ray: &mut Ray) -> Float {
         // Compute raster and camera sample positions.
-        let film_point = Point3::new(sample.film_point.x, sample.film_point.y, 0.0);
-        let camera_point = film_point.transform(&self.raster_to_camera);
+        let film = Point3::new(sample.film.x, sample.film.y, 0.0);
+        let camera = film.transform(&self.raster_to_camera);
         *ray = Ray::new(
             &Point3::default(),
-            &Vec3::from(camera_point).normalize(),
+            &Vec3::from(camera).normalize(),
             Float::INFINITY,
             0.0,
         );
@@ -98,15 +98,14 @@ impl Camera for PerspectiveCamera {
         // Modify ray for depth of field.
         if self.lens_radius > 0.0 {
             // Sample point on lens.
-            let lens_point = self.lens_radius * sample.lens_point.concentric_disk_sample();
+            let lens = self.lens_radius * sample.lens.concentric_disk_sample();
 
             // Compute point on plane of focus.
-            let focus_t = self.focal_distance / ray.direction.z;
-            let focus_point = ray.at(focus_t);
+            let focus = ray.at(self.focal_distance / ray.direction.z);
 
             // Update ray for effect of lens.
-            ray.origin = Point3::new(lens_point.x, lens_point.y, 0.0);
-            ray.direction = (focus_point - ray.origin).normalize();
+            ray.origin = Point3::new(lens.x, lens.y, 0.0);
+            ray.direction = (focus - ray.origin).normalize();
         }
 
         ray.time = lerp(sample.time, self.shutter_open, self.shutter_close);
@@ -117,11 +116,11 @@ impl Camera for PerspectiveCamera {
 
     fn generate_ray_differential(&self, sample: &CameraSample, ray: &mut Ray) -> Float {
         // Compute raster and camera sample positions.
-        let film_point = Point3::new(sample.film_point.x, sample.film_point.y, 0.0);
-        let camera_point = film_point.transform(&self.raster_to_camera);
+        let film = Point3::new(sample.film.x, sample.film.y, 0.0);
+        let camera = film.transform(&self.raster_to_camera);
         *ray = Ray::new(
             &Point3::default(),
-            &Vec3::from(camera_point).normalize(),
+            &Vec3::from(camera).normalize(),
             Float::INFINITY,
             0.0,
         );
@@ -129,38 +128,35 @@ impl Camera for PerspectiveCamera {
         // Modify ray for depth of field.
         if self.lens_radius > 0.0 {
             // Sample point on lens.
-            let lens_point = self.lens_radius * sample.lens_point.concentric_disk_sample();
+            let lens = self.lens_radius * sample.lens.concentric_disk_sample();
 
             // Compute point on plane of focus.
-            let focus_t = self.focal_distance / ray.direction.z;
-            let focus_point = ray.at(focus_t);
+            let focus_point = ray.at(self.focal_distance / ray.direction.z);
 
             // Update ray for effect of lens.
-            ray.origin = Point3::new(lens_point.x, lens_point.y, 0.0);
+            ray.origin = Point3::new(lens.x, lens.y, 0.0);
             ray.direction = (focus_point - ray.origin).normalize();
         }
 
         // Compute offset rays for ray differentials.
         if self.lens_radius > 0.0 {
             // Sample point on lens.
-            let lens_point = self.lens_radius * sample.lens_point.concentric_disk_sample();
+            let lens = self.lens_radius * sample.lens.concentric_disk_sample();
 
-            let dx = Vec3::from(camera_point + self.dx_camera).normalize();
-            let focus_t = self.focal_distance / dx.z;
-            let focus_point = Point3::default() + (focus_t * dx);
-            ray.rx_origin = Point3::new(lens_point.x, lens_point.y, 0.0);
-            ray.rx_direction = (focus_point - ray.rx_origin).normalize();
+            let dx = Vec3::from(camera + self.dx_camera).normalize();
+            let focus = Point3::default() + ((self.focal_distance / dx.z) * dx);
+            ray.rx_origin = Point3::new(lens.x, lens.y, 0.0);
+            ray.rx_direction = (focus - ray.rx_origin).normalize();
 
-            let dy = Vec3::from(camera_point + self.dy_camera).normalize();
-            let focus_t = self.focal_distance / dy.z;
-            let focus_point = Point3::default() + (focus_t * dy);
-            ray.ry_origin = Point3::new(lens_point.x, lens_point.y, 0.0);
-            ray.ry_direction = (focus_point - ray.ry_origin).normalize();
+            let dy = Vec3::from(camera + self.dy_camera).normalize();
+            let focus = Point3::default() + ((self.focal_distance / dy.z) * dy);
+            ray.ry_origin = Point3::new(lens.x, lens.y, 0.0);
+            ray.ry_direction = (focus - ray.ry_origin).normalize();
         } else {
             ray.rx_origin = ray.origin;
             ray.ry_origin = ray.origin;
-            ray.rx_direction = (Vec3::from(camera_point) + self.dx_camera).normalize();
-            ray.ry_direction = (Vec3::from(camera_point) + self.dy_camera).normalize();
+            ray.rx_direction = (Vec3::from(camera) + self.dx_camera).normalize();
+            ray.ry_direction = (Vec3::from(camera) + self.dy_camera).normalize();
         }
 
         ray.time = lerp(sample.time, self.shutter_open, self.shutter_close);

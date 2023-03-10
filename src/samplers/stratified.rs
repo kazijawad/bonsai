@@ -1,9 +1,9 @@
 use rand::prelude::*;
 
 use crate::{
-    base::sampler::{shuffle, Sampler},
+    base::sampler::Sampler,
     geometries::point2::Point2,
-    utils::math::{Float, ONE_MINUS_EPSILON},
+    utils::{math::Float, sampling::shuffle},
 };
 
 pub struct StratifiedSampler {
@@ -236,7 +236,7 @@ fn stratified_sample_1d(samples: &mut [Float], num_samples: usize, rng: &mut Std
         let delta = if jitter { rng.gen_range(0.0..1.0) } else { 0.5 };
         samples[i] = Float::min(
             (i as Float + delta) * inverse_num_samples,
-            ONE_MINUS_EPSILON,
+            1.0 - Float::EPSILON,
         );
     }
 }
@@ -255,8 +255,8 @@ fn stratified_sample_2d(
         for x in 0..nx {
             let jx = if jitter { rng.gen_range(0.0..1.0) } else { 0.5 };
             let jy = if jitter { rng.gen_range(0.0..1.0) } else { 0.5 };
-            samples[i].x = Float::min((x as Float + jx) * dx, ONE_MINUS_EPSILON);
-            samples[i].y = Float::min((y as Float + jy) * dy, ONE_MINUS_EPSILON);
+            samples[i].x = Float::min((x as Float + jx) * dx, 1.0 - Float::EPSILON);
+            samples[i].y = Float::min((y as Float + jy) * dy, 1.0 - Float::EPSILON);
             i += 1;
         }
     }
@@ -268,7 +268,7 @@ fn latin_hypercube(samples: &mut [Point2], num_samples: usize, num_dims: usize, 
     for i in 0..num_samples {
         for j in 0..num_dims {
             let sj = (i as Float + rng.gen_range(0.0..1.0)) * inverse_num_samples;
-            samples[num_dims * i + j].x = sj.min(ONE_MINUS_EPSILON);
+            samples[num_dims * i + j].x = sj.min(1.0 - Float::EPSILON);
         }
     }
 

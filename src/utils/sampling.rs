@@ -1,7 +1,18 @@
+use rand::prelude::*;
+
 use crate::{
     geometries::{point2::Point2, vec2::Vec2, vec3::Vec3},
     utils::math::{Float, PI},
 };
+
+pub fn shuffle<T>(sample: &mut [T], count: usize, num_dims: usize, rng: &mut StdRng) {
+    for i in 0..count {
+        let other = i + rng.gen_range(0..(count - i));
+        for j in 0..num_dims {
+            sample.swap(num_dims * i + j, num_dims * other + j);
+        }
+    }
+}
 
 pub fn uniform_sample_hemisphere(u: &Point2) -> Vec3 {
     let z = u[0];

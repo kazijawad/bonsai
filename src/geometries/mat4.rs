@@ -80,6 +80,7 @@ impl Mat4 {
             let mut col = 0;
             let mut big: Float = 0.0;
 
+            // Choose pivot.
             for j in 0..4 {
                 if pivot[j] != 1 {
                     for k in 0..4 {
@@ -90,7 +91,7 @@ impl Mat4 {
                                 col = k;
                             }
                         } else if pivot[k] > 1 {
-                            panic!("Singular matrix in matrix inverse");
+                            eprintln!("Mat4::inverse produced a singular matrix");
                         }
                     }
                 }
@@ -108,7 +109,7 @@ impl Mat4 {
             index_r[i] = row as i32;
             index_c[i] = col as i32;
             if m_inverse[col][col] == 0.0 {
-                panic!("Singular matrix in matrix inverse");
+                eprintln!("Mat4::inverse produced a singular matrix");
             }
 
             let pivot_inverse = 1.0 / m_inverse[col][col];

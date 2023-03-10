@@ -1,5 +1,5 @@
 use crate::{
-    base::material::TransportMode,
+    base::{material::Material, material::TransportMode},
     geometries::{bounds3::Bounds3, ray::Ray},
     interactions::surface::SurfaceInteraction,
 };
@@ -16,4 +16,6 @@ pub trait Primitive: Send + Sync {
         transport_mode: TransportMode,
         allow_multiple_lobes: bool,
     );
+
+    fn material(&self) -> Option<&dyn Material>;
 }

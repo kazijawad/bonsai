@@ -108,7 +108,7 @@ impl Spectrum for RGBSpectrum {
     }
 
     fn is_black(&self) -> bool {
-        self[0] == 0.0 || self[1] == 0.0 || self[2] == 0.0
+        self[0] == 0.0 && self[1] == 0.0 && self[2] == 0.0
     }
 
     fn is_nan(&self) -> bool {

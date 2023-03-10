@@ -1,11 +1,11 @@
-use std::{cmp::Ordering, ops, sync::Arc};
+use std::{cmp::Ordering, ops::Mul, sync::Arc};
 
 use crate::{
     geometries::{
         bounds3::Bounds3, interval::Interval, mat4::Mat4, normal::Normal, point3::Point3,
         quaternion::Quaternion, vec3::Vec3,
     },
-    utils::math::{self, Float},
+    utils::math::{gamma, lerp, Float},
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -43,11 +43,6 @@ struct DerivativeTerm {
 impl Transform {
     pub fn new(m: Mat4, m_inverse: Mat4) -> Self {
         Self { m, m_inverse }
-    }
-
-    pub fn orthographic(z_near: Float, z_far: Float) -> Self {
-        Transform::scale(1.0, 1.0, 1.0 / (z_far - z_near))
-            * Transform::translate(&Vec3::new(0.0, 0.0, -z_near))
     }
 
     pub fn perspective(fov: Float, near: Float, far: Float) -> Self {
@@ -105,7 +100,7 @@ impl Transform {
             + (self.m.m[2][3]))
             .abs();
 
-        *error = math::gamma(3.0) * Vec3::new(x_abs_sum, y_abs_sum, z_abs_sum);
+        *error = gamma(3.0) * Vec3::new(x_abs_sum, y_abs_sum, z_abs_sum);
 
         if wp == 1.0 {
             Point3::new(xp, yp, zp)
@@ -129,29 +124,29 @@ impl Transform {
         let zp = (self.m.m[2][0] * x + self.m.m[2][1] * y) + (self.m.m[2][2] * z + self.m.m[2][3]);
         let wp = (self.m.m[3][0] * x + self.m.m[3][1] * y) + (self.m.m[3][2] * z + self.m.m[3][3]);
 
-        abs_error.x = (math::gamma(3.0) + 1.0)
+        abs_error.x = (gamma(3.0) + 1.0)
             * (self.m.m[0][0].abs() * p_error.x
                 + self.m.m[0][1].abs() * p_error.y
                 + self.m.m[0][2].abs() * p_error.z)
-            + math::gamma(3.0)
+            + gamma(3.0)
                 * ((self.m.m[0][0] * x).abs()
                     + (self.m.m[0][1] * y).abs()
                     + (self.m.m[0][2] * z).abs()
                     + (self.m.m[0][3]).abs());
-        abs_error.y = (math::gamma(3.0) + 1.0)
+        abs_error.y = (gamma(3.0) + 1.0)
             * ((self.m.m[1][0]).abs() * p_error.x
                 + (self.m.m[1][1]).abs() * p_error.y
                 + (self.m.m[1][2]).abs() * p_error.z)
-            + math::gamma(3.0)
+            + gamma(3.0)
                 * ((self.m.m[1][0] * x).abs()
                     + (self.m.m[1][1] * y).abs()
                     + (self.m.m[1][2] * z).abs()
                     + (self.m.m[1][3]).abs());
-        abs_error.z = (math::gamma(3.0) + 1.0)
+        abs_error.z = (gamma(3.0) + 1.0)
             * ((self.m.m[2][0]).abs() * p_error.x
                 + (self.m.m[2][1]).abs() * p_error.y
                 + (self.m.m[2][2]).abs() * p_error.z)
-            + math::gamma(3.0)
+            + gamma(3.0)
                 * ((self.m.m[2][0] * x).abs()
                     + (self.m.m[2][1] * y).abs()
                     + (self.m.m[2][2] * z).abs()
@@ -179,15 +174,15 @@ impl Transform {
         let x = v.x;
         let y = v.y;
         let z = v.z;
-        error.x = math::gamma(3.0)
+        error.x = gamma(3.0)
             * ((self.m.m[0][0] * v.x).abs()
                 + (self.m.m[0][1] * v.y).abs()
                 + (self.m.m[0][2] * v.z).abs());
-        error.y = math::gamma(3.0)
+        error.y = gamma(3.0)
             * ((self.m.m[1][0] * v.x).abs()
                 + (self.m.m[1][1] * v.y).abs()
                 + (self.m.m[1][2] * v.z).abs());
-        error.z = math::gamma(3.0)
+        error.z = gamma(3.0)
             * ((self.m.m[2][0] * v.x).abs()
                 + (self.m.m[2][1] * v.y).abs()
                 + (self.m.m[2][2] * v.z).abs());
@@ -320,14 +315,21 @@ impl Transform {
     pub fn look_at(position: &Point3, look: &Point3, up: &Vec3) -> Self {
         let mut camera_to_world = Mat4::default();
 
+        // Initialize fourth column of view matrix.
         camera_to_world.m[0][3] = position.x;
         camera_to_world.m[1][3] = position.y;
         camera_to_world.m[2][3] = position.z;
         camera_to_world.m[3][3] = 1.0;
 
-        let direction = look - position;
-        let right = Vec3::normalize(&Vec3::cross(&Vec3::normalize(up), &direction));
-        let new_up = Vec3::cross(&direction, &right);
+        // Initialize first three columns of view matrix.
+        let direction = (look - position).normalize();
+        if up.normalize().cross(&direction).length() == 0.0 {
+            eprintln!("Transform::look_at have up and view direction in the same direction. Using the identity transformation.");
+            return Self::default();
+        }
+
+        let right = up.normalize().cross(&direction).normalize();
+        let new_up = direction.cross(&right);
 
         camera_to_world.m[0][0] = right.x;
         camera_to_world.m[1][0] = right.y;
@@ -392,7 +394,10 @@ impl Transform {
         let lc2 = self
             .transform_vec(&Vec3::new(0.0, 0.0, 1.0))
             .length_squared();
-        math::not_one(la2) || math::not_one(lb2) || math::not_one(lc2)
+
+        let not_one = |x: Float| -> bool { x < 0.999 || x > 1.001 };
+
+        not_one(la2) || not_one(lb2) || not_one(lc2)
     }
 }
 
@@ -1637,7 +1642,7 @@ impl AnimatedTransform {
         let mut scaling = Mat4::default();
         for i in 0..3 {
             for j in 0..3 {
-                scaling.m[i][j] = math::lerp(dt, scale[0].m[i][j], scale[1].m[i][j]);
+                scaling.m[i][j] = lerp(dt, scale[0].m[i][j], scale[1].m[i][j]);
             }
         }
 
@@ -1731,10 +1736,8 @@ impl AnimatedTransform {
 
             // Expand bounding box for any motion derivative zeros found.
             for i in 0..n_zeros {
-                let pz = self.transform_point(
-                    p,
-                    math::lerp(zeros[i as usize], self.start_time, self.end_time),
-                );
+                let pz = self
+                    .transform_point(p, lerp(zeros[i as usize], self.start_time, self.end_time));
                 bounds = bounds.union_point(&pz);
             }
         }
@@ -1807,7 +1810,7 @@ impl From<Quaternion> for Transform {
     }
 }
 
-impl ops::Mul for Transform {
+impl Mul for Transform {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
@@ -1818,7 +1821,7 @@ impl ops::Mul for Transform {
     }
 }
 
-impl ops::Mul for &Transform {
+impl Mul for &Transform {
     type Output = Transform;
 
     fn mul(self, rhs: Self) -> Self::Output {

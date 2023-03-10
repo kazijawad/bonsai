@@ -62,4 +62,8 @@ impl BxDF for OrenNayer {
     fn matches_flags(&self, t: BxDFType) -> bool {
         (self.bxdf_type & t) == self.bxdf_type
     }
+
+    fn bxdf_type(&self) -> BxDFType {
+        self.bxdf_type
+    }
 }

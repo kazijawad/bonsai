@@ -86,6 +86,8 @@ pub trait BxDF: Debug + Send + Sync + DynClone {
     }
 
     fn matches_flags(&self, t: BxDFType) -> bool;
+
+    fn bxdf_type(&self) -> BxDFType;
 }
 
 dyn_clone::clone_trait_object!(BxDF);

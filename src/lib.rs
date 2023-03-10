@@ -35,10 +35,7 @@ pub use base::{
     },
     transform::{AnimatedTransform, Transform},
 };
-pub use cameras::{
-    environment::EnvironmentCamera, orthographic::OrthographicCamera,
-    perspective::PerspectiveCamera,
-};
+pub use cameras::perspective::PerspectiveCamera;
 pub use filters::{
     gaussian::{GaussianFilter, GaussianFilterDescriptior},
     mitchell::{MitchellFilter, MitchellFilterDescriptior},
@@ -51,14 +48,11 @@ pub use geometries::{
     point2::Point2, point3::Point3, quaternion::Quaternion, ray::Ray, vec2::Vec2, vec3::Vec3,
 };
 pub use integrators::whitted::WhittedIntegrator;
-pub use lights::point::{PointLight, PointLightDescriptor};
+pub use lights::point::PointLight;
 pub use materials::{matte::MatteMaterial, plastic::PlasticMaterial};
 pub use primitives::{geometric::GeometricPrimitive, transformed::TransformedPrimitive};
 pub use samplers::stratified::StratifiedSampler;
 pub use shapes::{cone::Cone, cylinder::Cylinder, disk::Disk, sphere::Sphere};
 pub use spectra::rgb::RGBSpectrum;
-pub use textures::{
-    checkerboard::Checkerboard2DTexture, constant::ConstantTexture, dots::DotsTexture,
-    image::ImageTexture, uv::UVTexture,
-};
+pub use textures::{constant::ConstantTexture, image::ImageTexture, uv::UVTexture};
 pub use utils::math::*;

@@ -22,19 +22,7 @@ pub struct PointLight {
     flag: LightFlag,
 }
 
-#[derive(Debug)]
-pub struct PointLightDescriptor {
-    pub intensity: RGBSpectrum,
-    pub scale: RGBSpectrum,
-    pub from: Point3,
-}
-
 impl PointLight {
-    pub fn create(desc: &PointLightDescriptor, light_to_world: Transform) -> Self {
-        let light_to_world = Transform::translate(&Vec3::from(desc.from)) * light_to_world;
-        Self::new(light_to_world, desc.intensity * desc.scale)
-    }
-
     pub fn new(light_to_world: Transform, intensity: RGBSpectrum) -> Self {
         let world_to_light = light_to_world.inverse();
         let position = Point3::default().transform(&light_to_world);
@@ -104,15 +92,5 @@ impl Light for PointLight {
 
     fn flag(&self) -> LightFlag {
         self.flag
-    }
-}
-
-impl Default for PointLightDescriptor {
-    fn default() -> Self {
-        Self {
-            intensity: RGBSpectrum::new(1.0),
-            scale: RGBSpectrum::new(1.0),
-            from: Point3::new(0.0, 0.0, 0.0),
-        }
     }
 }

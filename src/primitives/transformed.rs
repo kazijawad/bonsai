@@ -1,6 +1,8 @@
+use std::sync::Arc;
+
 use crate::{
     base::{
-        material::TransportMode,
+        material::{Material, TransportMode},
         primitive::Primitive,
         transform::{AnimatedTransform, Transform},
     },
@@ -8,13 +10,13 @@ use crate::{
     interactions::surface::SurfaceInteraction,
 };
 
-pub struct TransformedPrimitive<'a> {
-    primitive: &'a dyn Primitive,
-    primitive_to_world: &'a AnimatedTransform,
+pub struct TransformedPrimitive {
+    primitive: Arc<dyn Primitive>,
+    primitive_to_world: Arc<AnimatedTransform>,
 }
 
-impl<'a> TransformedPrimitive<'a> {
-    pub fn new(primitive: &'a dyn Primitive, primitive_to_world: &'a AnimatedTransform) -> Self {
+impl TransformedPrimitive {
+    pub fn new(primitive: Arc<dyn Primitive>, primitive_to_world: Arc<AnimatedTransform>) -> Self {
         Self {
             primitive,
             primitive_to_world,
@@ -22,23 +24,23 @@ impl<'a> TransformedPrimitive<'a> {
     }
 }
 
-impl<'a> Primitive for TransformedPrimitive<'a> {
+impl Primitive for TransformedPrimitive {
     fn world_bound(&self) -> Bounds3 {
         self.primitive_to_world
             .motion_bounds(&self.primitive.world_bound())
     }
 
-    fn intersect(&self, r: &mut Ray, si: &mut SurfaceInteraction) -> bool {
+    fn intersect(&self, ray: &mut Ray, si: &mut SurfaceInteraction) -> bool {
         let mut interpolated_primitive_to_world = Transform::default();
 
         // Compute ray after transformation applied by primitive_to_world.
         self.primitive_to_world
-            .interpolate(r.time, &mut interpolated_primitive_to_world);
-        let mut ray = r.transform(&interpolated_primitive_to_world.inverse());
+            .interpolate(ray.time, &mut interpolated_primitive_to_world);
+        let mut ray = ray.transform(&interpolated_primitive_to_world.inverse());
         if !self.primitive.intersect(&mut ray, si) {
             return false;
         }
-        r.t_max = ray.t_max;
+        ray.t_max = ray.t_max;
 
         // Transform instance's intersection data to world space.
         if !interpolated_primitive_to_world.is_identity() {
@@ -52,6 +54,7 @@ impl<'a> Primitive for TransformedPrimitive<'a> {
         let mut interpolated_primitive_to_world = Transform::default();
         self.primitive_to_world
             .interpolate(r.time, &mut interpolated_primitive_to_world);
+
         let interpolated_world_to_primitive = interpolated_primitive_to_world.inverse();
         self.primitive
             .intersect_test(&r.transform(&interpolated_world_to_primitive))
@@ -64,5 +67,9 @@ impl<'a> Primitive for TransformedPrimitive<'a> {
         allow_multiple_lobes: bool,
     ) {
         panic!("TransformedPrimitive::compute_scattering_function should not be called")
+    }
+
+    fn material(&self) -> Option<&dyn Material> {
+        None
     }
 }

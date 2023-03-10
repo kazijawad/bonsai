@@ -5,7 +5,7 @@ use crate::{
     utils::math::{Float, PI},
 };
 
-pub trait Texture<T: Copy + Send + Sync>: Send + Sync {
+pub trait Texture<T: Send + Sync>: Send + Sync {
     fn evaluate(&self, si: &SurfaceInteraction) -> T;
 }
 

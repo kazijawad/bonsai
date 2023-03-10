@@ -10,12 +10,6 @@ cfg_if::cfg_if! {
     }
 }
 
-pub const ONE_MINUS_EPSILON: Float = 1.0 - Float::EPSILON;
-
-pub fn not_one(x: Float) -> bool {
-    x < 0.999 || x > 1.001
-}
-
 pub fn is_pow_two(x: i32) -> bool {
     (x != 0) && ((x & (x - 1)) == 0)
 }

@@ -1,5 +1,3 @@
-use rand::prelude::*;
-
 use crate::{base::camera::CameraSample, geometries::point2::Point2, utils::math::Float};
 
 pub trait Sampler: Send + Sync {
@@ -10,8 +8,8 @@ pub trait Sampler: Send + Sync {
 
     fn get_camera_sample(&mut self, pixel: &Point2) -> CameraSample {
         CameraSample {
-            film_point: pixel + &self.get_2d(),
-            lens_point: self.get_2d(),
+            film: pixel + &self.get_2d(),
+            lens: self.get_2d(),
             time: self.get_1d(),
         }
     }
@@ -27,13 +25,4 @@ pub trait Sampler: Send + Sync {
 
     fn samples_per_pixel(&self) -> usize;
     fn current_sample_number(&self) -> usize;
-}
-
-pub fn shuffle<T>(sample: &mut [T], count: usize, num_dims: usize, rng: &mut StdRng) {
-    for i in 0..count {
-        let other = i + rng.gen_range(0..(count - i));
-        for j in 0..num_dims {
-            sample.swap(num_dims * i + j, num_dims * other + j);
-        }
-    }
 }

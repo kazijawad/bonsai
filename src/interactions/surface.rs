@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     base::{
         bsdf::BSDF, interaction::Interaction, material::TransportMode, primitive::Primitive,
@@ -18,7 +20,7 @@ pub struct Shading {
     pub dndv: Normal,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct SurfaceInteraction {
     pub base: BaseInteraction,
     pub uv: Point2,
@@ -28,6 +30,7 @@ pub struct SurfaceInteraction {
     pub dndv: Normal,
     pub shading: Shading,
     pub bsdf: Option<BSDF>,
+    pub primitive: Option<Arc<dyn Primitive>>,
     pub dpdx: Vec3,
     pub dpdy: Vec3,
     pub dudx: Float,
@@ -77,6 +80,7 @@ impl SurfaceInteraction {
                 dndv,
             },
             bsdf: None,
+            primitive: None,
             dpdx: Vec3::default(),
             dpdy: Vec3::default(),
             dudx: 0.0,
@@ -112,12 +116,15 @@ impl SurfaceInteraction {
     pub fn compute_scattering_functions(
         &mut self,
         ray: &Ray,
-        primitive: &dyn Primitive,
         mode: TransportMode,
         allow_multiple_lobes: bool,
     ) {
         self.compute_differentials(ray);
-        primitive.compute_scattering_functions(self, mode, allow_multiple_lobes);
+        self.primitive
+            .as_ref()
+            .unwrap()
+            .clone()
+            .compute_scattering_functions(self, mode, allow_multiple_lobes);
     }
 
     pub fn compute_differentials(&mut self, ray: &Ray) {
@@ -217,6 +224,7 @@ impl SurfaceInteraction {
             dndv: t.transform_normal(&self.shading.dndv),
         };
         let bsdf = self.bsdf.clone();
+        let primitive = self.primitive.clone();
         let dudx = self.dudx;
         let dvdx = self.dvdx;
         let dudy = self.dudy;
@@ -239,6 +247,7 @@ impl SurfaceInteraction {
             dndv,
             shading,
             bsdf,
+            primitive,
             dpdx,
             dpdy,
             dudx,
@@ -322,6 +331,7 @@ impl Default for SurfaceInteraction {
                 dndv: Normal::default(),
             },
             bsdf: None,
+            primitive: None,
             dpdx: Vec3::default(),
             dpdy: Vec3::default(),
             dudx: 0.0,
