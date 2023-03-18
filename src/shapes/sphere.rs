@@ -341,11 +341,8 @@ impl Shape for Sphere {
         let object_error = gamma(5.0) * Vec3::from(object.abs());
 
         let mut p_error = Vec3::default();
-        let p = self.object_to_world.transform_point_with_point_error(
-            &object,
-            &object_error,
-            &mut p_error,
-        );
+        let p =
+            object.transform_with_point_error(&self.object_to_world, &object_error, &mut p_error);
 
         *pdf = 1.0 / self.area();
 

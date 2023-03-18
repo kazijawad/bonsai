@@ -204,7 +204,10 @@ impl SurfaceInteraction {
 
     pub fn transform(&self, t: &Transform) -> Self {
         let mut p_error = Vec3::default();
-        let p = t.transform_point_with_point_error(&self.base.p, &self.base.p_error, &mut p_error);
+        let p = self
+            .base
+            .p
+            .transform_with_point_error(t, &self.base.p_error, &mut p_error);
 
         let time = self.base.time;
         let wo = t.transform_vec(&self.base.wo);

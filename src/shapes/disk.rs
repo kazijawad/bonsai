@@ -195,8 +195,8 @@ impl Shape for Disk {
         }
 
         let mut p_error = Vec3::default();
-        let p = self.object_to_world.transform_point_with_point_error(
-            &object_point,
+        let p = object_point.transform_with_point_error(
+            &self.object_to_world,
             &Vec3::default(),
             &mut p_error,
         );

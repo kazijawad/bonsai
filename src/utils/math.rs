@@ -49,7 +49,7 @@ pub fn modulo(a: i32, b: i32) -> i32 {
 }
 
 pub fn gamma(n: Float) -> Float {
-    n * Float::EPSILON / (1.0 - n * Float::EPSILON)
+    n * (Float::EPSILON * 0.5) / (1.0 - n * (Float::EPSILON * 0.5))
 }
 
 pub fn lerp(t: Float, a: Float, b: Float) -> Float {

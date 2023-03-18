@@ -41,7 +41,7 @@ impl EFloat {
 
         let float_root_discriminant = EFloat::new(
             root_discriminant as f32,
-            (f64::EPSILON * root_discriminant) as f32,
+            (f64::EPSILON * 0.5 * root_discriminant) as f32,
         );
 
         // Compute quadratic t values.

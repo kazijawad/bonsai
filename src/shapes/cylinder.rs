@@ -307,8 +307,8 @@ impl Shape for Cylinder {
 
         let object_point_error = gamma(3.0) * Vec3::new(object_point.x, object_point.y, 0.0).abs();
         let mut p_error = Vec3::default();
-        let p = self.object_to_world.transform_point_with_point_error(
-            &object_point,
+        let p = object_point.transform_with_point_error(
+            &self.object_to_world,
             &object_point_error,
             &mut p_error,
         );

@@ -47,7 +47,7 @@ impl Ray {
 
     pub fn transform(&self, t: &Transform) -> Self {
         let mut origin_error = Vec3::default();
-        let mut origin = t.transform_point_with_error(&self.origin, &mut origin_error);
+        let mut origin = self.origin.transform_with_error(t, &mut origin_error);
 
         let direction = t.transform_vec(&self.direction);
         // Offset ray origin to edge of error bounds and compute max.
@@ -69,7 +69,7 @@ impl Ray {
         origin_error: &mut Vec3,
         direction_error: &mut Vec3,
     ) -> Self {
-        let mut origin = t.transform_point_with_error(&self.origin, origin_error);
+        let mut origin = self.origin.transform_with_error(t, origin_error);
         let direction = t.transform_vec_with_error(&self.direction, direction_error);
 
         let t_max = self.t_max;
