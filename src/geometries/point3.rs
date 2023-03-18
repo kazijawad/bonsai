@@ -3,7 +3,10 @@ use std::ops::{
 };
 
 use crate::{
-    base::{constants::Float, transform::Transform},
+    base::{
+        constants::Float,
+        transform::{AnimatedTransform, Transform},
+    },
     geometries::{normal::Normal, vec3::Vec3},
     utils::math::{gamma, next_down, next_up},
 };
@@ -52,9 +55,9 @@ impl Point3 {
         // Perform nonhomogeneous conversion.
         debug_assert_ne!(w, 0.0);
         if w == 1.0 {
-            Point3::new(x, y, z)
+            Self::new(x, y, z)
         } else {
-            Point3::new(x, y, z) / w
+            Self::new(x, y, z) / w
         }
     }
 
@@ -86,9 +89,9 @@ impl Point3 {
         // Perform nonhomogeneous conversion.
         debug_assert_ne!(w, 0.0);
         if w == 1.0 {
-            Point3::new(x, y, z)
+            Self::new(x, y, z)
         } else {
-            Point3::new(x, y, z) / w
+            Self::new(x, y, z) / w
         }
     }
 
@@ -97,7 +100,7 @@ impl Point3 {
         t: &Transform,
         p_error: &Vec3,
         abs_error: &mut Vec3,
-    ) -> Point3 {
+    ) -> Self {
         // Compute transformed coordinates from point.
         let x = t.m.m[0][0] * self.x + t.m.m[0][1] * self.y + t.m.m[0][2] * self.z + t.m.m[0][3];
         let y = t.m.m[1][0] * self.x + t.m.m[1][1] * self.y + t.m.m[1][2] * self.z + t.m.m[1][3];
@@ -135,9 +138,21 @@ impl Point3 {
         // Perform nonhomogeneous conversion.
         debug_assert_ne!(w, 0.0);
         if w == 1.0 {
-            Point3::new(x, y, z)
+            Self::new(x, y, z)
         } else {
-            Point3::new(x, y, z) / w
+            Self::new(x, y, z) / w
+        }
+    }
+
+    pub fn animated_transform(&self, at: &AnimatedTransform, time: Float) -> Self {
+        if !at.is_animated || time <= at.start_time {
+            self.transform(&at.start_transform)
+        } else if time >= at.end_time {
+            self.transform(&at.end_transform)
+        } else {
+            let mut t = Transform::default();
+            at.interpolate(time, &mut t);
+            self.transform(&t)
         }
     }
 

@@ -331,7 +331,7 @@ impl Shape for Sphere {
     fn sample(&self, u: &Point2, pdf: &mut Float) -> Box<dyn Interaction> {
         let mut object = Point3::default() + self.radius * uniform_sample_sphere(u);
 
-        let mut n = self.object_to_world.transform_normal(&Normal::from(object));
+        let mut n = Normal::from(object).transform(&self.object_to_world);
         if self.reverse_orientation {
             n *= -1.0;
         }

@@ -3,8 +3,8 @@ use std::{cmp::Ordering, ops::Mul, sync::Arc};
 use crate::{
     base::constants::Float,
     geometries::{
-        bounds3::Bounds3, interval::Interval, mat4::Mat4, normal::Normal, point3::Point3,
-        quaternion::Quaternion, vec3::Vec3,
+        bounds3::Bounds3, interval::Interval, mat4::Mat4, point3::Point3, quaternion::Quaternion,
+        vec3::Vec3,
     },
     utils::math::{gamma, lerp},
 };
@@ -104,17 +104,6 @@ impl Transform {
             self.m.m[0][0] * x + self.m.m[0][1] * y + self.m.m[0][2] * z,
             self.m.m[1][0] * x + self.m.m[1][1] * y + self.m.m[1][2] * z,
             self.m.m[2][0] * x + self.m.m[2][1] * y + self.m.m[2][2] * z,
-        )
-    }
-
-    pub fn transform_normal(&self, n: &Normal) -> Normal {
-        let x = n.x;
-        let y = n.y;
-        let z = n.z;
-        Normal::new(
-            self.m_inverse.m[0][0] * x + self.m_inverse.m[1][0] * y + self.m_inverse.m[2][0] * z,
-            self.m_inverse.m[0][1] * x + self.m_inverse.m[1][1] * y + self.m_inverse.m[2][1] * z,
-            self.m_inverse.m[0][2] * x + self.m_inverse.m[1][2] * y + self.m_inverse.m[2][2] * z,
         )
     }
 
@@ -1569,18 +1558,6 @@ impl AnimatedTransform {
         );
     }
 
-    pub fn transform_point(&self, p: &Point3, time: Float) -> Point3 {
-        if !self.is_animated || time <= self.start_time {
-            p.transform(&self.start_transform)
-        } else if time >= self.end_time {
-            p.transform(&self.end_transform)
-        } else {
-            let mut t = Transform::default();
-            self.interpolate(time, &mut t);
-            p.transform(&t)
-        }
-    }
-
     pub fn transform_vec(&self, v: &Vec3, time: Float) -> Vec3 {
         if !self.is_animated || time <= self.start_time {
             self.start_transform.transform_vec(v)
@@ -1650,8 +1627,10 @@ impl AnimatedTransform {
 
             // Expand bounding box for any motion derivative zeros found.
             for i in 0..n_zeros {
-                let pz = self
-                    .transform_point(p, lerp(zeros[i as usize], self.start_time, self.end_time));
+                let pz = p.animated_transform(
+                    self,
+                    lerp(zeros[i as usize], self.start_time, self.end_time),
+                );
                 bounds = bounds.union_point(&pz);
             }
         }

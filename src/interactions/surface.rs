@@ -211,20 +211,18 @@ impl SurfaceInteraction {
 
         let time = self.base.time;
         let wo = t.transform_vec(&self.base.wo);
-        let n = t.transform_normal(&self.base.n).normalize();
+        let n = self.base.n.transform(t).normalize();
         let uv = self.uv;
         let dpdu = t.transform_vec(&self.dpdu);
         let dpdv = t.transform_vec(&self.dpdv);
-        let dndu = t.transform_normal(&self.dndu);
-        let dndv = t.transform_normal(&self.dndv);
+        let dndu = self.dndu.transform(t);
+        let dndv = self.dndv.transform(t);
         let shading = Shading {
-            n: t.transform_normal(&self.shading.n)
-                .normalize()
-                .face_forward(&n),
+            n: self.shading.n.transform(t).normalize().face_forward(&n),
             dpdu: t.transform_vec(&self.shading.dpdu),
             dpdv: t.transform_vec(&self.shading.dpdv),
-            dndu: t.transform_normal(&self.shading.dndu),
-            dndv: t.transform_normal(&self.shading.dndv),
+            dndu: self.shading.dndu.transform(t),
+            dndv: self.shading.dndv.transform(t),
         };
         let bsdf = self.bsdf.clone();
         let primitive = self.primitive.clone();

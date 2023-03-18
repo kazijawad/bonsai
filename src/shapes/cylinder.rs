@@ -291,11 +291,8 @@ impl Shape for Cylinder {
         let phi = u.y * self.phi_max;
         let mut object_point = Point3::new(self.radius * phi.cos(), self.radius * phi.sin(), z);
 
-        let mut n = self.object_to_world.transform_normal(&Normal::new(
-            object_point.x,
-            object_point.y,
-            0.0,
-        ));
+        let mut n =
+            Normal::new(object_point.x, object_point.y, 0.0).transform(&self.object_to_world);
         if self.reverse_orientation {
             n *= -1.0;
         }

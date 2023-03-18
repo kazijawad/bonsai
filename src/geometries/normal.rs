@@ -1,7 +1,7 @@
 use std::ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign};
 
 use crate::{
-    base::constants::Float,
+    base::{constants::Float, transform::Transform},
     geometries::{point3::Point3, vec3::Vec3},
 };
 
@@ -16,6 +16,17 @@ impl Normal {
     pub fn new(x: Float, y: Float, z: Float) -> Self {
         debug_assert!(!x.is_nan() && !y.is_nan() && !z.is_nan());
         Self { x, y, z }
+    }
+
+    pub fn transform(&self, t: &Transform) -> Self {
+        let x = self.x;
+        let y = self.y;
+        let z = self.z;
+        Self::new(
+            t.m_inverse.m[0][0] * x + t.m_inverse.m[1][0] * y + t.m_inverse.m[2][0] * z,
+            t.m_inverse.m[0][1] * x + t.m_inverse.m[1][1] * y + t.m_inverse.m[2][1] * z,
+            t.m_inverse.m[0][2] * x + t.m_inverse.m[1][2] * y + t.m_inverse.m[2][2] * z,
+        )
     }
 
     pub fn face_forward(&self, n: &Self) -> Self {
