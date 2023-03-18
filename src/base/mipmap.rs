@@ -1,9 +1,8 @@
 use crate::{
     base::{constants::Float, spectrum::Spectrum},
     geometries::point2::Point2,
-    modulo,
     spectra::rgb::RGBSpectrum,
-    utils::math::{is_pow_two, lanczos, round_pow_two},
+    utils::math::{is_pow_two, lanczos, modulo, round_pow_two},
 };
 
 pub enum ImageWrap {

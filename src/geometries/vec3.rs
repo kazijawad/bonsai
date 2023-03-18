@@ -18,6 +18,16 @@ impl Vec3 {
         Self { x, y, z }
     }
 
+    pub fn coordinate_system(v1: &Self) -> (Self, Self) {
+        let v2 = if v1.x.abs() > v1.y.abs() {
+            Self::new(-v1.z, 0.0, v1.x) / (v1.x * v1.x + v1.z * v1.z).sqrt()
+        } else {
+            Self::new(0.0, v1.z, -v1.y) / (v1.y * v1.y + v1.z * v1.z).sqrt()
+        };
+        let v3 = v1.cross(&v2);
+        (v2, v3)
+    }
+
     pub fn spherical_theta(&self) -> Float {
         self.z.clamp(-1.0, 1.0).acos()
     }

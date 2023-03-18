@@ -31,33 +31,28 @@ fn main() {
     let sigma = Arc::new(ConstantTexture::new(0.0));
     let material = Arc::new(MatteMaterial::new(kd, sigma));
 
+    let spot_from = Point3::new(2.0, 0.0, 0.0);
+    let spot_dir = (Point3::default() - spot_from).normalize();
+    let (spot_du, spot_dv) = Vec3::coordinate_system(&spot_dir);
+    let spot_transform = Transform::translate(&spot_from.into())
+        * Transform::from(Mat4::new(
+            spot_du.x, spot_du.y, spot_du.z, 0.0, spot_dv.x, spot_dv.y, spot_dv.z, 0.0, spot_dir.x,
+            spot_dir.y, spot_dir.z, 0.0, 0.0, 0.0, 0.0, 1.0,
+        ))
+        .inverse();
+    let spot_light = Arc::new(SpotLight::new(
+        spot_transform,
+        RGBSpectrum::new(1.0),
+        30.0,
+        25.0,
+    ));
+
     let scene = Scene::new(
         Box::new(BVH::new(
             vec![Arc::new(GeometricPrimitive::new(sphere, material))],
             4,
         )),
-        vec![
-            Arc::new(PointLight::new(
-                Transform::translate(&Vec3::new(0.0, 0.0, 2.0)),
-                RGBSpectrum::new(1.0),
-            )),
-            Arc::new(PointLight::new(
-                Transform::translate(&Vec3::new(0.0, 0.0, -2.0)),
-                RGBSpectrum::new(1.0),
-            )),
-            Arc::new(PointLight::new(
-                Transform::translate(&Vec3::new(2.0, 0.0, 0.0)),
-                RGBSpectrum::new(1.0),
-            )),
-            Arc::new(PointLight::new(
-                Transform::translate(&Vec3::new(0.0, -2.0, 0.0)),
-                RGBSpectrum::new(1.0),
-            )),
-            Arc::new(PointLight::new(
-                Transform::translate(&Vec3::new(0.0, 2.0, 0.0)),
-                RGBSpectrum::new(1.0),
-            )),
-        ],
+        vec![spot_light],
     );
 
     let camera_transform = Arc::new(Transform::look_at(

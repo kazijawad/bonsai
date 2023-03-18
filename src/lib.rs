@@ -46,11 +46,10 @@ pub use geometries::{
     point2::Point2, point3::Point3, quaternion::Quaternion, ray::Ray, vec2::Vec2, vec3::Vec3,
 };
 pub use integrators::whitted::WhittedIntegrator;
-pub use lights::point::PointLight;
+pub use lights::{point::PointLight, spot::SpotLight};
 pub use materials::{matte::MatteMaterial, plastic::PlasticMaterial};
 pub use primitives::{geometric::GeometricPrimitive, transformed::TransformedPrimitive};
 pub use samplers::stratified::StratifiedSampler;
 pub use shapes::{cone::Cone, cylinder::Cylinder, disk::Disk, sphere::Sphere};
 pub use spectra::rgb::RGBSpectrum;
 pub use textures::{constant::ConstantTexture, image::ImageTexture, uv::UVTexture};
-pub use utils::math::*;

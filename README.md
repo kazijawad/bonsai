@@ -14,7 +14,7 @@ Supports physically-based BRDFs, including microfacet models, and arbitrary comb
 
 #### Acceleration Structures
 
-Uses a recursive BVH traversel system with an aggregate interface for implementing other acceleration structures.
+Uses a recursive BVH traversel system with a primitive interface for implementing other acceleration structures.
 
 #### Hardware Acceleration
 

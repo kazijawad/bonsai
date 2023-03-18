@@ -1675,6 +1675,13 @@ impl Default for DerivativeTerm {
     }
 }
 
+impl From<Mat4> for Transform {
+    fn from(m: Mat4) -> Self {
+        let m_inverse = m.inverse();
+        Self { m, m_inverse }
+    }
+}
+
 impl From<Quaternion> for Transform {
     fn from(q: Quaternion) -> Self {
         let xx = q.v.x * q.v.x;

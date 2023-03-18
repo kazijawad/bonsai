@@ -53,6 +53,13 @@ pub fn uniform_cone_pdf(cos_theta_max: Float) -> Float {
     1.0 / (2.0 * PI * (1.0 - cos_theta_max))
 }
 
+pub fn uniform_sample_cone(u: &Point2, cos_theta_max: Float) -> Vec3 {
+    let cos_theta = (1.0 - u.x) + u.x * cos_theta_max;
+    let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+    let phi = u.y * 2.0 * PI;
+    Vec3::new(phi.cos() * sin_theta, phi.sin() * sin_theta, cos_theta)
+}
+
 pub fn uniform_hemisphere_pdf() -> Float {
     (1.0 / PI) / 2.0
 }
