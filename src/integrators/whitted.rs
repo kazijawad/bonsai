@@ -1,3 +1,5 @@
+use rayon::prelude::*;
+
 use crate::{
     base::{
         bxdf::{BSDF_ALL, BSDF_REFLECTION, BSDF_SPECULAR, BSDF_TRANSMISSION},
@@ -33,7 +35,8 @@ impl WhittedIntegrator {
     }
 
     fn specular_reflect(
-        &mut self,
+        &self,
+        sampler: &mut Box<dyn Sampler>,
         ray: &Ray,
         si: &SurfaceInteraction,
         scene: &Scene,
@@ -48,7 +51,7 @@ impl WhittedIntegrator {
         let f = si.bsdf.as_ref().unwrap().sample_f(
             &wo,
             &mut wi,
-            &self.sampler.get_2d(),
+            &sampler.get_2d(),
             &mut pdf,
             bxdf_type,
             &mut 0,
@@ -79,14 +82,15 @@ impl WhittedIntegrator {
                     wi - dwody + 2.0 * (Vec3::from(wo.dot(&ns) * dndy) + ddndy * ns);
             }
 
-            f * self.li(&mut ray_diff, scene, depth + 1) * wi.abs_dot(&ns) / pdf
+            f * self.li(sampler, &mut ray_diff, scene, depth + 1) * wi.abs_dot(&ns) / pdf
         } else {
             RGBSpectrum::default()
         }
     }
 
     fn specular_transmit(
-        &mut self,
+        &self,
+        sampler: &mut Box<dyn Sampler>,
         ray: &Ray,
         si: &SurfaceInteraction,
         scene: &Scene,
@@ -101,7 +105,7 @@ impl WhittedIntegrator {
         let f = bsdf.sample_f(
             &wo,
             &mut wi,
-            &self.sampler.get_2d(),
+            &sampler.get_2d(),
             &mut pdf,
             BSDF_TRANSMISSION | BSDF_SPECULAR,
             &mut 0,
@@ -143,7 +147,7 @@ impl WhittedIntegrator {
                 ray_diff.ry_direction = wi - eta * dwody + (Vec3::from(mu * dndy) + dmudy * ns);
             }
 
-            l = f * self.li(&mut ray_diff, scene, depth + 1);
+            l = f * self.li(sampler, &mut ray_diff, scene, depth + 1);
         }
 
         l
@@ -153,7 +157,13 @@ impl WhittedIntegrator {
 impl Integrator for WhittedIntegrator {
     fn preprocess(&self, scene: &Scene) {}
 
-    fn li(&mut self, ray: &mut Ray, scene: &Scene, depth: u32) -> RGBSpectrum {
+    fn li(
+        &self,
+        sampler: &mut Box<dyn Sampler>,
+        ray: &mut Ray,
+        scene: &Scene,
+        depth: u32,
+    ) -> RGBSpectrum {
         let mut radiance = RGBSpectrum::default();
 
         // Find closest ray intersection or return background radiance.
@@ -172,7 +182,7 @@ impl Integrator for WhittedIntegrator {
         // Compute scattering functions for surface interaction.
         si.compute_scattering_functions(ray, TransportMode::Radiance, false);
         if si.bsdf.is_none() {
-            return self.li(&mut si.spawn_ray(&ray.direction), scene, depth);
+            return self.li(sampler, &mut si.spawn_ray(&ray.direction), scene, depth);
         }
 
         // Compute emitted light if ray hit an area light source.
@@ -183,7 +193,7 @@ impl Integrator for WhittedIntegrator {
             let mut wi = Vec3::default();
             let mut pdf = 0.0;
 
-            let (li, visibility) = light.sample_li(&si, &self.sampler.get_2d(), &mut wi, &mut pdf);
+            let (li, visibility) = light.sample_li(&si, &sampler.get_2d(), &mut wi, &mut pdf);
             if li.is_black() || pdf == 0.0 {
                 continue;
             }
@@ -196,8 +206,8 @@ impl Integrator for WhittedIntegrator {
 
         if depth + 1 < self.max_depth {
             // Trace rays for specular reflection and refraction.
-            radiance += self.specular_reflect(&ray, &si, scene, depth);
-            radiance += self.specular_transmit(&ray, &si, scene, depth);
+            radiance += self.specular_reflect(sampler, &ray, &si, scene, depth);
+            radiance += self.specular_transmit(sampler, &ray, &si, scene, depth);
         }
 
         radiance
@@ -205,17 +215,21 @@ impl Integrator for WhittedIntegrator {
 
     fn render(&mut self, scene: &Scene) {
         let bounds = self.camera.film().bounds;
+        let width = bounds.max.x - bounds.min.x;
 
         for y in (bounds.min.y as usize)..(bounds.max.y as usize) {
-            for x in (bounds.min.x as usize)..(bounds.max.x as usize) {
+            ((bounds.min.x as usize)..(bounds.max.x as usize)).into_par_iter().for_each(|x| {
                 let pixel = Point2::new(x as Float, y as Float);
                 let mut sampled_pixel = SampledPixel::default();
 
-                self.sampler.start_pixel(&pixel);
+                let mut sampler = self.sampler.clone();
+                sampler.seed((pixel.y * width + pixel.x) as u64);
+
+                sampler.start_pixel(&pixel);
 
                 loop {
                     // Initialize camera sample for current sample.
-                    let camera_sample = self.sampler.get_camera_sample(&pixel);
+                    let camera_sample = sampler.get_camera_sample(&pixel);
 
                     // Generate camera ray for current sample.
                     let mut ray = Ray::default();
@@ -228,7 +242,7 @@ impl Integrator for WhittedIntegrator {
 
                     // Evaluate radiance along camera ray.
                     let mut radiance = if ray_weight > 0.0 {
-                        self.li(&mut ray, scene, 0)
+                        self.li(&mut sampler, &mut ray, scene, 0)
                     } else {
                         RGBSpectrum::default()
                     };
@@ -269,13 +283,13 @@ impl Integrator for WhittedIntegrator {
                         ray_weight,
                     );
 
-                    if !self.sampler.start_next_sample() {
+                    if !sampler.start_next_sample() {
                         break;
                     }
                 }
 
                 self.camera.film().merge_samples(sampled_pixel, x, y);
-            }
+            });
         }
 
         self.camera.film().write_image();

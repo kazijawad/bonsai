@@ -6,6 +6,7 @@ use crate::{
     utils::sampling::shuffle,
 };
 
+#[derive(Clone)]
 pub struct StratifiedSampler {
     samples_per_pixel: usize,
 
@@ -79,6 +80,10 @@ impl StratifiedSampler {
 }
 
 impl Sampler for StratifiedSampler {
+    fn seed(&mut self, x: u64) {
+        self.rng = StdRng::seed_from_u64(x);
+    }
+
     fn start_pixel(&mut self, pixel: &Point2) {
         // Generate single stratified samples for pixel.
         for samples in self.samples_1d.iter_mut() {

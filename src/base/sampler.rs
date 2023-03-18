@@ -1,9 +1,13 @@
+use dyn_clone::DynClone;
+
 use crate::{
     base::{camera::CameraSample, constants::Float},
     geometries::point2::Point2,
 };
 
-pub trait Sampler: Send + Sync {
+pub trait Sampler: Send + Sync + DynClone {
+    fn seed(&mut self, x: u64);
+
     fn start_pixel(&mut self, pixel: &Point2);
 
     fn get_1d(&mut self) -> Float;
@@ -29,3 +33,5 @@ pub trait Sampler: Send + Sync {
     fn samples_per_pixel(&self) -> usize;
     fn current_sample_number(&self) -> usize;
 }
+
+dyn_clone::clone_trait_object!(Sampler);

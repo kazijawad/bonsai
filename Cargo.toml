@@ -1,5 +1,5 @@
 [package]
-name = "pat"
+name = "bonsai"
 version = "0.1.0"
 authors = ["Kazi Jawad"]
 edition = "2021"

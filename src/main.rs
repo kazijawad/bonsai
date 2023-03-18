@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
-use pat::*;
+use bonsai::*;
 
 fn main() {
     let filter = Box::new(BoxFilter::new(Vec2::new(0.5, 0.5)));
 
     let film = Film::new(
-        &Point2::new(1280.0, 720.0),
+        &Point2::new(1024.0, 1024.0),
         &Bounds2::new(&Point2::new(0.0, 0.0), &Point2::new(1.0, 1.0)),
         filter,
         String::from("result.exr"),
