@@ -1,4 +1,4 @@
-use std::ops;
+use std::ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign};
 
 use crate::{
     geometries::{point3::Point3, vec3::Vec3},
@@ -40,7 +40,6 @@ impl Normal {
     }
 
     pub fn abs_dot(&self, v: &Self) -> Float {
-        debug_assert!(!self.is_nan() && !v.is_nan());
         self.dot(v).abs()
     }
 
@@ -87,7 +86,7 @@ impl From<Point3> for Normal {
     }
 }
 
-impl ops::Add for Normal {
+impl Add for Normal {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -99,7 +98,7 @@ impl ops::Add for Normal {
     }
 }
 
-impl ops::Add for &Normal {
+impl Add for &Normal {
     type Output = Normal;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -111,7 +110,7 @@ impl ops::Add for &Normal {
     }
 }
 
-impl ops::AddAssign for Normal {
+impl AddAssign for Normal {
     fn add_assign(&mut self, rhs: Self) {
         self.x += rhs.x;
         self.y += rhs.y;
@@ -119,7 +118,7 @@ impl ops::AddAssign for Normal {
     }
 }
 
-impl ops::Sub for Normal {
+impl Sub for Normal {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -131,7 +130,7 @@ impl ops::Sub for Normal {
     }
 }
 
-impl ops::Sub for &Normal {
+impl Sub for &Normal {
     type Output = Normal;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -143,7 +142,7 @@ impl ops::Sub for &Normal {
     }
 }
 
-impl ops::SubAssign for Normal {
+impl SubAssign for Normal {
     fn sub_assign(&mut self, rhs: Self) {
         self.x -= rhs.x;
         self.y -= rhs.y;
@@ -151,7 +150,7 @@ impl ops::SubAssign for Normal {
     }
 }
 
-impl ops::Mul<Float> for Normal {
+impl Mul<Float> for Normal {
     type Output = Self;
 
     fn mul(self, rhs: Float) -> Self::Output {
@@ -163,7 +162,7 @@ impl ops::Mul<Float> for Normal {
     }
 }
 
-impl ops::Mul<Float> for &Normal {
+impl Mul<Float> for &Normal {
     type Output = Normal;
 
     fn mul(self, rhs: Float) -> Self::Output {
@@ -175,23 +174,31 @@ impl ops::Mul<Float> for &Normal {
     }
 }
 
-impl ops::Mul<Normal> for Float {
+impl Mul<Normal> for Float {
     type Output = Normal;
 
     fn mul(self, rhs: Normal) -> Self::Output {
-        rhs * self
+        Self::Output {
+            x: self * rhs.x,
+            y: self * rhs.y,
+            z: self * rhs.z,
+        }
     }
 }
 
-impl ops::Mul<&Normal> for Float {
+impl Mul<&Normal> for Float {
     type Output = Normal;
 
     fn mul(self, rhs: &Normal) -> Self::Output {
-        rhs * self
+        Self::Output {
+            x: self * rhs.x,
+            y: self * rhs.y,
+            z: self * rhs.z,
+        }
     }
 }
 
-impl ops::MulAssign<Float> for Normal {
+impl MulAssign<Float> for Normal {
     fn mul_assign(&mut self, rhs: Float) {
         self.x *= rhs;
         self.y *= rhs;
@@ -199,7 +206,7 @@ impl ops::MulAssign<Float> for Normal {
     }
 }
 
-impl ops::Div<Float> for Normal {
+impl Div<Float> for Normal {
     type Output = Self;
 
     fn div(self, rhs: Float) -> Self::Output {
@@ -213,7 +220,7 @@ impl ops::Div<Float> for Normal {
     }
 }
 
-impl ops::Div<Float> for &Normal {
+impl Div<Float> for &Normal {
     type Output = Normal;
 
     fn div(self, rhs: Float) -> Self::Output {
@@ -227,7 +234,7 @@ impl ops::Div<Float> for &Normal {
     }
 }
 
-impl ops::DivAssign<Float> for Normal {
+impl DivAssign<Float> for Normal {
     fn div_assign(&mut self, rhs: Float) {
         debug_assert!(rhs != 0.0);
         let inverse = 1.0 / rhs;
@@ -237,7 +244,7 @@ impl ops::DivAssign<Float> for Normal {
     }
 }
 
-impl ops::Neg for Normal {
+impl Neg for Normal {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -249,7 +256,7 @@ impl ops::Neg for Normal {
     }
 }
 
-impl ops::Neg for &Normal {
+impl Neg for &Normal {
     type Output = Normal;
 
     fn neg(self) -> Self::Output {
@@ -261,16 +268,198 @@ impl ops::Neg for &Normal {
     }
 }
 
-impl ops::Index<usize> for Normal {
+impl Index<usize> for Normal {
     type Output = Float;
 
     fn index(&self, index: usize) -> &Self::Output {
-        debug_assert!(index <= 2);
+        debug_assert!(index < 3);
         if index == 0 {
             return &self.x;
         } else if index == 1 {
             return &self.y;
         }
         &self.z
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        geometries::normal::{Normal, Point3, Vec3},
+        utils::math::Float,
+    };
+
+    #[test]
+    fn new() {
+        let n = Normal::new(3.0, 4.0, 7.0);
+        assert_eq!(n.x, 3.0);
+        assert_eq!(n.y, 4.0);
+        assert_eq!(n.z, 7.0);
+    }
+
+    #[test]
+    fn face_forward() {
+        let a = Normal::new(3.0, 4.0, 7.0);
+        let b = Normal::new(-3.0, -4.0, -5.0);
+        let c = Normal::new(-3.0, -4.0, -7.0);
+        assert_eq!(a.face_forward(&b), c);
+    }
+
+    #[test]
+    fn length_squared() {
+        let n = Normal::new(3.0, 4.0, 7.0);
+        let x = 74.0;
+        assert_eq!(n.length_squared(), x);
+    }
+
+    #[test]
+    fn length() {
+        let n = Normal::new(3.0, 4.0, 7.0);
+        let x = 74.0 as Float;
+        assert_eq!(n.length(), x.sqrt());
+    }
+
+    #[test]
+    fn dot() {
+        let a = Normal::new(3.0, 4.0, 7.0);
+        let b = Normal::new(2.0, 6.0, 1.0);
+        let x = 37.0;
+        assert_eq!(a.dot(&b), x);
+    }
+
+    #[test]
+    fn abs_dot() {
+        let a = Normal::new(-3.0, -4.0, 7.0);
+        let b = Normal::new(-2.0, 6.0, -1.0);
+        let x = 25.0;
+        assert_eq!(a.dot(&b), -x);
+        assert_eq!(a.abs_dot(&b), x);
+    }
+
+    #[test]
+    fn normalize() {
+        let n = Normal::new(3.0, 4.0, 7.0);
+        let magnitude = n.length();
+        assert_eq!(n.normalize(), n / magnitude);
+    }
+
+    #[test]
+    fn abs() {
+        let a = Normal::new(-3.0, 4.0, 0.0);
+        let b = Normal::new(3.0, -4.0, -0.0);
+        let c = Normal::new(3.0, 4.0, 0.0);
+        assert_eq!(a.abs(), c);
+        assert_eq!(b.abs(), c);
+    }
+
+    #[test]
+    fn is_nan() {
+        let mut a = Normal::new(3.0, 2.0, 4.0);
+        assert!(!a.is_nan());
+        a.x = Float::NAN;
+        assert!(a.is_nan());
+    }
+
+    #[test]
+    fn default() {
+        let n = Normal::new(0.0, 0.0, 0.0);
+        assert_eq!(n, Normal::default());
+    }
+
+    #[test]
+    fn from() {
+        let n = Normal::new(3.0, 4.0, 7.0);
+        let v = Vec3::new(3.0, 4.0, 7.0);
+        let p = Point3::new(3.0, 4.0, 7.0);
+        assert_eq!(n, Normal::from(v));
+        assert_eq!(n, Normal::from(p));
+    }
+
+    #[test]
+    fn add() {
+        let a = Normal::new(3.0, 4.0, 7.0);
+        let b = Normal::new(2.0, 1.0, 7.0);
+        let c = Normal::new(5.0, 5.0, 14.0);
+        assert_eq!(a + b, c);
+        assert_eq!(&a + &b, c);
+    }
+
+    #[test]
+    fn add_assign() {
+        let mut a = Normal::new(3.0, 4.0, 7.0);
+        let b = Normal::new(2.0, 1.0, 7.0);
+        let c = Normal::new(5.0, 5.0, 14.0);
+        a += b;
+        assert_eq!(a, c);
+    }
+
+    #[test]
+    fn sub() {
+        let a = Normal::new(3.0, 4.0, 7.0);
+        let b = Normal::new(2.0, 1.0, 7.0);
+        let c = Normal::new(5.0, 5.0, 14.0);
+        assert_eq!(c - b, a);
+        assert_eq!(&c - &b, a);
+    }
+
+    #[test]
+    fn sub_assign() {
+        let a = Normal::new(3.0, 4.0, 7.0);
+        let b = Normal::new(2.0, 1.0, 7.0);
+        let mut c = Normal::new(5.0, 5.0, 14.0);
+        c -= b;
+        assert_eq!(c, a);
+    }
+
+    #[test]
+    fn mul() {
+        let a = Normal::new(3.0, 4.0, 7.0);
+        let b = Normal::new(9.0, 12.0, 21.0);
+        let x = 3.0;
+        assert_eq!(a * x, b);
+        assert_eq!(&a * x, b);
+        assert_eq!(x * a, b);
+        assert_eq!(x * &a, b);
+    }
+
+    #[test]
+    fn mul_assign() {
+        let mut a = Normal::new(3.0, 4.0, 7.0);
+        let b = Normal::new(9.0, 12.0, 21.0);
+        a *= 3.0;
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn div() {
+        let a = Normal::new(3.0, 4.0, 7.0);
+        let b = Normal::new(9.0, 12.0, 21.0);
+        let x = 3.0;
+        assert_eq!(b / x, a);
+        assert_eq!(&b / x, a);
+    }
+
+    #[test]
+    fn div_assign() {
+        let a = Normal::new(3.0, 4.0, 7.0);
+        let mut b = Normal::new(9.0, 12.0, 21.0);
+        b /= 3.0;
+        assert_eq!(b, a);
+    }
+
+    #[test]
+    fn neg() {
+        let a = Normal::new(3.0, 4.0, 7.0);
+        let b = Normal::new(-3.0, -4.0, -7.0);
+        assert_eq!(-a, b);
+        assert_eq!(-&a, b);
+    }
+
+    #[test]
+    fn index() {
+        let a = Normal::new(3.0, 4.0, 7.0);
+        assert_eq!(a[0], 3.0);
+        assert_eq!(a[1], 4.0);
+        assert_eq!(a[2], 7.0);
     }
 }

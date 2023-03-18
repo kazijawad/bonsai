@@ -1,7 +1,7 @@
 use std::mem;
 
 cfg_if::cfg_if! {
-    if #[cfg(feature = "float-as-double")] {
+    if #[cfg(feature = "float-precision")] {
         pub type Float = f64;
         pub const PI: Float = std::f64::consts::PI;
     } else {

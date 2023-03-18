@@ -42,8 +42,8 @@ fn main() {
     let scene = Scene::new(aggregate, vec![point_light]);
 
     let camera_transform = Arc::new(Transform::look_at(
-        &Point3::new(3.0, 4.0, 1.5),
-        &Point3::new(0.5, 0.5, 0.0),
+        &Point3::new(3.0, 0.0, 0.0),
+        &Point3::new(0.0, 0.0, 0.0),
         &Vec3::new(0.0, 0.0, 1.0),
     ));
     let camera_to_world =
