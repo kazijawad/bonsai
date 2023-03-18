@@ -249,7 +249,9 @@ impl Transform {
         camera_to_world.m[2][2] = direction.z;
         camera_to_world.m[3][2] = 0.0;
 
-        Self::new(camera_to_world.inverse(), camera_to_world)
+        let inv_camera_to_world = camera_to_world.inverse();
+
+        Self::new(camera_to_world, inv_camera_to_world)
     }
 
     pub fn inverse(&self) -> Self {
