@@ -31,15 +31,34 @@ fn main() {
     let sigma = Arc::new(ConstantTexture::new(0.0));
     let material = Arc::new(MatteMaterial::new(kd, sigma));
 
-    let primitive = Arc::new(GeometricPrimitive::new(sphere, material));
-    let aggregate = Box::new(BVH::new(vec![primitive], 4));
-
-    let point_light = Arc::new(PointLight::new(
-        Transform::translate(&Vec3::new(0.0, 0.0, 2.0)),
-        RGBSpectrum::new(1.0),
-    ));
-
-    let scene = Scene::new(aggregate, vec![point_light]);
+    let scene = Scene::new(
+        Box::new(BVH::new(
+            vec![Arc::new(GeometricPrimitive::new(sphere, material))],
+            4,
+        )),
+        vec![
+            Arc::new(PointLight::new(
+                Transform::translate(&Vec3::new(0.0, 0.0, 2.0)),
+                RGBSpectrum::new(1.0),
+            )),
+            Arc::new(PointLight::new(
+                Transform::translate(&Vec3::new(0.0, 0.0, -2.0)),
+                RGBSpectrum::new(1.0),
+            )),
+            Arc::new(PointLight::new(
+                Transform::translate(&Vec3::new(2.0, 0.0, 0.0)),
+                RGBSpectrum::new(1.0),
+            )),
+            Arc::new(PointLight::new(
+                Transform::translate(&Vec3::new(0.0, -2.0, 0.0)),
+                RGBSpectrum::new(1.0),
+            )),
+            Arc::new(PointLight::new(
+                Transform::translate(&Vec3::new(0.0, 2.0, 0.0)),
+                RGBSpectrum::new(1.0),
+            )),
+        ],
+    );
 
     let camera_transform = Arc::new(Transform::look_at(
         &Point3::new(3.0, 0.0, 0.0),

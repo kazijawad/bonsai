@@ -72,27 +72,23 @@ impl Shape for Sphere {
 
     fn intersect(
         &self,
-        r: &Ray,
+        ray: &Ray,
         t_hit: &mut Float,
         interaction: &mut SurfaceInteraction,
         _include_alpha: bool,
     ) -> bool {
         // Transform ray to object space.
-        let mut origin_error = Vec3::default();
-        let mut direction_error = Vec3::default();
-        let ray = r.transform_with_error(
-            &self.world_to_object,
-            &mut origin_error,
-            &mut direction_error,
-        );
+        let mut o_error = Vec3::default();
+        let mut d_error = Vec3::default();
+        let ray = ray.transform_with_error(&self.world_to_object, &mut o_error, &mut d_error);
 
         // Initialize ray coordinate values.
-        let ox = EFloat::new(ray.origin.x, origin_error.x);
-        let oy = EFloat::new(ray.origin.y, origin_error.y);
-        let oz = EFloat::new(ray.origin.z, origin_error.z);
-        let dx = EFloat::new(ray.direction.x, direction_error.x);
-        let dy = EFloat::new(ray.direction.y, direction_error.y);
-        let dz = EFloat::new(ray.direction.z, direction_error.z);
+        let ox = EFloat::new(ray.origin.x, o_error.x);
+        let oy = EFloat::new(ray.origin.y, o_error.y);
+        let oz = EFloat::new(ray.origin.z, o_error.z);
+        let dx = EFloat::new(ray.direction.x, d_error.x);
+        let dy = EFloat::new(ray.direction.y, d_error.y);
+        let dz = EFloat::new(ray.direction.z, d_error.z);
         let a = dx * dx + dy * dy + dz * dz;
         let b = 2.0 * (dx * ox + dy * oy + dz * oz);
         let c = ox * ox + oy * oy + oz * oz

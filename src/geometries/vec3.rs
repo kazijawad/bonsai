@@ -18,31 +18,6 @@ impl Vec3 {
         Self { x, y, z }
     }
 
-    pub fn coordinate_system(v1: &Self, v2: &mut Self, v3: &mut Self) {
-        let new_v2 = if v1.x.abs() > v1.y.abs() {
-            Self::new(-v1.z, 0.0, v1.x) / (v1.x * v1.x + v1.z * v1.z).sqrt()
-        } else {
-            Self::new(0.0, v1.z, -v1.y) / (v1.y * v1.y + v1.z * v1.z).sqrt()
-        };
-        v2.clone_from(&new_v2);
-        v3.clone_from(&v1.cross(&v2));
-    }
-
-    pub fn spherical_direction(sin_theta: Float, cos_theta: Float, phi: Float) -> Self {
-        Self::new(sin_theta * phi.cos(), sin_theta * phi.sin(), cos_theta)
-    }
-
-    pub fn spherical_direction_from_basis(
-        sin_theta: Float,
-        cos_theta: Float,
-        phi: Float,
-        x: &Self,
-        y: &Self,
-        z: &Self,
-    ) -> Self {
-        sin_theta * phi.cos() * x + sin_theta * phi.sin() * y + cos_theta * z
-    }
-
     pub fn spherical_theta(&self) -> Float {
         self.z.clamp(-1.0, 1.0).acos()
     }
@@ -73,18 +48,18 @@ impl Vec3 {
     }
 
     pub fn cross(&self, v: &Self) -> Self {
-        let x: f64 = self.x.into();
-        let y: f64 = self.y.into();
-        let z: f64 = self.z.into();
+        let x = self.x as f64;
+        let y = self.y as f64;
+        let z = self.z as f64;
 
-        let vx: f64 = v.x.into();
-        let vy: f64 = v.y.into();
-        let vz: f64 = v.z.into();
+        let vx = v.x as f64;
+        let vy = v.y as f64;
+        let vz = v.z as f64;
 
         Self::new(
-            (y * vz - z * vy) as Float,
-            (z * vx - x * vz) as Float,
-            (x * vy - y * vx) as Float,
+            ((y * vz) - (z * vy)) as Float,
+            ((z * vx) - (x * vz)) as Float,
+            ((x * vy) - (y * vx)) as Float,
         )
     }
 
@@ -94,7 +69,6 @@ impl Vec3 {
     }
 
     pub fn abs_dot(&self, v: &Self) -> Float {
-        debug_assert!(!self.is_nan() && !v.is_nan());
         self.dot(v).abs()
     }
 
