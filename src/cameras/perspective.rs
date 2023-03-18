@@ -6,7 +6,7 @@ use crate::{
         transform::{AnimatedTransform, Transform},
     },
     geometries::{bounds2::Bounds2, point3::Point3, ray::Ray, vec3::Vec3},
-    utils::math::lerp,
+    utils::{math::lerp, sampling::concentric_sample_disk},
 };
 
 pub struct PerspectiveCamera {
@@ -99,7 +99,7 @@ impl Camera for PerspectiveCamera {
         // Modify ray for depth of field.
         if self.lens_radius > 0.0 {
             // Sample point on lens.
-            let lens = self.lens_radius * sample.lens.concentric_disk_sample();
+            let lens = self.lens_radius * concentric_sample_disk(&sample.lens);
 
             // Compute point on plane of focus.
             let focus = ray.at(self.focal_distance / ray.direction.z);
@@ -129,7 +129,7 @@ impl Camera for PerspectiveCamera {
         // Modify ray for depth of field.
         if self.lens_radius > 0.0 {
             // Sample point on lens.
-            let lens = self.lens_radius * sample.lens.concentric_disk_sample();
+            let lens = self.lens_radius * concentric_sample_disk(&sample.lens);
 
             // Compute point on plane of focus.
             let focus_point = ray.at(self.focal_distance / ray.direction.z);
@@ -142,7 +142,7 @@ impl Camera for PerspectiveCamera {
         // Compute offset rays for ray differentials.
         if self.lens_radius > 0.0 {
             // Sample point on lens.
-            let lens = self.lens_radius * sample.lens.concentric_disk_sample();
+            let lens = self.lens_radius * concentric_sample_disk(&sample.lens);
 
             let dx = Vec3::from(camera + self.dx_camera).normalize();
             let focus = Point3::default() + ((self.focal_distance / dx.z) * dx);

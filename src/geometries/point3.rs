@@ -43,15 +43,15 @@ impl Point3 {
     }
 
     pub fn transform(&self, t: &Transform) -> Self {
-        let xp = t.m.m[0][0] * self.x + t.m.m[0][1] * self.y + t.m.m[0][2] * self.z + t.m.m[0][3];
-        let yp = t.m.m[1][0] * self.x + t.m.m[1][1] * self.y + t.m.m[1][2] * self.z + t.m.m[1][3];
-        let zp = t.m.m[2][0] * self.x + t.m.m[2][1] * self.y + t.m.m[2][2] * self.z + t.m.m[2][3];
-        let wp = t.m.m[3][0] * self.x + t.m.m[3][1] * self.y + t.m.m[3][2] * self.z + t.m.m[3][3];
+        let x = t.m.m[0][0] * self.x + t.m.m[0][1] * self.y + t.m.m[0][2] * self.z + t.m.m[0][3];
+        let y = t.m.m[1][0] * self.x + t.m.m[1][1] * self.y + t.m.m[1][2] * self.z + t.m.m[1][3];
+        let z = t.m.m[2][0] * self.x + t.m.m[2][1] * self.y + t.m.m[2][2] * self.z + t.m.m[2][3];
+        let w = t.m.m[3][0] * self.x + t.m.m[3][1] * self.y + t.m.m[3][2] * self.z + t.m.m[3][3];
 
-        if wp == 1.0 {
-            Point3::new(xp, yp, zp)
+        if w == 1.0 {
+            Point3::new(x, y, z)
         } else {
-            Point3::new(xp, yp, zp) / wp
+            Point3::new(x, y, z) / w
         }
     }
 
@@ -76,7 +76,7 @@ impl Point3 {
     }
 
     pub fn ceil(&self) -> Self {
-        Self::new(self.x.ceil(), self.y.ceil(), self.z.floor())
+        Self::new(self.x.ceil(), self.y.ceil(), self.z.ceil())
     }
 
     pub fn min(&self, p: &Self) -> Self {
@@ -91,8 +91,8 @@ impl Point3 {
         Self::new(self.x.abs(), self.y.abs(), self.z.abs())
     }
 
-    pub fn permute(&self, x: usize, y: usize, z: usize) -> Self {
-        Self::new(self[x], self[y], self[z])
+    pub fn permute(&self, i: usize, j: usize, k: usize) -> Self {
+        Self::new(self[i], self[j], self[k])
     }
 
     pub fn is_nan(&self) -> bool {
@@ -383,5 +383,240 @@ impl IndexMut<usize> for Point3 {
         } else {
             &mut self.z
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        base::{constants::Float, transform::Transform},
+        geometries::{point3::Point3, vec3::Vec3},
+    };
+
+    #[test]
+    fn new() {
+        let p = Point3::new(1.0, 3.0, 4.0);
+        assert_eq!(p.x, 1.0);
+        assert_eq!(p.y, 3.0);
+        assert_eq!(p.z, 4.0);
+    }
+
+    #[test]
+    fn lerp() {
+        let a = Point3::new(1.0, 2.0, 5.0);
+        let b = Point3::new(2.0, 4.0, 2.0);
+        let c = Point3::new(1.25, 2.5, 4.25);
+        let t = 0.25;
+        assert_eq!(Point3::lerp(t, &a, &b), c);
+    }
+
+    #[test]
+    #[ignore]
+    fn offset_ray_origin() {
+        todo!()
+    }
+
+    #[test]
+    fn transform() {
+        let t = Transform::translate(&Vec3::new(2.0, 3.0, 6.0));
+        let a = Point3::new(4.0, 2.0, 1.0);
+        let b = Point3::new(6.0, 5.0, 7.0);
+        assert_eq!(a.transform(&t), b);
+    }
+
+    #[test]
+    fn distance_squared() {
+        let a = Point3::new(1.0, 2.0, 3.0);
+        let b = Point3::new(2.0, 4.0, 1.0);
+        let x = 9.0;
+        assert_eq!(a.distance_squared(&b), x);
+    }
+
+    #[test]
+    fn distance() {
+        let a = Point3::new(1.0, 2.0, 3.0);
+        let b = Point3::new(2.0, 4.0, 1.0);
+        let x = (9.0 as Float).sqrt();
+        assert_eq!(a.distance(&b), x);
+    }
+
+    #[test]
+    fn length_squared() {
+        let a = Point3::new(1.0, 2.0, 3.0);
+        let x = 14.0;
+        assert_eq!(a.length_squared(), x);
+    }
+
+    #[test]
+    fn length() {
+        let a = Point3::new(1.0, 2.0, 3.0);
+        let x = (14.0 as Float).sqrt();
+        assert_eq!(a.length(), x);
+    }
+
+    #[test]
+    fn floor() {
+        let a = Point3::new(3.5, 2.0, 1.8);
+        let b = Point3::new(3.0, 2.0, 1.0);
+        assert_eq!(a.floor(), b);
+    }
+
+    #[test]
+    fn ceil() {
+        let a = Point3::new(3.5, 2.0, 1.1);
+        let b = Point3::new(4.0, 2.0, 2.0);
+        assert_eq!(a.ceil(), b);
+    }
+
+    #[test]
+    fn min() {
+        let a = Point3::new(3.5, 2.0, 6.8);
+        let b = Point3::new(4.0, 1.0, 6.6);
+        let c = Point3::new(3.5, 1.0, 6.6);
+        assert_eq!(a.min(&b), c);
+    }
+
+    #[test]
+    fn max() {
+        let a = Point3::new(3.5, 2.0, 3.0);
+        let b = Point3::new(4.0, 1.0, 1.0);
+        let c = Point3::new(4.0, 2.0, 3.0);
+        assert_eq!(a.max(&b), c);
+    }
+
+    #[test]
+    fn abs() {
+        let a = Point3::new(-4.0, 2.0, -3.0);
+        let b = Point3::new(4.0, 2.0, 3.0);
+        assert_eq!(a.abs(), b);
+    }
+
+    #[test]
+    fn permute() {
+        let a = Point3::new(4.0, 2.0, 3.0);
+        let b = Point3::new(2.0, 3.0, 4.0);
+        assert_eq!(a.permute(1, 2, 0), b);
+    }
+
+    #[test]
+    fn is_nan() {
+        let mut a = Point3::new(4.0, 2.0, 3.0);
+        assert_ne!(a.is_nan(), true);
+        a.y = Float::NAN;
+        assert_eq!(a.is_nan(), true);
+    }
+
+    #[test]
+    fn default() {
+        let p = Point3::default();
+        assert_eq!(p.x, 0.0);
+        assert_eq!(p.y, 0.0);
+        assert_eq!(p.z, 0.0);
+    }
+
+    #[test]
+    fn from() {
+        let v = Vec3::new(3.0, 4.0, 2.0);
+        let p = Point3::new(3.0, 4.0, 2.0);
+        assert_eq!(Point3::from(v), p);
+    }
+
+    #[test]
+    fn add() {
+        let a = Point3::new(3.0, 4.0, 2.0);
+        let b = Point3::new(2.0, 1.0, 3.0);
+        let v = Vec3::new(2.0, 1.0, 3.0);
+        let c = Point3::new(5.0, 5.0, 5.0);
+        assert_eq!(a + b, c);
+        assert_eq!(&a + &b, c);
+        assert_eq!(a + v, c);
+        assert_eq!(&a + &v, c);
+    }
+
+    #[test]
+    fn add_assign() {
+        let mut p = Point3::new(3.0, 4.0, 2.0);
+        p += Point3::new(2.0, 1.0, 3.0);
+        p += Vec3::new(2.0, 3.0, 1.0);
+        assert_eq!(p, Point3::new(7.0, 8.0, 6.0));
+    }
+
+    #[test]
+    fn sub() {
+        let a = Point3::new(3.0, 4.0, 1.0);
+        let b = Point3::new(2.0, 1.0, -2.0);
+        let c = Vec3::new(2.0, 1.0, -2.0);
+        let v = Vec3::new(1.0, 3.0, 3.0);
+        let p = Point3::new(1.0, 3.0, 3.0);
+        assert_eq!(a - b, v);
+        assert_eq!(&a - &b, v);
+        assert_eq!(a - c, p);
+        assert_eq!(&a - &c, p);
+    }
+
+    #[test]
+    fn sub_assign() {
+        let mut p = Point3::new(3.0, 4.0, 1.0);
+        p -= Point3::new(2.0, 1.0, -2.0);
+        p -= Vec3::new(2.0, 3.0, 4.0);
+        assert_eq!(p, Point3::new(-1.0, 0.0, -1.0));
+    }
+
+    #[test]
+    fn mul() {
+        let a = Point3::new(3.0, 4.0, 1.0);
+        let x = 4.0;
+        let b = Point3::new(12.0, 16.0, 4.0);
+        assert_eq!(a * x, b);
+        assert_eq!(&a * x, b);
+        assert_eq!(x * a, b);
+        assert_eq!(x * &a, b);
+    }
+
+    #[test]
+    fn mul_assign() {
+        let mut a = Point3::new(3.0, 4.0, 1.0);
+        a *= 4.0;
+        assert_eq!(a, Point3::new(12.0, 16.0, 4.0));
+    }
+
+    #[test]
+    fn div() {
+        let a = Point3::new(3.0, 4.0, 2.0);
+        let x = 4.0;
+        let b = Point3::new(0.75, 1.0, 0.5);
+        assert_eq!(a / x, b);
+        assert_eq!(&a / x, b);
+    }
+
+    #[test]
+    fn div_assign() {
+        let mut a = Point3::new(3.0, 4.0, 1.0);
+        a /= 4.0;
+        assert_eq!(a, Point3::new(0.75, 1.0, 0.25));
+    }
+
+    #[test]
+    fn neg() {
+        let a = Point3::new(3.0, 4.0, -2.0);
+        let b = Point3::new(-3.0, -4.0, 2.0);
+        assert_eq!(-a, b);
+        assert_eq!(-(&a), b);
+    }
+
+    #[test]
+    fn index() {
+        let a = Point3::new(3.0, 4.0, 1.0);
+        assert_eq!(a[0], 3.0);
+        assert_eq!(a[1], 4.0);
+        assert_eq!(a[2], 1.0);
+    }
+
+    #[test]
+    fn index_mut() {
+        let mut a = Point3::new(3.0, 4.0, 1.0);
+        assert_eq!(a[0], 3.0);
+        a[0] += 1.0;
+        assert_eq!(a[0], 4.0);
     }
 }

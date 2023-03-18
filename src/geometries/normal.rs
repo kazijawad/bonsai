@@ -285,8 +285,8 @@ impl Index<usize> for Normal {
 #[cfg(test)]
 mod tests {
     use crate::{
+        base::constants::Float,
         geometries::normal::{Normal, Point3, Vec3},
-        utils::math::Float,
     };
 
     #[test]

@@ -37,7 +37,7 @@ pub fn concentric_sample_disk(u: &Point2) -> Point2 {
     }
 
     // Apply concentric mapping to point.
-    let (theta, r) = if u_offset.x.abs() > u_offset.y.abs() {
+    let (theta, radius) = if u_offset.x.abs() > u_offset.y.abs() {
         ((PI / 4.0) * (u_offset.y / u_offset.x), u_offset.x)
     } else {
         (
@@ -46,7 +46,7 @@ pub fn concentric_sample_disk(u: &Point2) -> Point2 {
         )
     };
 
-    r * Point2::new(theta.cos(), theta.sin())
+    radius * Point2::new(theta.cos(), theta.sin())
 }
 
 pub fn uniform_cone_pdf(cos_theta_max: Float) -> Float {
