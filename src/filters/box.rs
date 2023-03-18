@@ -1,7 +1,6 @@
 use crate::{
-    base::filter::Filter,
+    base::{constants::Float, filter::Filter},
     geometries::{point2::Point2, vec2::Vec2},
-    utils::math::Float,
 };
 
 pub struct BoxFilter {
@@ -9,18 +8,7 @@ pub struct BoxFilter {
     inverse_radius: Vec2,
 }
 
-pub struct BoxFilterDescriptior {
-    pub x_width: Option<Float>,
-    pub y_width: Option<Float>,
-}
-
 impl BoxFilter {
-    pub fn create(desc: BoxFilterDescriptior) -> Self {
-        let x_width = desc.x_width.unwrap_or(0.5);
-        let y_width = desc.y_width.unwrap_or(0.5);
-        Self::new(Vec2::new(x_width, y_width))
-    }
-
     pub fn new(radius: Vec2) -> Self {
         Self {
             radius,

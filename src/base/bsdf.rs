@@ -1,11 +1,13 @@
 use std::ptr;
 
 use crate::{
-    base::bxdf::{BxDF, BxDFType, BSDF_REFLECTION, BSDF_TRANSMISSION},
+    base::{
+        bxdf::{BxDF, BxDFType, BSDF_REFLECTION, BSDF_TRANSMISSION},
+        constants::Float,
+    },
     geometries::{normal::Normal, point2::Point2, vec3::Vec3},
     interactions::surface::SurfaceInteraction,
     spectra::rgb::RGBSpectrum,
-    utils::math::Float,
 };
 
 use super::bxdf::BSDF_SPECULAR;
@@ -15,7 +17,7 @@ use super::bxdf::BSDF_SPECULAR;
 // let us preallocate the vector of BxDFs.
 const MAX_BXDFS: usize = 8;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct BSDF {
     pub eta: Float,
     ns: Normal,

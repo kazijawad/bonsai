@@ -1,21 +1,23 @@
 use crate::{
-    base::bxdf::{BxDF, BxDFType, BSDF_DIFFUSE, BSDF_REFLECTION, BSDF_TRANSMISSION},
+    base::{
+        bxdf::{BxDF, BxDFType, BSDF_DIFFUSE, BSDF_REFLECTION, BSDF_TRANSMISSION},
+        constants::{Float, PI},
+    },
     geometries::{point2::Point2, vec3::Vec3},
     spectra::rgb::RGBSpectrum,
     utils::{
         bxdf::{abs_cos_theta, same_hemisphere},
-        math::{Float, PI},
         sampling::cosine_sample_hemisphere,
     },
 };
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct LambertianReflection {
     bxdf_type: BxDFType,
     r: RGBSpectrum,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct LambertianTransmission {
     bxdf_type: BxDFType,
     t: RGBSpectrum,

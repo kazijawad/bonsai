@@ -1,5 +1,6 @@
 use crate::{
     base::{
+        constants::{Float, PI},
         interaction::Interaction,
         light::{Light, LightFlag, VisibilityTester},
         transform::Transform,
@@ -7,13 +8,10 @@ use crate::{
     geometries::{normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3},
     interactions::base::BaseInteraction,
     spectra::rgb::RGBSpectrum,
-    utils::{
-        math::{Float, PI},
-        sampling::{uniform_sample_sphere, uniform_sphere_pdf},
-    },
+    utils::sampling::{uniform_sample_sphere, uniform_sphere_pdf},
 };
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct PointLight {
     light_to_world: Transform,
     world_to_light: Transform,

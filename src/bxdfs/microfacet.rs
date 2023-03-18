@@ -1,19 +1,17 @@
 use crate::{
     base::{
         bxdf::{BxDF, BxDFType, BSDF_GLOSSY, BSDF_REFLECTION, BSDF_TRANSMISSION},
+        constants::Float,
         fresnel::{Fresnel, FresnelDielectric},
         material::TransportMode,
         microfacet::MicrofacetDistribution,
     },
     geometries::{normal::Normal, point2::Point2, vec3::Vec3},
     spectra::rgb::RGBSpectrum,
-    utils::{
-        bxdf::{abs_cos_theta, cos_theta, reflect, refract, same_hemisphere},
-        math::Float,
-    },
+    utils::bxdf::{abs_cos_theta, cos_theta, reflect, refract, same_hemisphere},
 };
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct MicrofacetReflection {
     bxdf_type: BxDFType,
     r: RGBSpectrum,
@@ -21,7 +19,7 @@ pub struct MicrofacetReflection {
     fresnel: Box<dyn Fresnel>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct MicrofactTransmission {
     bxdf_type: BxDFType,
     t: RGBSpectrum,

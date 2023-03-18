@@ -2,13 +2,13 @@ use std::sync::Arc;
 
 use crate::{
     base::{
+        constants::Float,
         material::{Material, TransportMode},
         primitive::Primitive,
         shape::Shape,
     },
     geometries::{bounds3::Bounds3, ray::Ray},
     interactions::surface::SurfaceInteraction,
-    utils::math::Float,
 };
 
 #[derive(Clone)]

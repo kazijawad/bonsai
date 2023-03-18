@@ -3,6 +3,7 @@ use std::sync::Arc;
 use crate::{
     base::{
         bsdf::BSDF,
+        constants::Float,
         material::{Material, TransportMode},
         spectrum::Spectrum,
         texture::Texture,
@@ -10,7 +11,6 @@ use crate::{
     bxdfs::{lambertian::LambertianReflection, oren_nayer::OrenNayer},
     interactions::surface::SurfaceInteraction,
     spectra::rgb::RGBSpectrum,
-    utils::math::Float,
 };
 
 pub struct MatteMaterial {

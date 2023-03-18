@@ -1,7 +1,9 @@
 use crate::{
-    base::transform::{AnimatedTransform, Transform},
+    base::{
+        constants::Float,
+        transform::{AnimatedTransform, Transform},
+    },
     geometries::{point3::Point3, vec3::Vec3},
-    utils::math::Float,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]

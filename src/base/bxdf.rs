@@ -1,13 +1,11 @@
-use std::fmt::Debug;
-
 use dyn_clone::DynClone;
 
 use crate::{
+    base::constants::{Float, PI},
     geometries::{point2::Point2, vec3::Vec3},
     spectra::rgb::RGBSpectrum,
     utils::{
         bxdf::{abs_cos_theta, same_hemisphere},
-        math::{Float, PI},
         sampling::{cosine_sample_hemisphere, uniform_hemisphere_pdf, uniform_sample_hemisphere},
     },
 };
@@ -22,7 +20,7 @@ pub const BSDF_SPECULAR: BxDFType = 1 << 4;
 pub const BSDF_ALL: BxDFType =
     BSDF_DIFFUSE | BSDF_GLOSSY | BSDF_SPECULAR | BSDF_REFLECTION | BSDF_TRANSMISSION;
 
-pub trait BxDF: Debug + Send + Sync + DynClone {
+pub trait BxDF: Send + Sync + DynClone {
     fn f(&self, wo: &Vec3, wi: &Vec3) -> RGBSpectrum;
 
     fn sample_f(

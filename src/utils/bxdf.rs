@@ -1,10 +1,9 @@
 use std::mem;
 
 use crate::{
-    base::spectrum::Spectrum,
+    base::{constants::Float, spectrum::Spectrum},
     geometries::{normal::Normal, vec3::Vec3},
     spectra::rgb::RGBSpectrum,
-    utils::math::Float,
 };
 
 pub fn cos_theta(w: &Vec3) -> Float {

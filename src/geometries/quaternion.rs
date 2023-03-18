@@ -1,9 +1,8 @@
 use std::ops;
 
 use crate::{
-    base::transform::Transform,
+    base::{constants::Float, transform::Transform},
     geometries::{mat4::Mat4, vec3::Vec3},
-    utils::math::Float,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]

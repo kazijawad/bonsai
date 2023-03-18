@@ -1,14 +1,14 @@
 use crate::{
-    base::bxdf::{BxDF, BxDFType, BSDF_DIFFUSE, BSDF_REFLECTION},
+    base::{
+        bxdf::{BxDF, BxDFType, BSDF_DIFFUSE, BSDF_REFLECTION},
+        constants::{Float, PI},
+    },
     geometries::vec3::Vec3,
     spectra::rgb::RGBSpectrum,
-    utils::{
-        bxdf::{abs_cos_theta, cos_phi, sin_phi, sin_theta},
-        math::{Float, PI},
-    },
+    utils::bxdf::{abs_cos_theta, cos_phi, sin_phi, sin_theta},
 };
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct OrenNayer {
     bxdf_type: BxDFType,
     r: RGBSpectrum,

@@ -1,6 +1,6 @@
 use std::{mem, ops};
 
-use crate::utils::math::{Float, PI};
+use crate::base::constants::{Float, PI};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Interval {

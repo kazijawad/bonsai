@@ -1,7 +1,9 @@
 use crate::{
-    base::filter::Filter,
+    base::{
+        constants::{Float, PI},
+        filter::Filter,
+    },
     geometries::{point2::Point2, vec2::Vec2},
-    utils::math::{Float, PI},
 };
 
 pub struct LanczosSincFilter {
@@ -10,20 +12,7 @@ pub struct LanczosSincFilter {
     tau: Float,
 }
 
-pub struct LanczosSincFilterDescriptior {
-    pub x_width: Option<Float>,
-    pub y_width: Option<Float>,
-    pub tau: Option<Float>,
-}
-
 impl LanczosSincFilter {
-    pub fn create(desc: LanczosSincFilterDescriptior) -> Self {
-        let x_width = desc.x_width.unwrap_or(4.0);
-        let y_width = desc.y_width.unwrap_or(4.0);
-        let tau = desc.tau.unwrap_or(3.0);
-        Self::new(Vec2::new(x_width, y_width), tau)
-    }
-
     pub fn new(radius: Vec2, tau: Float) -> Self {
         Self {
             radius,

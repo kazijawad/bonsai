@@ -1,6 +1,6 @@
 use crate::{
+    base::constants::Float,
     geometries::{point2::Point2, vec2::Vec2},
-    utils::math::Float,
 };
 
 pub trait Filter: Send + Sync {

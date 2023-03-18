@@ -1,15 +1,17 @@
 use std::sync::Arc;
 
 use crate::{
-    base::{interaction::Interaction, shape::Shape, transform::Transform},
+    base::{
+        constants::{Float, PI},
+        interaction::Interaction,
+        shape::Shape,
+        transform::Transform,
+    },
     geometries::{
         bounds3::Bounds3, normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3,
     },
     interactions::{base::BaseInteraction, surface::SurfaceInteraction},
-    utils::{
-        math::{Float, PI},
-        sampling::concentric_sample_disk,
-    },
+    utils::sampling::concentric_sample_disk,
 };
 
 pub struct Disk {

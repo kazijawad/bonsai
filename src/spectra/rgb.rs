@@ -2,9 +2,9 @@ use std::ops::{
     Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign,
 };
 
-use crate::{
-    base::spectrum::{rgb_to_xyz, xyz_to_rgb, Spectrum, RGB, XYZ},
-    utils::math::Float,
+use crate::base::{
+    constants::Float,
+    spectrum::{rgb_to_xyz, xyz_to_rgb, Spectrum, RGB, XYZ},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]

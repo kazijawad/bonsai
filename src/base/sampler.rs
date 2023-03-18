@@ -1,4 +1,7 @@
-use crate::{base::camera::CameraSample, geometries::point2::Point2, utils::math::Float};
+use crate::{
+    base::{camera::CameraSample, constants::Float},
+    geometries::point2::Point2,
+};
 
 pub trait Sampler: Send + Sync {
     fn start_pixel(&mut self, pixel: &Point2);

@@ -2,13 +2,14 @@ use image::{open, GenericImageView};
 
 use crate::{
     base::{
+        constants::Float,
         mipmap::{ImageWrap, MIPMap},
         spectrum::{Spectrum, RGB},
         texture::TextureMapping2D,
     },
     geometries::point2::Point2,
     spectra::rgb::RGBSpectrum,
-    utils::math::{inverse_gamma_correct, Float},
+    utils::math::inverse_gamma_correct,
 };
 
 pub struct ImageTexture {

@@ -3,9 +3,9 @@ use std::ops::{
 };
 
 use crate::{
-    base::transform::Transform,
+    base::{constants::Float, transform::Transform},
     geometries::{normal::Normal, vec3::Vec3},
-    utils::math::{next_down, next_up, Float},
+    utils::math::{next_down, next_up},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]

@@ -1,11 +1,9 @@
-use std::fmt::Debug;
-
-use crate::utils::math::Float;
+use crate::base::constants::Float;
 
 pub type XYZ = [Float; 3];
 pub type RGB = [Float; 3];
 
-pub trait Spectrum: Debug + Default + Send + Sync {
+pub trait Spectrum: Send + Sync {
     fn from_xyz(xyz: &XYZ) -> Self;
     fn from_rgb(rgb: &RGB) -> Self;
 

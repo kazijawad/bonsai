@@ -1,6 +1,9 @@
-use std::{mem, ops};
+use std::{
+    mem,
+    ops::{Add, Div, Mul, Neg, Sub},
+};
 
-use crate::utils::math::{self, Float};
+use crate::{base::constants::Float, utils::math};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct EFloat {
@@ -128,17 +131,13 @@ impl Default for EFloat {
     }
 }
 
-// TYPE CONVERSION
-
 impl From<EFloat> for Float {
     fn from(x: EFloat) -> Self {
         x.v
     }
 }
 
-// ADDITION
-
-impl ops::Add for EFloat {
+impl Add for EFloat {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -156,7 +155,7 @@ impl ops::Add for EFloat {
     }
 }
 
-impl ops::Add<EFloat> for f32 {
+impl Add<EFloat> for f32 {
     type Output = EFloat;
 
     fn add(self, rhs: EFloat) -> Self::Output {
@@ -164,9 +163,7 @@ impl ops::Add<EFloat> for f32 {
     }
 }
 
-// SUBTRACTION
-
-impl ops::Sub for EFloat {
+impl Sub for EFloat {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -182,7 +179,7 @@ impl ops::Sub for EFloat {
     }
 }
 
-impl ops::Sub<EFloat> for f32 {
+impl Sub<EFloat> for f32 {
     type Output = EFloat;
 
     fn sub(self, rhs: EFloat) -> Self::Output {
@@ -190,7 +187,7 @@ impl ops::Sub<EFloat> for f32 {
     }
 }
 
-impl ops::Sub<f32> for EFloat {
+impl Sub<f32> for EFloat {
     type Output = Self;
 
     fn sub(self, rhs: f32) -> Self::Output {
@@ -198,9 +195,7 @@ impl ops::Sub<f32> for EFloat {
     }
 }
 
-// MULTIPLICATION
-
-impl ops::Mul for EFloat {
+impl Mul for EFloat {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
@@ -233,7 +228,7 @@ impl ops::Mul for EFloat {
     }
 }
 
-impl ops::Mul<EFloat> for f32 {
+impl Mul<EFloat> for f32 {
     type Output = EFloat;
 
     fn mul(self, rhs: EFloat) -> Self::Output {
@@ -241,9 +236,7 @@ impl ops::Mul<EFloat> for f32 {
     }
 }
 
-// DIVISION
-
-impl ops::Div for EFloat {
+impl Div for EFloat {
     type Output = Self;
 
     fn div(self, rhs: Self) -> Self::Output {
@@ -287,7 +280,7 @@ impl ops::Div for EFloat {
     }
 }
 
-impl ops::Div<EFloat> for f32 {
+impl Div<EFloat> for f32 {
     type Output = EFloat;
 
     fn div(self, rhs: EFloat) -> Self::Output {
@@ -295,9 +288,7 @@ impl ops::Div<EFloat> for f32 {
     }
 }
 
-// NEGATION
-
-impl ops::Neg for EFloat {
+impl Neg for EFloat {
     type Output = Self;
 
     fn neg(self) -> Self::Output {

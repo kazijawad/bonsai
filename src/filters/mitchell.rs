@@ -1,7 +1,6 @@
 use crate::{
-    base::filter::Filter,
+    base::{constants::Float, filter::Filter},
     geometries::{point2::Point2, vec2::Vec2},
-    utils::math::Float,
 };
 
 pub struct MitchellFilter {
@@ -11,22 +10,7 @@ pub struct MitchellFilter {
     c: Float,
 }
 
-pub struct MitchellFilterDescriptior {
-    pub x_width: Option<Float>,
-    pub y_width: Option<Float>,
-    pub b: Option<Float>,
-    pub c: Option<Float>,
-}
-
 impl MitchellFilter {
-    pub fn create(desc: MitchellFilterDescriptior) -> Self {
-        let x_width = desc.x_width.unwrap_or(2.0);
-        let y_width = desc.y_width.unwrap_or(2.0);
-        let b = desc.b.unwrap_or(1.0 / 3.0);
-        let c = desc.c.unwrap_or(1.0 / 3.0);
-        Self::new(Vec2::new(x_width, y_width), b, c)
-    }
-
     pub fn new(radius: Vec2, b: Float, c: Float) -> Self {
         Self {
             radius,

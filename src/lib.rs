@@ -22,6 +22,7 @@ mod utils;
 pub use accelerators::bvh::BVH;
 pub use base::{
     camera::Camera,
+    constants::Float,
     film::Film,
     filter::Filter,
     integrator::Integrator,
@@ -37,11 +38,8 @@ pub use base::{
 };
 pub use cameras::perspective::PerspectiveCamera;
 pub use filters::{
-    gaussian::{GaussianFilter, GaussianFilterDescriptior},
-    mitchell::{MitchellFilter, MitchellFilterDescriptior},
-    r#box::{BoxFilter, BoxFilterDescriptior},
-    sinc::{LanczosSincFilter, LanczosSincFilterDescriptior},
-    triangle::{TriangleFilter, TriangleFilterDescriptior},
+    gaussian::GaussianFilter, mitchell::MitchellFilter, r#box::BoxFilter, sinc::LanczosSincFilter,
+    triangle::TriangleFilter,
 };
 pub use geometries::{
     bounds2::Bounds2, bounds3::Bounds3, interval::Interval, mat4::Mat4, normal::Normal,

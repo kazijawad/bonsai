@@ -1,7 +1,6 @@
 use crate::{
-    base::filter::Filter,
+    base::{constants::Float, filter::Filter},
     geometries::{point2::Point2, vec2::Vec2},
-    utils::math::Float,
 };
 
 pub struct GaussianFilter {
@@ -12,17 +11,7 @@ pub struct GaussianFilter {
     exp_y: Float,
 }
 
-pub struct GaussianFilterDescriptior {
-    pub x_width: Float,
-    pub y_width: Float,
-    pub alpha: Float,
-}
-
 impl GaussianFilter {
-    pub fn create(desc: &GaussianFilterDescriptior) -> Self {
-        Self::new(Vec2::new(desc.x_width, desc.y_width), desc.alpha)
-    }
-
     pub fn new(radius: Vec2, alpha: Float) -> Self {
         Self {
             radius,
@@ -49,15 +38,5 @@ impl Filter for GaussianFilter {
 
     fn inverse_radius(&self) -> Vec2 {
         self.inverse_radius
-    }
-}
-
-impl Default for GaussianFilterDescriptior {
-    fn default() -> Self {
-        Self {
-            x_width: 2.0,
-            y_width: 2.0,
-            alpha: 2.0,
-        }
     }
 }

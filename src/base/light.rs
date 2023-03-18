@@ -1,11 +1,8 @@
-use std::fmt::Debug;
-
 use crate::{
-    base::{interaction::Interaction, primitive::Primitive, scene::Scene},
+    base::{constants::Float, interaction::Interaction, primitive::Primitive, scene::Scene},
     geometries::{normal::Normal, point2::Point2, ray::Ray, vec3::Vec3},
     interactions::base::BaseInteraction,
     spectra::rgb::RGBSpectrum,
-    utils::math::Float,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -16,7 +13,7 @@ pub enum LightFlag {
     Infinite,
 }
 
-pub trait Light: Debug + Send + Sync {
+pub trait Light: Send + Sync {
     fn preprocess(&self, scene: &Scene) {}
 
     fn power(&self) -> RGBSpectrum;

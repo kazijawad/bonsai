@@ -1,6 +1,7 @@
 use crate::{
     base::{
         bxdf::{BxDF, BxDFType, BSDF_GLOSSY, BSDF_REFLECTION, BSDF_SPECULAR, BSDF_TRANSMISSION},
+        constants::{Float, PI},
         material::TransportMode,
         microfacet::MicrofacetDistribution,
     },
@@ -8,12 +9,11 @@ use crate::{
     spectra::rgb::RGBSpectrum,
     utils::{
         bxdf::{abs_cos_theta, cos_theta, fresnel_dielectric, reflect, refract, same_hemisphere},
-        math::{Float, PI},
         sampling::cosine_sample_hemisphere,
     },
 };
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct FresnelSpecular {
     bxdf_type: BxDFType,
     r: RGBSpectrum,
@@ -23,7 +23,7 @@ pub struct FresnelSpecular {
     mode: TransportMode,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct FresnelBlend {
     bxdf_type: BxDFType,
     rd: RGBSpectrum,

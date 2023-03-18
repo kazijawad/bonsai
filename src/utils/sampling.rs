@@ -1,8 +1,8 @@
 use rand::prelude::*;
 
 use crate::{
+    base::constants::{Float, PI},
     geometries::{point2::Point2, vec2::Vec2, vec3::Vec3},
-    utils::math::{Float, PI},
 };
 
 pub fn shuffle<T>(sample: &mut [T], count: usize, num_dims: usize, rng: &mut StdRng) {

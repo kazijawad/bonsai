@@ -1,9 +1,9 @@
 use rand::prelude::*;
 
 use crate::{
-    base::sampler::Sampler,
+    base::{constants::Float, sampler::Sampler},
     geometries::point2::Point2,
-    utils::{math::Float, sampling::shuffle},
+    utils::sampling::shuffle,
 };
 
 pub struct StratifiedSampler {

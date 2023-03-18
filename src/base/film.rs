@@ -4,12 +4,12 @@ use image::{ImageBuffer, Rgb32FImage};
 
 use crate::{
     base::{
+        constants::Float,
         filter::Filter,
         spectrum::{xyz_to_rgb, Spectrum, RGB, XYZ},
     },
     geometries::{bounds2::Bounds2, point2::Point2, vec2::Vec2},
     spectra::rgb::RGBSpectrum,
-    utils::math::Float,
 };
 
 const FILTER_TABLE_WIDTH: usize = 16;

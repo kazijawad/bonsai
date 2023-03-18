@@ -1,6 +1,6 @@
 use crate::{
+    base::constants::Float,
     geometries::{normal::Normal, point3::Point3, ray::Ray, vec3::Vec3},
-    utils::math::Float,
 };
 
 pub trait Interaction: Send + Sync {

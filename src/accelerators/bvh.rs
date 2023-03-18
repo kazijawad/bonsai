@@ -17,7 +17,7 @@ pub struct BVH {
     nodes: Vec<LinearBVHNode>,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 struct LinearBVHNode {
     bounds: Bounds3,
     // Leaf Node:
@@ -29,14 +29,13 @@ struct LinearBVHNode {
     axis: usize,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 struct BVHPrimitiveInfo {
     prim_index: usize,
     bounds: Bounds3,
     centroid: Point3,
 }
 
-#[derive(Debug)]
 struct BVHBuildNode {
     bounds: Bounds3,
     children: Vec<BVHBuildNode>,
@@ -45,7 +44,7 @@ struct BVHBuildNode {
     num_prims: usize,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 struct BucketInfo {
     count: u32,
     bounds: Bounds3,

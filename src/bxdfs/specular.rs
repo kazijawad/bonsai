@@ -1,25 +1,23 @@
 use crate::{
     base::{
         bxdf::{BxDF, BxDFType, BSDF_REFLECTION, BSDF_SPECULAR, BSDF_TRANSMISSION},
+        constants::Float,
         fresnel::{Fresnel, FresnelDielectric},
         material::TransportMode,
     },
     geometries::{normal::Normal, point2::Point2, vec3::Vec3},
     spectra::rgb::RGBSpectrum,
-    utils::{
-        bxdf::{abs_cos_theta, cos_theta, refract},
-        math::Float,
-    },
+    utils::bxdf::{abs_cos_theta, cos_theta, refract},
 };
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct SpecularReflection {
     bxdf_type: BxDFType,
     r: RGBSpectrum,
     fresnel: Box<dyn Fresnel>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct SpecularTransmission {
     bxdf_type: BxDFType,
     t: RGBSpectrum,

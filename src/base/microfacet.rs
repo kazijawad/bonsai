@@ -1,16 +1,12 @@
-use std::fmt::Debug;
-
 use dyn_clone::DynClone;
 
 use crate::{
+    base::constants::{Float, PI},
     geometries::{point2::Point2, vec3::Vec3},
-    utils::{
-        bxdf::{abs_cos_theta, cos2_phi, cos2_theta, sin2_phi, tan2_theta, tan_theta},
-        math::{Float, PI},
-    },
+    utils::bxdf::{abs_cos_theta, cos2_phi, cos2_theta, sin2_phi, tan2_theta, tan_theta},
 };
 
-pub trait MicrofacetDistribution: Debug + Send + Sync + DynClone {
+pub trait MicrofacetDistribution: Send + Sync + DynClone {
     fn d(&self, wh: &Vec3) -> Float;
 
     fn lambda(&self, w: &Vec3) -> Float;
@@ -30,14 +26,14 @@ pub trait MicrofacetDistribution: Debug + Send + Sync + DynClone {
 
 dyn_clone::clone_trait_object!(MicrofacetDistribution);
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct BeckmannDistribution {
     sample_visible_area: bool,
     alpha_x: Float,
     alpha_y: Float,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct TrowbridgeReitzDistribution {
     sample_visible_area: bool,
     alpha_x: Float,

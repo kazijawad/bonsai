@@ -1,8 +1,10 @@
 use crate::{
-    base::transform::Transform,
+    base::{
+        constants::{Float, PI},
+        transform::Transform,
+    },
     geometries::{point2::Point2, point3::Point3, vec2::Vec2, vec3::Vec3},
     interactions::surface::SurfaceInteraction,
-    utils::math::{Float, PI},
 };
 
 pub trait Texture<T: Send + Sync>: Send + Sync {

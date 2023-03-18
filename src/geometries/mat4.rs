@@ -1,4 +1,4 @@
-use crate::utils::math::Float;
+use crate::base::constants::Float;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Mat4 {

@@ -1,9 +1,9 @@
 use std::ops::Index;
 
 use crate::{
+    base::constants::Float,
     geometries::{point2::Point2, vec2::Vec2},
     utils::math,
-    utils::math::Float,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]

@@ -1,14 +1,6 @@
 use std::mem;
 
-cfg_if::cfg_if! {
-    if #[cfg(feature = "float-precision")] {
-        pub type Float = f64;
-        pub const PI: Float = std::f64::consts::PI;
-    } else {
-        pub type Float = f32;
-        pub const PI: Float = std::f32::consts::PI;
-    }
-}
+use crate::base::constants::{Float, PI};
 
 pub fn is_pow_two(x: i32) -> bool {
     (x != 0) && ((x & (x - 1)) == 0)

@@ -3,7 +3,7 @@ use std::sync::Arc;
 use pat::*;
 
 fn main() {
-    let filter = Box::new(GaussianFilter::create(&GaussianFilterDescriptior::default()));
+    let filter = Box::new(BoxFilter::new(Vec2::new(0.5, 0.5)));
 
     let film = Film::new(
         &Point2::new(1280.0, 720.0),

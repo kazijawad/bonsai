@@ -2,6 +2,7 @@ use crate::{
     base::{
         bxdf::{BSDF_ALL, BSDF_REFLECTION, BSDF_SPECULAR, BSDF_TRANSMISSION},
         camera::Camera,
+        constants::Float,
         film::SampledPixel,
         integrator::Integrator,
         interaction::Interaction,
@@ -14,7 +15,6 @@ use crate::{
     geometries::{point2::Point2, ray::Ray, vec3::Vec3},
     interactions::surface::SurfaceInteraction,
     spectra::rgb::RGBSpectrum,
-    utils::math::Float,
 };
 
 pub struct WhittedIntegrator {

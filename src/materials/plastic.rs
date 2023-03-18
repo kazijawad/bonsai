@@ -3,6 +3,7 @@ use std::sync::Arc;
 use crate::{
     base::{
         bsdf::BSDF,
+        constants::Float,
         fresnel::FresnelDielectric,
         material::{Material, TransportMode},
         microfacet::TrowbridgeReitzDistribution,
@@ -12,7 +13,6 @@ use crate::{
     bxdfs::{lambertian::LambertianReflection, microfacet::MicrofacetReflection},
     interactions::surface::SurfaceInteraction,
     spectra::rgb::RGBSpectrum,
-    utils::math::Float,
 };
 
 pub struct PlasticMaterial {

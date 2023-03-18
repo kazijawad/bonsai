@@ -1,6 +1,7 @@
 pub mod bsdf;
 pub mod bxdf;
 pub mod camera;
+pub mod constants;
 pub mod film;
 pub mod filter;
 pub mod fresnel;

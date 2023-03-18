@@ -1,4 +1,4 @@
-use crate::utils::{math::Float, primes::PRIMES};
+use crate::base::constants::{Float, PRIMES};
 
 pub fn radical_inverse(base_index: usize, mut a: u64) -> Float {
     let base = PRIMES[base_index];

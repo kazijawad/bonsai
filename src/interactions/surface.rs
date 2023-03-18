@@ -2,16 +2,16 @@ use std::sync::Arc;
 
 use crate::{
     base::{
-        bsdf::BSDF, interaction::Interaction, material::TransportMode, primitive::Primitive,
-        transform::Transform,
+        bsdf::BSDF, constants::Float, interaction::Interaction, material::TransportMode,
+        primitive::Primitive, transform::Transform,
     },
     geometries::{normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3},
     interactions::base::BaseInteraction,
     spectra::rgb::RGBSpectrum,
-    utils::math::{solve_linear_system_2x2, Float},
+    utils::math::solve_linear_system_2x2,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Shading {
     pub n: Normal,
     pub dpdu: Vec3,

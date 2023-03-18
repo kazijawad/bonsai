@@ -1,10 +1,9 @@
 use crate::{
-    base::interaction::Interaction,
+    base::{constants::Float, interaction::Interaction},
     geometries::{normal::Normal, point3::Point3, ray::Ray, vec3::Vec3},
-    utils::math::Float,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct BaseInteraction {
     pub p: Point3,
     pub p_error: Vec3,
