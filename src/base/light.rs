@@ -1,3 +1,5 @@
+use dyn_clone::DynClone;
+
 use crate::{
     base::{constants::Float, interaction::Interaction, primitive::Primitive, scene::Scene},
     geometries::{normal::Normal, point2::Point2, ray::Ray, vec3::Vec3},
@@ -5,8 +7,8 @@ use crate::{
     spectra::rgb::RGBSpectrum,
 };
 
-pub trait Light: Send + Sync {
-    fn preprocess(&self, _scene: &Scene) {}
+pub trait Light: Send + Sync + DynClone {
+    fn preprocess(&mut self, _scene: &Scene) {}
 
     fn power(&self) -> RGBSpectrum;
 
@@ -41,6 +43,8 @@ pub trait Light: Send + Sync {
         false
     }
 }
+
+dyn_clone::clone_trait_object!(Light);
 
 pub struct VisibilityTester {
     pub p0: BaseInteraction,

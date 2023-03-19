@@ -175,14 +175,13 @@ impl Bounds3 {
         offset
     }
 
-    pub fn bounding_sphere(&self) -> (Point3, Float) {
-        let center = (self.min + self.max) / 2.0;
-        let radius = if self.inside(&center) {
+    pub fn bounding_sphere(&self, center: &mut Point3, radius: &mut Float) {
+        *center = (self.min + self.max) / 2.0;
+        *radius = if self.inside(&center) {
             center.distance(&self.max)
         } else {
             0.0
         };
-        (center, radius)
     }
 
     pub fn intersect_range(&self, ray: &Ray, hit0: &mut Float, hit1: &mut Float) -> bool {

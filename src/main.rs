@@ -40,7 +40,7 @@ fn main() {
             spot_dir.y, spot_dir.z, 0.0, 0.0, 0.0, 0.0, 1.0,
         ))
         .inverse();
-    let spot_light = Arc::new(SpotLight::new(
+    let spot_light = Box::new(SpotLight::new(
         spot_transform,
         RGBSpectrum::new(1.0),
         30.0,
