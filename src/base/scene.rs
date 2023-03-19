@@ -1,6 +1,6 @@
 use crate::{
     base::{
-        light::Light,
+        light::{AreaLight, Light},
         material::{Material, TransportMode},
         primitive::Primitive,
     },
@@ -60,6 +60,10 @@ impl Primitive for Scene {
     }
 
     fn material(&self) -> Option<&dyn Material> {
+        None
+    }
+
+    fn area_light(&self) -> Option<&dyn AreaLight> {
         None
     }
 }

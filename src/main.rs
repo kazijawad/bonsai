@@ -14,12 +14,15 @@ fn main() {
         Float::INFINITY,
     );
 
-    let object_to_world = Arc::new(Transform::default());
-    let world_to_object = Arc::new(object_to_world.inverse());
+    let material = Arc::new(MatteMaterial::new(
+        Arc::new(ConstantTexture::new(RGBSpectrum::new(0.5))),
+        Arc::new(ConstantTexture::new(0.0)),
+    ));
 
+    let sphere_transform = Arc::new(Transform::default());
     let sphere = Arc::new(Sphere::new(
-        object_to_world,
-        world_to_object,
+        sphere_transform.clone(),
+        sphere_transform,
         false,
         1.0,
         -1.0,
@@ -27,12 +30,19 @@ fn main() {
         360.0,
     ));
 
-    let kd = Arc::new(ConstantTexture::new(RGBSpectrum::new(0.5)));
-    let sigma = Arc::new(ConstantTexture::new(0.0));
-    let material = Arc::new(MatteMaterial::new(kd, sigma));
+    let disk_transform = Arc::new(Transform::translate(&Vec3::new(0.0, 0.0, 2.0)));
+    let disk = Arc::new(Disk::new(
+        disk_transform.clone(),
+        Arc::new(disk_transform.inverse()),
+        false,
+        0.0,
+        1.0,
+        0.0,
+        360.0,
+    ));
 
     let spot_from = Point3::new(2.0, 0.0, 0.0);
-    let spot_dir = (Point3::default() - spot_from).normalize();
+    let spot_dir = (Point3::new(0.0, 0.0, 2.0) - spot_from).normalize();
     let (spot_du, spot_dv) = Vec3::coordinate_system(&spot_dir);
     let spot_transform = Transform::translate(&spot_from.into())
         * Transform::from(Mat4::new(
@@ -49,21 +59,29 @@ fn main() {
 
     let scene = Scene::new(
         Box::new(BVH::new(
-            vec![Arc::new(GeometricPrimitive::new(sphere, material))],
+            vec![
+                Arc::new(GeometricPrimitive::new(sphere, material.clone(), None)),
+                Arc::new(GeometricPrimitive::new(disk.clone(), material, None)),
+            ],
             4,
         )),
-        vec![spot_light],
+        vec![
+            spot_light,
+            Box::new(PointLight::new(
+                Transform::translate(&Vec3::new(2.0, 0.0, 0.0)),
+                RGBSpectrum::new(1.0),
+            )),
+            Box::new(DiffuseAreaLight::new(RGBSpectrum::new(1.0), disk, false)),
+        ],
     );
 
     let camera_transform = Arc::new(Transform::look_at(
-        &Point3::new(3.0, 0.0, 0.0),
+        &Point3::new(10.0, 0.0, 0.0),
         &Point3::new(0.0, 0.0, 0.0),
         &Vec3::new(0.0, 0.0, 1.0),
     ));
-    let camera_to_world =
-        AnimatedTransform::new(camera_transform.clone(), 0.0, camera_transform, 1.0);
     let camera = Box::new(PerspectiveCamera::new(
-        camera_to_world,
+        AnimatedTransform::new(camera_transform.clone(), 0.0, camera_transform, 1.0),
         0.0,
         1.0,
         0.0,

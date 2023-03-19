@@ -4,6 +4,7 @@ use itertools::partition;
 
 use crate::{
     base::{
+        light::AreaLight,
         material::{Material, TransportMode},
         primitive::Primitive,
     },
@@ -393,6 +394,10 @@ impl Primitive for BVH {
     }
 
     fn material(&self) -> Option<&dyn Material> {
+        None
+    }
+
+    fn area_light(&self) -> Option<&dyn AreaLight> {
         None
     }
 }

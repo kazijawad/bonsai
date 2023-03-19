@@ -22,7 +22,7 @@ pub use base::{
     film::Film,
     filter::Filter,
     integrator::Integrator,
-    light::Light,
+    light::{AreaLight, Light},
     material::Material,
     sampler::Sampler,
     scene::Scene,
@@ -42,7 +42,9 @@ pub use geometries::{
     point2::Point2, point3::Point3, quaternion::Quaternion, ray::Ray, vec2::Vec2, vec3::Vec3,
 };
 pub use integrators::whitted::WhittedIntegrator;
-pub use lights::{directional::DirectionalLight, point::PointLight, spot::SpotLight};
+pub use lights::{
+    diffuse::DiffuseAreaLight, directional::DirectionalLight, point::PointLight, spot::SpotLight,
+};
 pub use materials::{matte::MatteMaterial, plastic::PlasticMaterial};
 pub use primitives::{geometric::GeometricPrimitive, transformed::TransformedPrimitive};
 pub use samplers::stratified::StratifiedSampler;

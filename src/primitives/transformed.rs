@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use crate::{
     base::{
+        light::AreaLight,
         material::{Material, TransportMode},
         primitive::Primitive,
         transform::{AnimatedTransform, Transform},
@@ -70,6 +71,10 @@ impl Primitive for TransformedPrimitive {
     }
 
     fn material(&self) -> Option<&dyn Material> {
+        None
+    }
+
+    fn area_light(&self) -> Option<&dyn AreaLight> {
         None
     }
 }

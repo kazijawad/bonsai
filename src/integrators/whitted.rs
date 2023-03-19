@@ -170,7 +170,7 @@ impl Integrator for WhittedIntegrator {
         let mut si = SurfaceInteraction::default();
         if !scene.intersect(ray, &mut si) {
             for light in scene.lights.iter() {
-                radiance += light.le(ray);
+                radiance += light.radiance(ray);
             }
             return radiance;
         }
@@ -186,21 +186,19 @@ impl Integrator for WhittedIntegrator {
         }
 
         // Compute emitted light if ray hit an area light source.
-        radiance += si.le(&wo);
+        radiance += si.emitted_radiance(&wo);
 
         // Add contribution of each light source.
         for light in scene.lights.iter() {
-            let mut wi = Vec3::default();
-            let mut pdf = 0.0;
-
-            let (li, visibility) = light.sample_li(&si, &sampler.get_2d(), &mut wi, &mut pdf);
-            if li.is_black() || pdf == 0.0 {
+            let (emitted_radiance, incident_dir, pdf, visibility) =
+                light.sample_point(&si, &sampler.get_2d());
+            if emitted_radiance.is_black() || pdf == 0.0 {
                 continue;
             }
 
-            let f = si.bsdf.as_ref().unwrap().f(&wo, &wi, BSDF_ALL);
+            let f = si.bsdf.as_ref().unwrap().f(&wo, &incident_dir, BSDF_ALL);
             if !f.is_black() && visibility.is_unoccluded(scene) {
-                radiance += f * li * wi.abs_dot(&Vec3::from(n)) / pdf;
+                radiance += f * emitted_radiance * incident_dir.abs_dot(&Vec3::from(n)) / pdf;
             }
         }
 

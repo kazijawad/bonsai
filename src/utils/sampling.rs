@@ -27,6 +27,10 @@ pub fn cosine_sample_hemisphere(u: &Point2) -> Vec3 {
     Vec3::new(d.x, d.y, z)
 }
 
+pub fn cosine_hemisphere_pdf(cos_theta: Float) -> Float {
+    cos_theta * (1.0 / PI)
+}
+
 pub fn concentric_sample_disk(u: &Point2) -> Point2 {
     // Map uniform values to [-1, 1].
     let u_offset = 2.0 * u - Vec2::new(1.0, 1.0);

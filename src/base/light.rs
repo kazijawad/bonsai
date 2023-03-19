@@ -12,32 +12,28 @@ pub trait Light: Send + Sync + DynClone {
 
     fn power(&self) -> RGBSpectrum;
 
-    fn sample_li(
+    fn sample_point(
         &self,
-        it: &dyn Interaction,
-        u: &Point2,
-        wi: &mut Vec3,
-        pdf: &mut Float,
-    ) -> (RGBSpectrum, VisibilityTester);
+        interaction: &dyn Interaction,
+        sample: &Point2,
+    ) -> (RGBSpectrum, Vec3, Float, VisibilityTester);
 
-    fn pdf_li(&self, it: &dyn Interaction, wi: &Vec3) -> Float;
+    fn pdf(&self, _interaction: &dyn Interaction, _incident_direction: &Vec3) -> Float {
+        0.0
+    }
 
-    fn le(&self, _ray: &Ray) -> RGBSpectrum {
+    fn radiance(&self, _ray: &Ray) -> RGBSpectrum {
         RGBSpectrum::default()
     }
 
-    fn sample_le(
+    fn sample_ray(
         &self,
-        u1: &Point2,
-        u2: &Point2,
+        origin_sample: &Point2,
+        direction_sample: &Point2,
         time: Float,
-        ray: &mut Ray,
-        light_norm: &mut Normal,
-        pdf_pos: &mut Float,
-        pdf_dir: &mut Float,
-    ) -> RGBSpectrum;
+    ) -> (RGBSpectrum, Ray, Normal, Float, Float);
 
-    fn pdf_le(&self, ray: &Ray, light_norm: Normal, pdf_pos: &mut Float, pdf_dir: &mut Float);
+    fn pdf_ray(&self, ray: &Ray, surface_normal: &Normal) -> (Float, Float);
 
     fn is_infinite(&self) -> bool {
         false
@@ -45,6 +41,10 @@ pub trait Light: Send + Sync + DynClone {
 }
 
 dyn_clone::clone_trait_object!(Light);
+
+pub trait AreaLight: Light {
+    fn emission(&self, interaction: &dyn Interaction, direction: &Vec3) -> RGBSpectrum;
+}
 
 pub struct VisibilityTester {
     pub p0: BaseInteraction,

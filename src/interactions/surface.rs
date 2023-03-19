@@ -198,7 +198,12 @@ impl SurfaceInteraction {
         }
     }
 
-    pub fn le(&self, _w: &Vec3) -> RGBSpectrum {
+    pub fn emitted_radiance(&self, direction: &Vec3) -> RGBSpectrum {
+        if let Some(primitive) = self.primitive.as_ref() {
+            if let Some(area_light) = primitive.area_light() {
+                return area_light.emission(self, direction);
+            }
+        }
         RGBSpectrum::default()
     }
 

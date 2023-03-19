@@ -3,6 +3,7 @@ use std::sync::Arc;
 use crate::{
     base::{
         constants::Float,
+        light::AreaLight,
         material::{Material, TransportMode},
         primitive::Primitive,
         shape::Shape,
@@ -15,11 +16,20 @@ use crate::{
 pub struct GeometricPrimitive {
     pub shape: Arc<dyn Shape>,
     pub material: Arc<dyn Material>,
+    pub area_light: Option<Arc<dyn AreaLight>>,
 }
 
 impl GeometricPrimitive {
-    pub fn new(shape: Arc<dyn Shape>, material: Arc<dyn Material>) -> Self {
-        Self { shape, material }
+    pub fn new(
+        shape: Arc<dyn Shape>,
+        material: Arc<dyn Material>,
+        area_light: Option<Arc<dyn AreaLight>>,
+    ) -> Self {
+        Self {
+            shape,
+            material,
+            area_light,
+        }
     }
 }
 
@@ -54,5 +64,9 @@ impl Primitive for GeometricPrimitive {
 
     fn material(&self) -> Option<&dyn Material> {
         Some(self.material.as_ref())
+    }
+
+    fn area_light(&self) -> Option<&dyn AreaLight> {
+        self.area_light.as_deref()
     }
 }

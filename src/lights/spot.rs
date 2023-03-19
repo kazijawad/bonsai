@@ -66,17 +66,16 @@ impl Light for SpotLight {
         self.intensity * 2.0 * PI * (1.0 - 0.5 * (self.cos_falloff_start + self.cos_total_width))
     }
 
-    fn sample_li(
+    fn sample_point(
         &self,
         it: &dyn Interaction,
-        _u: &Point2,
-        wi: &mut Vec3,
-        pdf: &mut Float,
-    ) -> (RGBSpectrum, VisibilityTester) {
-        *wi = (self.position - it.position()).normalize();
-        *pdf = 1.0;
+        _sample: &Point2,
+    ) -> (RGBSpectrum, Vec3, Float, VisibilityTester) {
+        let wi = (self.position - it.position()).normalize();
         (
-            self.intensity * self.falloff(&-*wi) / self.position.distance_squared(&it.position()),
+            self.intensity * self.falloff(&-wi) / self.position.distance_squared(&it.position()),
+            wi,
+            1.0,
             VisibilityTester::new(
                 BaseInteraction::new(&it.position(), it.time()),
                 BaseInteraction::new(&self.position, it.time()),
@@ -84,41 +83,37 @@ impl Light for SpotLight {
         )
     }
 
-    fn pdf_li(&self, _it: &dyn Interaction, _wi: &Vec3) -> Float {
-        0.0
-    }
-
-    fn sample_le(
+    fn sample_ray(
         &self,
-        u1: &Point2,
-        _u2: &Point2,
+        origin_sample: &Point2,
+        _direction_sample: &Point2,
         time: Float,
-        ray: &mut Ray,
-        light_norm: &mut Normal,
-        pdf_pos: &mut Float,
-        pdf_dir: &mut Float,
-    ) -> RGBSpectrum {
-        let w = uniform_sample_cone(u1, self.cos_total_width);
-        *ray = Ray::new(
+    ) -> (RGBSpectrum, Ray, Normal, Float, Float) {
+        let w = uniform_sample_cone(origin_sample, self.cos_total_width);
+        let ray = Ray::new(
             &self.position,
             &self.light_to_world.transform_vec(&w),
             Float::INFINITY,
             time,
         );
-        *light_norm = ray.direction.into();
-        *pdf_pos = 1.0;
-        *pdf_dir = uniform_cone_pdf(self.cos_total_width);
-        self.intensity * self.falloff(&ray.direction)
+        (
+            self.intensity * self.falloff(&ray.direction),
+            ray,
+            Normal::from(ray.direction),
+            1.0,
+            uniform_cone_pdf(self.cos_total_width),
+        )
     }
 
-    fn pdf_le(&self, ray: &Ray, _light_norm: Normal, pdf_pos: &mut Float, pdf_dir: &mut Float) {
-        *pdf_pos = 0.0;
-        *pdf_dir = if cos_theta(&self.world_to_light.transform_vec(&ray.direction))
-            >= self.cos_total_width
-        {
-            uniform_cone_pdf(self.cos_total_width)
-        } else {
-            0.0
-        };
+    fn pdf_ray(&self, ray: &Ray, _surface_normal: &Normal) -> (Float, Float) {
+        (
+            0.0,
+            if cos_theta(&self.world_to_light.transform_vec(&ray.direction)) >= self.cos_total_width
+            {
+                uniform_cone_pdf(self.cos_total_width)
+            } else {
+                0.0
+            },
+        )
     }
 }

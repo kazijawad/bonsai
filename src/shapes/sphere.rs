@@ -351,14 +351,14 @@ impl Shape for Sphere {
 
     fn sample_from_ref(
         &self,
-        _reference: Box<dyn Interaction>,
+        _reference: &dyn Interaction,
         _u: &Point2,
         _pdf: &mut Float,
     ) -> Box<dyn Interaction> {
         unimplemented!()
     }
 
-    fn pdf_from_ref(&self, reference: Box<dyn Interaction>, wi: &Vec3) -> Float {
+    fn pdf_from_ref(&self, reference: &dyn Interaction, wi: &Vec3) -> Float {
         let center = Point3::default().transform(&self.object_to_world);
 
         // Return uniform PDF if point is inside sphere.
