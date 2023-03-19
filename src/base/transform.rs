@@ -1749,7 +1749,7 @@ impl PartialOrd for Transform {
         false
     }
 
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    fn partial_cmp(&self, _other: &Self) -> Option<Ordering> {
         None
     }
 }

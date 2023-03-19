@@ -64,7 +64,7 @@ impl Shape for Cone {
         ray: &Ray,
         t_hit: &mut Float,
         interaction: &mut SurfaceInteraction,
-        include_alpha: bool,
+        _include_alpha: bool,
     ) -> bool {
         // Transform ray to object space.
         let mut origin_error = Vec3::default();
@@ -279,7 +279,7 @@ impl Shape for Cone {
         true
     }
 
-    fn sample(&self, u: &Point2, pdf: &mut Float) -> Box<dyn Interaction> {
+    fn sample(&self, _u: &Point2, _pdf: &mut Float) -> Box<dyn Interaction> {
         unimplemented!();
     }
 

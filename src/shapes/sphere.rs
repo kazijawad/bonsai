@@ -351,9 +351,9 @@ impl Shape for Sphere {
 
     fn sample_from_ref(
         &self,
-        reference: Box<dyn Interaction>,
-        u: &Point2,
-        pdf: &mut Float,
+        _reference: Box<dyn Interaction>,
+        _u: &Point2,
+        _pdf: &mut Float,
     ) -> Box<dyn Interaction> {
         unimplemented!()
     }
@@ -383,7 +383,7 @@ impl Shape for Sphere {
         self.phi_max * self.radius * (self.z_max - self.z_min)
     }
 
-    fn solid_angle(&self, p: &Point3, num_samples: u32) -> Float {
+    fn solid_angle(&self, p: &Point3, _num_samples: u32) -> Float {
         let center = Point3::default().transform(&self.object_to_world);
         if p.distance_squared(&center) <= self.radius * self.radius {
             return 4.0 * PI;

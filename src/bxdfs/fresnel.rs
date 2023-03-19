@@ -71,7 +71,7 @@ impl FresnelBlend {
 }
 
 impl BxDF for FresnelSpecular {
-    fn f(&self, wo: &Vec3, wi: &Vec3) -> RGBSpectrum {
+    fn f(&self, _wo: &Vec3, _wi: &Vec3) -> RGBSpectrum {
         RGBSpectrum::default()
     }
 
@@ -129,7 +129,7 @@ impl BxDF for FresnelSpecular {
         }
     }
 
-    fn pdf(&self, wo: &Vec3, wi: &Vec3) -> Float {
+    fn pdf(&self, _wo: &Vec3, _wi: &Vec3) -> Float {
         0.0
     }
 
@@ -172,7 +172,7 @@ impl BxDF for FresnelBlend {
         wi: &mut Vec3,
         sample: &Point2,
         pdf: &mut Float,
-        sampled_type: &mut Option<BxDFType>,
+        _sampled_type: &mut Option<BxDFType>,
     ) -> RGBSpectrum {
         let mut sample = sample.clone();
         if sample.x < 0.5 {

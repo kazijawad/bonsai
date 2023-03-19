@@ -155,7 +155,7 @@ impl WhittedIntegrator {
 }
 
 impl Integrator for WhittedIntegrator {
-    fn preprocess(&self, scene: &Scene) {}
+    fn preprocess(&self, _scene: &Scene) {}
 
     fn li(
         &self,

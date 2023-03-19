@@ -98,7 +98,7 @@ impl BxDF for MicrofacetReflection {
         wi: &mut Vec3,
         sample: &Point2,
         pdf: &mut Float,
-        sampled_type: &mut Option<BxDFType>,
+        _sampled_type: &mut Option<BxDFType>,
     ) -> RGBSpectrum {
         // Sample microfacet orientation wh and reflected direction wi.
         if wo.z == 0.0 {
@@ -198,7 +198,7 @@ impl BxDF for MicrofactTransmission {
         wi: &mut Vec3,
         sample: &Point2,
         pdf: &mut Float,
-        sampled_type: &mut Option<BxDFType>,
+        _sampled_type: &mut Option<BxDFType>,
     ) -> RGBSpectrum {
         if wo.z == 0.0 {
             return RGBSpectrum::default();

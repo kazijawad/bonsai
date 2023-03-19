@@ -60,16 +60,6 @@ pub fn sin2_phi(w: &Vec3) -> Float {
     sin_phi(w) * sin_phi(w)
 }
 
-pub fn cosd_phi(wa: &Vec3, wb: &Vec3) -> Float {
-    let wa_xy = wa.x * wa.x + wa.y * wa.y;
-    let wb_xy = wb.x * wb.x + wb.y * wb.y;
-    if wa_xy == 0.0 || wb_xy == 0.0 {
-        1.0
-    } else {
-        ((wa.x * wb.x + wa.y * wb.y) / (wa_xy * wb_xy).sqrt()).clamp(-1.0, 1.0)
-    }
-}
-
 pub fn reflect(wo: &Vec3, n: &Vec3) -> Vec3 {
     -wo + 2.0 * wo.dot(n) * n
 }

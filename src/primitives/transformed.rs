@@ -62,9 +62,9 @@ impl Primitive for TransformedPrimitive {
 
     fn compute_scattering_functions(
         &self,
-        interaction: &mut SurfaceInteraction,
-        transport_mode: TransportMode,
-        allow_multiple_lobes: bool,
+        _interaction: &mut SurfaceInteraction,
+        _transport_mode: TransportMode,
+        _allow_multiple_lobes: bool,
     ) {
         panic!("TransformedPrimitive::compute_scattering_function should not be called")
     }

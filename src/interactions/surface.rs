@@ -198,7 +198,7 @@ impl SurfaceInteraction {
         }
     }
 
-    pub fn le(&self, w: &Vec3) -> RGBSpectrum {
+    pub fn le(&self, _w: &Vec3) -> RGBSpectrum {
         RGBSpectrum::default()
     }
 

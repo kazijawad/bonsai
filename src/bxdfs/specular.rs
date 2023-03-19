@@ -51,7 +51,7 @@ impl SpecularTransmission {
 }
 
 impl BxDF for SpecularReflection {
-    fn f(&self, wo: &Vec3, wi: &Vec3) -> RGBSpectrum {
+    fn f(&self, _wo: &Vec3, _wi: &Vec3) -> RGBSpectrum {
         RGBSpectrum::default()
     }
 
@@ -59,16 +59,16 @@ impl BxDF for SpecularReflection {
         &self,
         wo: &Vec3,
         wi: &mut Vec3,
-        sample: &Point2,
+        _sample: &Point2,
         pdf: &mut Float,
-        sampled_type: &mut Option<BxDFType>,
+        _sampled_type: &mut Option<BxDFType>,
     ) -> RGBSpectrum {
         *wi = Vec3::new(-wo.x, -wo.y, wo.z);
         *pdf = 1.0;
         self.fresnel.evaluate(cos_theta(wi)) * self.r / abs_cos_theta(wi)
     }
 
-    fn pdf(&self, wo: &Vec3, wi: &Vec3) -> Float {
+    fn pdf(&self, _wo: &Vec3, _wi: &Vec3) -> Float {
         0.0
     }
 
@@ -82,7 +82,7 @@ impl BxDF for SpecularReflection {
 }
 
 impl BxDF for SpecularTransmission {
-    fn f(&self, wo: &Vec3, wi: &Vec3) -> RGBSpectrum {
+    fn f(&self, _wo: &Vec3, _wi: &Vec3) -> RGBSpectrum {
         RGBSpectrum::default()
     }
 
@@ -90,9 +90,9 @@ impl BxDF for SpecularTransmission {
         &self,
         wo: &Vec3,
         wi: &mut Vec3,
-        sample: &Point2,
+        _sample: &Point2,
         pdf: &mut Float,
-        sampled_type: &mut Option<BxDFType>,
+        _sampled_type: &mut Option<BxDFType>,
     ) -> RGBSpectrum {
         // Determine which eta is incident or transmitted.
         let entering = cos_theta(wo) > 0.0;
@@ -120,7 +120,7 @@ impl BxDF for SpecularTransmission {
         factor / abs_cos_theta(&wi)
     }
 
-    fn pdf(&self, wo: &Vec3, wi: &Vec3) -> Float {
+    fn pdf(&self, _wo: &Vec3, _wi: &Vec3) -> Float {
         0.0
     }
 

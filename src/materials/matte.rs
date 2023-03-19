@@ -28,8 +28,8 @@ impl Material for MatteMaterial {
     fn compute_scattering_functions(
         &self,
         si: &mut SurfaceInteraction,
-        mode: TransportMode,
-        allow_multiple_lobes: bool,
+        _mode: TransportMode,
+        _allow_multiple_lobes: bool,
     ) {
         let mut bsdf = BSDF::new(&si, 1.0);
         let r = self.kd.evaluate(si).clamp(0.0, Float::INFINITY);

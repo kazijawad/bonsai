@@ -57,7 +57,7 @@ impl Fresnel for FresnelDielectric {
 }
 
 impl Fresnel for FresnelNoOp {
-    fn evaluate(&self, cos_theta_i: Float) -> RGBSpectrum {
+    fn evaluate(&self, _cos_theta_i: Float) -> RGBSpectrum {
         RGBSpectrum::new(1.0)
     }
 }

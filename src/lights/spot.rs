@@ -2,7 +2,7 @@ use crate::{
     base::{
         constants::{Float, PI},
         interaction::Interaction,
-        light::{Light, LightFlag, VisibilityTester},
+        light::{Light, VisibilityTester},
         transform::Transform,
     },
     geometries::{normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3},
@@ -22,7 +22,6 @@ pub struct SpotLight {
     intensity: RGBSpectrum,
     cos_total_width: Float,
     cos_falloff_start: Float,
-    flag: LightFlag,
 }
 
 impl SpotLight {
@@ -41,7 +40,6 @@ impl SpotLight {
             intensity,
             cos_total_width: total_width.to_radians().cos(),
             cos_falloff_start: falloff_start.to_radians().cos(),
-            flag: LightFlag::DeltaPosition,
         }
     }
 
@@ -71,7 +69,7 @@ impl Light for SpotLight {
     fn sample_li(
         &self,
         it: &dyn Interaction,
-        u: &Point2,
+        _u: &Point2,
         wi: &mut Vec3,
         pdf: &mut Float,
     ) -> (RGBSpectrum, VisibilityTester) {
@@ -86,14 +84,14 @@ impl Light for SpotLight {
         )
     }
 
-    fn pdf_li(&self, it: &dyn Interaction, wi: &Vec3) -> Float {
+    fn pdf_li(&self, _it: &dyn Interaction, _wi: &Vec3) -> Float {
         0.0
     }
 
     fn sample_le(
         &self,
         u1: &Point2,
-        u2: &Point2,
+        _u2: &Point2,
         time: Float,
         ray: &mut Ray,
         light_norm: &mut Normal,
@@ -113,7 +111,7 @@ impl Light for SpotLight {
         self.intensity * self.falloff(&ray.direction)
     }
 
-    fn pdf_le(&self, ray: &Ray, light_norm: Normal, pdf_pos: &mut Float, pdf_dir: &mut Float) {
+    fn pdf_le(&self, ray: &Ray, _light_norm: Normal, pdf_pos: &mut Float, pdf_dir: &mut Float) {
         *pdf_pos = 0.0;
         *pdf_dir = if cos_theta(&self.world_to_light.transform_vec(&ray.direction))
             >= self.cos_total_width
@@ -122,9 +120,5 @@ impl Light for SpotLight {
         } else {
             0.0
         };
-    }
-
-    fn flag(&self) -> LightFlag {
-        self.flag
     }
 }

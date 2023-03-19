@@ -11,7 +11,7 @@ impl<T: Copy + Send + Sync> ConstantTexture<T> {
 }
 
 impl<T: Copy + Send + Sync> Texture<T> for ConstantTexture<T> {
-    fn evaluate(&self, si: &SurfaceInteraction) -> T {
+    fn evaluate(&self, _si: &SurfaceInteraction) -> T {
         self.value
     }
 }

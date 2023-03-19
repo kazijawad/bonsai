@@ -5,16 +5,8 @@ use crate::{
     spectra::rgb::RGBSpectrum,
 };
 
-#[derive(Debug, Clone, Copy)]
-pub enum LightFlag {
-    DeltaPosition,
-    DeltaDirection,
-    Area,
-    Infinite,
-}
-
 pub trait Light: Send + Sync {
-    fn preprocess(&self, scene: &Scene) {}
+    fn preprocess(&self, _scene: &Scene) {}
 
     fn power(&self) -> RGBSpectrum;
 
@@ -28,7 +20,7 @@ pub trait Light: Send + Sync {
 
     fn pdf_li(&self, it: &dyn Interaction, wi: &Vec3) -> Float;
 
-    fn le(&self, ray: &Ray) -> RGBSpectrum {
+    fn le(&self, _ray: &Ray) -> RGBSpectrum {
         RGBSpectrum::default()
     }
 
@@ -45,17 +37,8 @@ pub trait Light: Send + Sync {
 
     fn pdf_le(&self, ray: &Ray, light_norm: Normal, pdf_pos: &mut Float, pdf_dir: &mut Float);
 
-    fn flag(&self) -> LightFlag;
-
-    fn is_delta_flag(&self) -> bool {
-        let flag = self.flag();
-        if let LightFlag::DeltaPosition = flag {
-            true
-        } else if let LightFlag::DeltaDirection = flag {
-            true
-        } else {
-            false
-        }
+    fn is_infinite(&self) -> bool {
+        false
     }
 }
 

@@ -50,7 +50,7 @@ pub trait Shape: Send + Sync {
         interaction
     }
 
-    fn pdf(&self, interaction: Box<dyn Interaction>) -> Float {
+    fn pdf(&self, _interaction: Box<dyn Interaction>) -> Float {
         1.0 / self.area()
     }
 

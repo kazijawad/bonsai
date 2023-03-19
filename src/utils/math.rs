@@ -1,5 +1,3 @@
-use std::mem;
-
 use crate::base::constants::{Float, PI};
 
 pub fn is_pow_two(x: i32) -> bool {
@@ -105,27 +103,6 @@ where
         }
     }
     (first - 1).clamp(0, size - 2)
-}
-
-pub fn quadratic(a: Float, b: Float, c: Float, t0: &mut Float, t1: &mut Float) -> bool {
-    // Find quadratic discriminant.
-    let discriminant: f64 = (b as f64) * (b as f64) - 4.0 * (a as f64) * (c as f64);
-    if discriminant < 0.0 {
-        return false;
-    }
-    let root_discriminant = discriminant.sqrt();
-    // Compute quadratic t value.
-    let q: f64 = if b < 0.0 {
-        -0.5 * ((b as f64) - root_discriminant)
-    } else {
-        -0.5 * ((b as f64) + root_discriminant)
-    };
-    *t0 = (q / (a as f64)) as Float;
-    *t1 = ((c as f64) / (q as f64)) as Float;
-    if t0 > t1 {
-        mem::swap(t0, t1);
-    }
-    return true;
 }
 
 pub fn solve_linear_system_2x2(

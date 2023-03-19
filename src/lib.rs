@@ -1,7 +1,3 @@
-// Temporarily disable while in development.
-#![allow(unused_variables)]
-#![allow(dead_code)]
-
 mod accelerators;
 mod base;
 mod bxdfs;

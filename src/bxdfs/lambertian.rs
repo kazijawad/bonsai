@@ -42,15 +42,15 @@ impl LambertianTransmission {
 }
 
 impl BxDF for LambertianReflection {
-    fn f(&self, wo: &Vec3, wi: &Vec3) -> RGBSpectrum {
+    fn f(&self, _wo: &Vec3, _wi: &Vec3) -> RGBSpectrum {
         self.r * (1.0 / PI)
     }
 
-    fn rho_hd(&self, wo: &Vec3, num_samples: usize, samples: &[Point2]) -> RGBSpectrum {
+    fn rho_hd(&self, _wo: &Vec3, _num_samples: usize, _samples: &[Point2]) -> RGBSpectrum {
         self.r
     }
 
-    fn rho_hh(&self, num_samples: usize, u1: &[Point2], u2: &[Point2]) -> RGBSpectrum {
+    fn rho_hh(&self, _num_samples: usize, _u1: &[Point2], _u2: &[Point2]) -> RGBSpectrum {
         self.r
     }
 
@@ -64,7 +64,7 @@ impl BxDF for LambertianReflection {
 }
 
 impl BxDF for LambertianTransmission {
-    fn f(&self, wo: &Vec3, wi: &Vec3) -> RGBSpectrum {
+    fn f(&self, _wo: &Vec3, _wi: &Vec3) -> RGBSpectrum {
         self.t * (1.0 / PI)
     }
 
@@ -74,7 +74,7 @@ impl BxDF for LambertianTransmission {
         wi: &mut Vec3,
         sample: &Point2,
         pdf: &mut Float,
-        sampled_type: &mut Option<BxDFType>,
+        _sampled_type: &mut Option<BxDFType>,
     ) -> RGBSpectrum {
         *wi = cosine_sample_hemisphere(sample);
         if wo.z > 0.0 {
@@ -84,11 +84,11 @@ impl BxDF for LambertianTransmission {
         self.f(wo, wi)
     }
 
-    fn rho_hd(&self, wo: &Vec3, num_samples: usize, samples: &[Point2]) -> RGBSpectrum {
+    fn rho_hd(&self, _wo: &Vec3, _num_samples: usize, _samples: &[Point2]) -> RGBSpectrum {
         self.t
     }
 
-    fn rho_hh(&self, num_samples: usize, u1: &[Point2], u2: &[Point2]) -> RGBSpectrum {
+    fn rho_hh(&self, _num_samples: usize, _u1: &[Point2], _u2: &[Point2]) -> RGBSpectrum {
         self.t
     }
 

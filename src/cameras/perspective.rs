@@ -11,10 +11,7 @@ use crate::{
 
 pub struct PerspectiveCamera {
     camera_to_world: AnimatedTransform,
-    camera_to_screen: Transform,
     raster_to_camera: Transform,
-    screen_to_raster: Transform,
-    raster_to_screen: Transform,
     shutter_open: Float,
     shutter_close: Float,
     lens_radius: Float,
@@ -32,9 +29,11 @@ impl PerspectiveCamera {
         lens_radius: Float,
         focal_distance: Float,
         fov: Float,
+        near: Float,
+        far: Float,
         film: Film,
     ) -> Self {
-        let camera_to_screen = Transform::perspective(fov, 1e-2, 1000.0);
+        let camera_to_screen = Transform::perspective(fov, near, far);
 
         let mut screen_window = Bounds2::default();
         let frame = film.full_resolution.x / film.full_resolution.y;
@@ -69,9 +68,6 @@ impl PerspectiveCamera {
 
         Self {
             camera_to_world,
-            camera_to_screen,
-            screen_to_raster,
-            raster_to_screen,
             raster_to_camera,
             shutter_open,
             shutter_close,

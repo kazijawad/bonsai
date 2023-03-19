@@ -113,7 +113,7 @@ impl MicrofacetDistribution for BeckmannDistribution {
         (1.0 - 1.259 * a + 0.396 * a * a) / (3.535 * a + 2.181 * a * a)
     }
 
-    fn sample_wh(&self, wo: &Vec3, u: &Point2) -> Vec3 {
+    fn sample_wh(&self, _wo: &Vec3, _u: &Point2) -> Vec3 {
         todo!()
     }
 
@@ -155,7 +155,7 @@ impl MicrofacetDistribution for TrowbridgeReitzDistribution {
         (-1.0 + (1.0 + alpha2_tan2_theta).sqrt()) / 2.0
     }
 
-    fn sample_wh(&self, wo: &Vec3, u: &Point2) -> Vec3 {
+    fn sample_wh(&self, _wo: &Vec3, _u: &Point2) -> Vec3 {
         todo!()
     }
 

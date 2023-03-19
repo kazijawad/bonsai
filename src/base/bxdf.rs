@@ -29,7 +29,7 @@ pub trait BxDF: Send + Sync + DynClone {
         wi: &mut Vec3,
         sample: &Point2,
         pdf: &mut Float,
-        sampled_type: &mut Option<BxDFType>,
+        _sampled_type: &mut Option<BxDFType>,
     ) -> RGBSpectrum {
         // Cosine-sample the hemisphere, flipping the direction if necessary.
         *wi = cosine_sample_hemisphere(sample);

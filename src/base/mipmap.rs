@@ -112,7 +112,7 @@ impl MIPMap {
             pyramid[0] = image
         }
 
-        for i in 1..num_levels {
+        for _i in 1..num_levels {
             // TODO: Initialize ith MIPMap level from i - 1 level.
         }
 
@@ -136,10 +136,10 @@ impl MIPMap {
         self.pyramid.len()
     }
 
-    pub fn texel(&self, level: usize, s: i32, t: i32) -> RGBSpectrum {
+    pub fn texel(&self, level: usize, _s: i32, _t: i32) -> RGBSpectrum {
         debug_assert!(level < self.pyramid.len());
 
-        let image = self.pyramid.get(level).unwrap();
+        let _image = self.pyramid.get(level).unwrap();
 
         todo!()
     }
@@ -164,8 +164,8 @@ impl MIPMap {
         }
     }
 
-    fn triangle(&self, level: i32, st: &Point2) -> RGBSpectrum {
-        let level = level.clamp(0, self.levels() as i32 - 1);
+    fn triangle(&self, level: i32, _st: &Point2) -> RGBSpectrum {
+        let _level = level.clamp(0, self.levels() as i32 - 1);
         todo!()
     }
 

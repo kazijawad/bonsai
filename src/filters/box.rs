@@ -18,7 +18,7 @@ impl BoxFilter {
 }
 
 impl Filter for BoxFilter {
-    fn evaluate(&self, point: &Point2) -> Float {
+    fn evaluate(&self, _point: &Point2) -> Float {
         1.0
     }
 
