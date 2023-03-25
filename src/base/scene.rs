@@ -1,9 +1,5 @@
 use crate::{
-    base::{
-        light::{AreaLight, Light},
-        material::{Material, TransportMode},
-        primitive::Primitive,
-    },
+    base::{light::Light, primitive::Primitive},
     geometries::{bounds3::Bounds3, ray::Ray},
     interactions::surface::SurfaceInteraction,
 };
@@ -35,35 +31,16 @@ impl Scene {
 
         scene
     }
-}
 
-impl Primitive for Scene {
-    fn world_bound(&self) -> Bounds3 {
+    pub fn world_bound(&self) -> Bounds3 {
         self.bounds
     }
 
-    fn intersect(&self, ray: &mut Ray, interaction: &mut SurfaceInteraction) -> bool {
+    pub fn intersect(&self, ray: &mut Ray, interaction: &mut SurfaceInteraction) -> bool {
         self.aggregate.intersect(ray, interaction)
     }
 
-    fn intersect_test(&self, ray: &Ray) -> bool {
+    pub fn intersect_test(&self, ray: &Ray) -> bool {
         self.aggregate.intersect_test(ray)
-    }
-
-    fn compute_scattering_functions(
-        &self,
-        _interaction: &mut SurfaceInteraction,
-        _transport_mode: TransportMode,
-        _allow_multiple_lobes: bool,
-    ) {
-        panic!("Scene::compute_scattering_function should not be called")
-    }
-
-    fn material(&self) -> Option<&dyn Material> {
-        None
-    }
-
-    fn area_light(&self) -> Option<&dyn AreaLight> {
-        None
     }
 }

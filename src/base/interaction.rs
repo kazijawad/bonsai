@@ -11,5 +11,5 @@ pub trait Interaction: Send + Sync {
 
     fn spawn_ray(&self, direction: &Vec3) -> Ray;
     fn spawn_ray_to_point(&self, point: Point3) -> Ray;
-    fn spawn_ray_to_it(&self, it: &dyn Interaction) -> Ray;
+    fn spawn_ray_to_it(&self, interaction: &dyn Interaction) -> Ray;
 }

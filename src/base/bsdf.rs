@@ -2,20 +2,13 @@ use std::ptr;
 
 use crate::{
     base::{
-        bxdf::{BxDF, BxDFType, BSDF_REFLECTION, BSDF_TRANSMISSION},
+        bxdf::{BxDF, BxDFType, BSDF_REFLECTION, BSDF_SPECULAR, BSDF_TRANSMISSION},
         constants::Float,
     },
     geometries::{normal::Normal, point2::Point2, vec3::Vec3},
     interactions::surface::SurfaceInteraction,
     spectra::rgb::RGBSpectrum,
 };
-
-use super::bxdf::BSDF_SPECULAR;
-
-// This is a heuristic assumption that a BSDF will
-// typically not need more than MAX_BXDFS. This will
-// let us preallocate the vector of BxDFs.
-const MAX_BXDFS: usize = 8;
 
 #[derive(Clone)]
 pub struct BSDF {
@@ -32,16 +25,13 @@ impl BSDF {
         let ns = si.shading.n;
         let ss = si.shading.dpdu.normalize();
 
-        let mut bxdfs: Vec<Box<dyn BxDF>> = vec![];
-        bxdfs.reserve(MAX_BXDFS);
-
         Self {
             eta,
             ns,
             ng: si.base.n,
             ss,
             ts: Vec3::from(ns).cross(&ss),
-            bxdfs,
+            bxdfs: vec![],
         }
     }
 

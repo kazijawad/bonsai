@@ -7,7 +7,7 @@ use crate::{
 pub trait Integrator: Send + Sync {
     fn preprocess(&self, scene: &Scene);
 
-    fn li(
+    fn radiance(
         &self,
         sampler: &mut Box<dyn Sampler>,
         ray: &mut Ray,
