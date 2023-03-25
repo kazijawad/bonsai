@@ -3,15 +3,13 @@ use crate::{
         constants::{Float, PI},
         interaction::Interaction,
         light::{Light, VisibilityTester},
+        sampling::{uniform_cone_pdf, uniform_sample_cone},
         transform::Transform,
     },
     geometries::{normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3},
     interactions::base::BaseInteraction,
     spectra::rgb::RGBSpectrum,
-    utils::{
-        bxdf::cos_theta,
-        sampling::{uniform_cone_pdf, uniform_sample_cone},
-    },
+    utils::bxdf::cos_theta,
 };
 
 #[derive(Debug, Clone)]

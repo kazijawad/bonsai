@@ -1,9 +1,12 @@
 use rand::prelude::*;
 
 use crate::{
-    base::{constants::Float, sampler::Sampler},
+    base::{
+        constants::Float,
+        sampler::Sampler,
+        sampling::{latin_hypercube, shuffle, stratified_sample_1d, stratified_sample_2d},
+    },
     geometries::point2::Point2,
-    utils::sampling::shuffle,
 };
 
 #[derive(Clone)]
@@ -232,56 +235,5 @@ impl Sampler for StratifiedSampler {
 
     fn current_sample_number(&self) -> usize {
         self.current_pixel_sample_index
-    }
-}
-
-fn stratified_sample_1d(samples: &mut [Float], num_samples: usize, rng: &mut StdRng, jitter: bool) {
-    let inverse_num_samples = 1.0 / num_samples as Float;
-    for i in 0..num_samples {
-        let delta = if jitter { rng.gen_range(0.0..1.0) } else { 0.5 };
-        samples[i] = Float::min(
-            (i as Float + delta) * inverse_num_samples,
-            1.0 - Float::EPSILON,
-        );
-    }
-}
-
-fn stratified_sample_2d(
-    samples: &mut [Point2],
-    nx: usize,
-    ny: usize,
-    rng: &mut StdRng,
-    jitter: bool,
-) {
-    let dx = 1.0 / nx as Float;
-    let dy = 1.0 / ny as Float;
-    let mut i = 0;
-    for y in 0..ny {
-        for x in 0..nx {
-            let jx = if jitter { rng.gen_range(0.0..1.0) } else { 0.5 };
-            let jy = if jitter { rng.gen_range(0.0..1.0) } else { 0.5 };
-            samples[i].x = Float::min((x as Float + jx) * dx, 1.0 - Float::EPSILON);
-            samples[i].y = Float::min((y as Float + jy) * dy, 1.0 - Float::EPSILON);
-            i += 1;
-        }
-    }
-}
-
-fn latin_hypercube(samples: &mut [Point2], num_samples: usize, num_dims: usize, rng: &mut StdRng) {
-    // Generate LHS samples along diagonal.
-    let inverse_num_samples = 1.0 / num_samples as Float;
-    for i in 0..num_samples {
-        for j in 0..num_dims {
-            let sj = (i as Float + rng.gen_range(0.0..1.0)) * inverse_num_samples;
-            samples[num_dims * i + j].x = sj.min(1.0 - Float::EPSILON);
-        }
-    }
-
-    // Permute LHS samples in each dimension.
-    for i in 0..num_dims {
-        for j in 0..num_samples {
-            let other = j + rng.gen_range(0..(num_samples - j));
-            samples.swap(num_dims * j + i, num_dims * other + i);
-        }
     }
 }

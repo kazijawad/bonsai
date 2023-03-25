@@ -4,6 +4,7 @@ use crate::{
     base::{
         constants::{Float, PI},
         interaction::Interaction,
+        sampling::concentric_sample_disk,
         shape::Shape,
         transform::Transform,
     },
@@ -11,7 +12,6 @@ use crate::{
         bounds3::Bounds3, normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3,
     },
     interactions::{base::BaseInteraction, surface::SurfaceInteraction},
-    utils::sampling::concentric_sample_disk,
 };
 
 pub struct Disk {

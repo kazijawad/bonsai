@@ -1,13 +1,13 @@
 use dyn_clone::DynClone;
 
 use crate::{
-    base::constants::{Float, PI},
-    geometries::{point2::Point2, vec3::Vec3},
-    spectra::rgb::RGBSpectrum,
-    utils::{
-        bxdf::{abs_cos_theta, same_hemisphere},
+    base::{
+        constants::{Float, PI},
         sampling::{cosine_sample_hemisphere, uniform_hemisphere_pdf, uniform_sample_hemisphere},
     },
+    geometries::{point2::Point2, vec3::Vec3},
+    spectra::rgb::RGBSpectrum,
+    utils::bxdf::{abs_cos_theta, same_hemisphere},
 };
 
 pub type BxDFType = u8;

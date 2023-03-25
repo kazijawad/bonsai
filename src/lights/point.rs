@@ -3,12 +3,12 @@ use crate::{
         constants::{Float, PI},
         interaction::Interaction,
         light::{Light, VisibilityTester},
+        sampling::{uniform_sample_sphere, uniform_sphere_pdf},
         transform::Transform,
     },
     geometries::{normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3},
     interactions::base::BaseInteraction,
     spectra::rgb::RGBSpectrum,
-    utils::sampling::{uniform_sample_sphere, uniform_sphere_pdf},
 };
 
 #[derive(Debug, Clone)]

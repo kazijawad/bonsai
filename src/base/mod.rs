@@ -13,6 +13,7 @@ pub mod microfacet;
 pub mod mipmap;
 pub mod primitive;
 pub mod sampler;
+pub mod sampling;
 pub mod scene;
 pub mod shape;
 pub mod spectrum;

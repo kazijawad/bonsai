@@ -4,12 +4,12 @@ use crate::{
         constants::{Float, PI},
         material::TransportMode,
         microfacet::MicrofacetDistribution,
+        sampling::cosine_sample_hemisphere,
     },
     geometries::{normal::Normal, point2::Point2, vec3::Vec3},
     spectra::rgb::RGBSpectrum,
-    utils::{
-        bxdf::{abs_cos_theta, cos_theta, fresnel_dielectric, reflect, refract, same_hemisphere},
-        sampling::cosine_sample_hemisphere,
+    utils::bxdf::{
+        abs_cos_theta, cos_theta, fresnel_dielectric, reflect, refract, same_hemisphere,
     },
 };
 

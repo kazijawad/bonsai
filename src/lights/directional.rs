@@ -4,12 +4,12 @@ use crate::{
         interaction::Interaction,
         light::{Light, VisibilityTester},
         primitive::Primitive,
+        sampling::concentric_sample_disk,
         scene::Scene,
     },
     geometries::{normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3},
     interactions::base::BaseInteraction,
     spectra::rgb::RGBSpectrum,
-    utils::sampling::concentric_sample_disk,
 };
 
 #[derive(Debug, Clone)]

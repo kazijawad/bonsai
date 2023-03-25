@@ -5,12 +5,12 @@ use crate::{
         constants::{Float, PI},
         interaction::Interaction,
         light::{AreaLight, Light, VisibilityTester},
+        sampling::{cosine_hemisphere_pdf, cosine_sample_hemisphere},
         shape::Shape,
     },
     geometries::{normal::Normal, point2::Point2, ray::Ray, vec3::Vec3},
     interactions::base::BaseInteraction,
     spectra::rgb::RGBSpectrum,
-    utils::sampling::{cosine_hemisphere_pdf, cosine_sample_hemisphere},
 };
 
 #[derive(Clone)]

@@ -4,6 +4,7 @@ use crate::{
     base::{
         constants::{Float, PI},
         interaction::Interaction,
+        sampling::{uniform_cone_pdf, uniform_sample_sphere},
         shape::Shape,
         transform::Transform,
     },
@@ -11,11 +12,7 @@ use crate::{
         bounds3::Bounds3, normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3,
     },
     interactions::{base::BaseInteraction, surface::SurfaceInteraction},
-    utils::{
-        efloat::EFloat,
-        math::gamma,
-        sampling::{uniform_cone_pdf, uniform_sample_sphere},
-    },
+    utils::{efloat::EFloat, math::gamma},
 };
 
 pub struct Sphere {
