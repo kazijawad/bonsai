@@ -1,13 +1,11 @@
-use dyn_clone::DynClone;
-
 use crate::{
-    base::{constants::Float, interaction::Interaction, primitive::Primitive, scene::Scene},
+    base::{constants::Float, interaction::Interaction, scene::Scene},
     geometries::{normal::Normal, point2::Point2, ray::Ray, vec3::Vec3},
     interactions::base::BaseInteraction,
     spectra::rgb::RGBSpectrum,
 };
 
-pub trait Light: Send + Sync + DynClone {
+pub trait Light: Send + Sync {
     fn preprocess(&mut self, _scene: &Scene) {}
 
     fn power(&self) -> RGBSpectrum;
@@ -39,8 +37,6 @@ pub trait Light: Send + Sync + DynClone {
         false
     }
 }
-
-dyn_clone::clone_trait_object!(Light);
 
 pub trait AreaLight: Light {
     fn emission(&self, interaction: &dyn Interaction, direction: &Vec3) -> RGBSpectrum;

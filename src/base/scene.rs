@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     base::{light::Light, primitive::Primitive},
     geometries::{bounds3::Bounds3, ray::Ray},
@@ -5,29 +7,32 @@ use crate::{
 };
 
 pub struct Scene {
-    pub lights: Vec<Box<dyn Light>>,
-    pub infinite_lights: Vec<Box<dyn Light>>,
+    pub lights: Vec<Arc<dyn Light>>,
+    pub infinite_lights: Vec<Arc<dyn Light>>,
     aggregate: Box<dyn Primitive>,
     bounds: Bounds3,
 }
 
 impl Scene {
-    pub fn new(aggregate: Box<dyn Primitive>, mut lights: Vec<Box<dyn Light>>) -> Self {
+    pub fn new(aggregate: Box<dyn Primitive>, lights: Vec<Box<dyn Light>>) -> Self {
         let bounds = aggregate.world_bound();
         let mut scene = Self {
             bounds,
-            lights: vec![],
+            lights: Vec::with_capacity(lights.len()),
             infinite_lights: vec![],
             aggregate,
         };
 
-        for light in lights.iter_mut() {
+        for mut light in lights {
             light.preprocess(&mut scene);
+            let light: Arc<dyn Light> = Arc::from(light);
+
             if light.is_infinite() {
                 scene.infinite_lights.push(light.clone());
             }
+
+            scene.lights.push(light);
         }
-        scene.lights = lights;
 
         scene
     }

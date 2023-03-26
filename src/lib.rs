@@ -50,4 +50,4 @@ pub use primitives::{geometric::GeometricPrimitive, transformed::TransformedPrim
 pub use samplers::stratified::StratifiedSampler;
 pub use shapes::{cone::Cone, cylinder::Cylinder, disk::Disk, sphere::Sphere};
 pub use spectra::rgb::RGBSpectrum;
-pub use textures::{constant::ConstantTexture, image::ImageTexture, uv::UVTexture};
+pub use textures::{constant::ConstantTexture, uv::UVTexture};

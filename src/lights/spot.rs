@@ -12,7 +12,6 @@ use crate::{
     utils::bxdf::cos_theta,
 };
 
-#[derive(Debug, Clone)]
 pub struct SpotLight {
     light_to_world: Transform,
     world_to_light: Transform,

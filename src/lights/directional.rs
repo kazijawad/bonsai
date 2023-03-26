@@ -3,7 +3,6 @@ use crate::{
         constants::{Float, PI},
         interaction::Interaction,
         light::{Light, VisibilityTester},
-        primitive::Primitive,
         sampling::concentric_sample_disk,
         scene::Scene,
     },
@@ -12,7 +11,6 @@ use crate::{
     spectra::rgb::RGBSpectrum,
 };
 
-#[derive(Debug, Clone)]
 pub struct DirectionalLight {
     intensity: RGBSpectrum,
     direction: Vec3,

@@ -9,7 +9,6 @@ use crate::{
         integrator::Integrator,
         interaction::Interaction,
         material::TransportMode,
-        primitive::Primitive,
         sampler::Sampler,
         scene::Scene,
         spectrum::Spectrum,

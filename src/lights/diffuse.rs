@@ -13,7 +13,6 @@ use crate::{
     spectra::rgb::RGBSpectrum,
 };
 
-#[derive(Clone)]
 pub struct DiffuseAreaLight {
     intensity: RGBSpectrum,
     shape: Arc<dyn Shape>,

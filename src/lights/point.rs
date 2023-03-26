@@ -11,7 +11,6 @@ use crate::{
     spectra::rgb::RGBSpectrum,
 };
 
-#[derive(Debug, Clone)]
 pub struct PointLight {
     position: Point3,
     intensity: RGBSpectrum,

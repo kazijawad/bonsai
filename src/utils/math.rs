@@ -1,50 +1,4 @@
-use crate::base::constants::{Float, PI};
-
-pub fn is_pow_two(x: i32) -> bool {
-    (x != 0) && ((x & (x - 1)) == 0)
-}
-
-pub fn round_pow_two(x: i32) -> i32 {
-    let mut v = x;
-    v -= 1;
-    v |= v >> 1;
-    v |= v >> 2;
-    v |= v >> 4;
-    v |= v >> 8;
-    v |= v >> 16;
-    v + 1
-}
-
-pub fn inverse_gamma_correct(v: Float) -> Float {
-    if v <= 0.04045 {
-        v * 1.0 / 12.92
-    } else {
-        ((v + 0.055) * 1.0 / 1.055).powf(2.4)
-    }
-}
-
-pub fn lanczos(x: Float, tau: Float) -> Float {
-    let mut x = x.abs();
-    if x < 1e-5 {
-        return 1.0;
-    }
-    if x > 1.0 {
-        return 0.0;
-    }
-    x *= PI;
-    let s = (x * tau).sin() / (x * tau);
-    let lanczos = x.sin() / x;
-    s * lanczos
-}
-
-pub fn modulo(a: i32, b: i32) -> i32 {
-    let result = a - (a / b) * b;
-    if result < 0 {
-        result + b
-    } else {
-        result
-    }
-}
+use crate::base::constants::Float;
 
 pub fn gamma(n: Float) -> Float {
     n * (Float::EPSILON * 0.5) / (1.0 - n * (Float::EPSILON * 0.5))
@@ -84,25 +38,6 @@ pub fn next_up(mut v: Float) -> Float {
         ui -= 1;
     }
     Float::from_bits(ui)
-}
-
-pub fn find_interval<F>(size: usize, f: F) -> usize
-where
-    F: Fn(usize) -> bool,
-{
-    let mut first = 0;
-    let mut len = size;
-    while len > 0 {
-        let half = len >> 1;
-        let middle = first + half;
-        if f(middle) {
-            first = middle + 1;
-            len -= half + 1;
-        } else {
-            len = half;
-        }
-    }
-    (first - 1).clamp(0, size - 2)
 }
 
 pub fn solve_linear_system_2x2(
