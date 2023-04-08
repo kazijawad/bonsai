@@ -1,4 +1,6 @@
-use std::ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::ops::{
+    Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign,
+};
 
 use crate::{base::constants::Float, geometries::vec2::Vec2};
 
@@ -296,6 +298,17 @@ impl Index<usize> for Point2 {
             &self.x
         } else {
             &self.y
+        }
+    }
+}
+
+impl IndexMut<usize> for Point2 {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        debug_assert!(index < 2);
+        if index == 0 {
+            &mut self.x
+        } else {
+            &mut self.y
         }
     }
 }

@@ -67,6 +67,6 @@ impl Material for PlasticMaterial {
             bsdf.add(specular);
         }
 
-        si.bsdf = Some(bsdf);
+        si.bsdf = Some(Arc::new(bsdf));
     }
 }

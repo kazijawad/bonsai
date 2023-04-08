@@ -13,7 +13,6 @@ use crate::{
     },
 };
 
-#[derive(Clone)]
 pub struct FresnelSpecular {
     bxdf_type: BxDFType,
     r: RGBSpectrum,
@@ -23,7 +22,6 @@ pub struct FresnelSpecular {
     mode: TransportMode,
 }
 
-#[derive(Clone)]
 pub struct FresnelBlend {
     bxdf_type: BxDFType,
     rd: RGBSpectrum,
@@ -75,27 +73,15 @@ impl BxDF for FresnelSpecular {
         RGBSpectrum::default()
     }
 
-    fn sample_f(
-        &self,
-        wo: &Vec3,
-        wi: &mut Vec3,
-        sample: &Point2,
-        pdf: &mut Float,
-        sampled_type: &mut Option<BxDFType>,
-    ) -> RGBSpectrum {
+    fn sample(&self, wo: &Vec3, u: &Point2) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
         let f = fresnel_dielectric(cos_theta(wo), self.eta_a, self.eta_b);
-        if sample[0] < f {
+        if u[0] < f {
             // Compute specular reflection.
-            // Compute perfect specular reflection direction.
-            *wi = Vec3::new(-wo.x, -wo.y, wo.z);
-
-            if sampled_type.is_some() {
-                *sampled_type = Some(BSDF_SPECULAR | BSDF_REFLECTION);
-            }
-
-            *pdf = f;
-
-            RGBSpectrum::new(f) * self.r / abs_cos_theta(&wi)
+            let wi = Vec3::new(-wo.x, -wo.y, wo.z);
+            let radiance = RGBSpectrum::new(f) * self.r / abs_cos_theta(&wi);
+            let pdf = f;
+            let sampled_type = Some(BSDF_SPECULAR | BSDF_REFLECTION);
+            (wi, radiance, pdf, sampled_type)
         } else {
             // Compute specular transmission.
             // Figure out which eta is incident and which is transmitted.
@@ -104,28 +90,26 @@ impl BxDF for FresnelSpecular {
             let eta_t = if entering { self.eta_b } else { self.eta_a };
 
             // Compute ray direction for specular transmission.
-            if !refract(
+            if let Some(wi) = refract(
                 wo,
                 &Normal::new(0.0, 0.0, 1.0).face_forward(&Normal::from(*wo)),
                 eta_i / eta_t,
-                wi,
             ) {
-                return RGBSpectrum::default();
+                let mut ft = self.t * (1.0 - f);
+                // Account for non-symmetry with transmission to different medium.
+                if let TransportMode::Radiance = self.mode {
+                    ft *= (eta_i * eta_i) / (eta_t * eta_t);
+                }
+                let radiance = ft / abs_cos_theta(&wi);
+                (
+                    wi,
+                    radiance,
+                    1.0 - f,
+                    Some(BSDF_SPECULAR | BSDF_TRANSMISSION),
+                )
+            } else {
+                (Vec3::default(), RGBSpectrum::default(), 0.0, None)
             }
-
-            let mut ft = self.t * (1.0 - f);
-            // Account for non-symmetry with transmission to different medium.
-            if let TransportMode::Radiance = self.mode {
-                ft *= (eta_i * eta_i) / (eta_t * eta_t);
-            }
-
-            if sampled_type.is_some() {
-                *sampled_type = Some(BSDF_SPECULAR | BSDF_TRANSMISSION);
-            }
-
-            *pdf = 1.0 - f;
-
-            ft / abs_cos_theta(&wi)
         }
     }
 
@@ -166,37 +150,33 @@ impl BxDF for FresnelBlend {
         diffuse + specular
     }
 
-    fn sample_f(
-        &self,
-        wo: &Vec3,
-        wi: &mut Vec3,
-        sample: &Point2,
-        pdf: &mut Float,
-        _sampled_type: &mut Option<BxDFType>,
-    ) -> RGBSpectrum {
-        let mut sample = sample.clone();
-        if sample.x < 0.5 {
-            sample.x = (2.0 * sample[0]).min(1.0 - Float::EPSILON);
+    fn sample(&self, wo: &Vec3, u: &Point2) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
+        let mut u = u.clone();
+
+        let mut wi;
+        if u[0] < 0.5 {
+            u[0] = (2.0 * u[0]).min(1.0 - Float::EPSILON);
 
             // Cosine-sample the hemisphere, flipping the direction if necessary.
-            *wi = cosine_sample_hemisphere(&sample);
+            wi = cosine_sample_hemisphere(&u);
             if wo.z < 0.0 {
                 wi.z *= -1.0;
             }
         } else {
-            sample.x = (2.0 * (sample.x - 0.5)).min(1.0 - Float::EPSILON);
+            u[0] = (2.0 * (u[0] - 0.5)).min(1.0 - Float::EPSILON);
 
             // Sample microfacet orientation wh and reflected direction wi.
-            let wh = self.distribution.sample_wh(wo, &sample);
-            *wi = reflect(wo, &wh);
+            let wh = self.distribution.sample_wh(wo, &u);
+            wi = reflect(wo, &wh);
             if !same_hemisphere(wo, &wi) {
-                return RGBSpectrum::default();
+                return (wi, RGBSpectrum::default(), 0.0, None);
             }
         }
 
-        *pdf = self.pdf(wo, &wi);
+        let radiance = self.f(wo, &wi);
+        let pdf = self.pdf(wo, &wi);
 
-        self.f(wo, &wi)
+        (wi, radiance, pdf, None)
     }
 
     fn pdf(&self, wo: &Vec3, wi: &Vec3) -> Float {

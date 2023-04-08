@@ -42,6 +42,6 @@ impl Material for MatteMaterial {
             }
         }
 
-        si.bsdf = Some(bsdf);
+        si.bsdf = Some(Arc::new(bsdf));
     }
 }

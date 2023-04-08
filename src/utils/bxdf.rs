@@ -64,7 +64,7 @@ pub fn reflect(wo: &Vec3, n: &Vec3) -> Vec3 {
     -wo + 2.0 * wo.dot(n) * n
 }
 
-pub fn refract(wi: &Vec3, n: &Normal, eta: Float, wt: &mut Vec3) -> bool {
+pub fn refract(wi: &Vec3, n: &Normal, eta: Float) -> Option<Vec3> {
     // Compute cos(theta) using Snell's law.
     let cos_theta_i = n.dot(&Normal::from(*wi));
     let sin2_theta_i = Float::max(0.0, 1.0 - cos_theta_i * cos_theta_i);
@@ -72,13 +72,11 @@ pub fn refract(wi: &Vec3, n: &Normal, eta: Float, wt: &mut Vec3) -> bool {
 
     // Handle total internal reflection for transmission.
     if sin2_theta_t >= 1.0 {
-        return false;
+        return None;
     }
 
     let cos_theta_t = (1.0 - sin2_theta_t).sqrt();
-    *wt = eta * -wi + (eta * cos_theta_i - cos_theta_t) * Vec3::from(*n);
-
-    true
+    Some(eta * -wi + (eta * cos_theta_i - cos_theta_t) * Vec3::from(*n))
 }
 
 pub fn same_hemisphere(w: &Vec3, wp: &Vec3) -> bool {

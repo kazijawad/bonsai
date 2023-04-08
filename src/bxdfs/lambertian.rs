@@ -9,13 +9,11 @@ use crate::{
     utils::bxdf::{abs_cos_theta, same_hemisphere},
 };
 
-#[derive(Clone)]
 pub struct LambertianReflection {
     bxdf_type: BxDFType,
     r: RGBSpectrum,
 }
 
-#[derive(Clone)]
 pub struct LambertianTransmission {
     bxdf_type: BxDFType,
     t: RGBSpectrum,
@@ -66,20 +64,14 @@ impl BxDF for LambertianTransmission {
         self.t * (1.0 / PI)
     }
 
-    fn sample_f(
-        &self,
-        wo: &Vec3,
-        wi: &mut Vec3,
-        sample: &Point2,
-        pdf: &mut Float,
-        _sampled_type: &mut Option<BxDFType>,
-    ) -> RGBSpectrum {
-        *wi = cosine_sample_hemisphere(sample);
+    fn sample(&self, wo: &Vec3, u: &Point2) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
+        let mut wi = cosine_sample_hemisphere(u);
         if wo.z > 0.0 {
             wi.z *= -1.0;
         }
-        *pdf = self.pdf(wo, wi);
-        self.f(wo, wi)
+        let radiance = self.f(wo, &wi);
+        let pdf = self.pdf(wo, &wi);
+        (wi, radiance, pdf, None)
     }
 
     fn rho_hd(&self, _wo: &Vec3, _num_samples: usize, _samples: &[Point2]) -> RGBSpectrum {

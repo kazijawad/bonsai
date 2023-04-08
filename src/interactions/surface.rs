@@ -29,7 +29,7 @@ pub struct SurfaceInteraction {
     pub dndu: Normal,
     pub dndv: Normal,
     pub shading: Shading,
-    pub bsdf: Option<BSDF>,
+    pub bsdf: Option<Arc<BSDF>>,
     pub primitive: Option<Arc<dyn Primitive>>,
     pub dpdx: Vec3,
     pub dpdy: Vec3,

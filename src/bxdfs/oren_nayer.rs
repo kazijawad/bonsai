@@ -8,7 +8,6 @@ use crate::{
     utils::bxdf::{abs_cos_theta, cos_phi, sin_phi, sin_theta},
 };
 
-#[derive(Clone)]
 pub struct OrenNayer {
     bxdf_type: BxDFType,
     r: RGBSpectrum,

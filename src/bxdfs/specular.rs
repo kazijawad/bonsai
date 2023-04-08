@@ -10,14 +10,12 @@ use crate::{
     utils::bxdf::{abs_cos_theta, cos_theta, refract},
 };
 
-#[derive(Clone)]
 pub struct SpecularReflection {
     bxdf_type: BxDFType,
     r: RGBSpectrum,
     fresnel: Box<dyn Fresnel>,
 }
 
-#[derive(Clone)]
 pub struct SpecularTransmission {
     bxdf_type: BxDFType,
     t: RGBSpectrum,
@@ -55,17 +53,11 @@ impl BxDF for SpecularReflection {
         RGBSpectrum::default()
     }
 
-    fn sample_f(
-        &self,
-        wo: &Vec3,
-        wi: &mut Vec3,
-        _sample: &Point2,
-        pdf: &mut Float,
-        _sampled_type: &mut Option<BxDFType>,
-    ) -> RGBSpectrum {
-        *wi = Vec3::new(-wo.x, -wo.y, wo.z);
-        *pdf = 1.0;
-        self.fresnel.evaluate(cos_theta(wi)) * self.r / abs_cos_theta(wi)
+    fn sample(&self, wo: &Vec3, _u: &Point2) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
+        let wi = Vec3::new(-wo.x, -wo.y, wo.z);
+        let radiance = self.fresnel.evaluate(cos_theta(&wi)) * self.r / abs_cos_theta(&wi);
+        let pdf = 1.0;
+        (wi, radiance, pdf, None)
     }
 
     fn pdf(&self, _wo: &Vec3, _wi: &Vec3) -> Float {
@@ -86,38 +78,31 @@ impl BxDF for SpecularTransmission {
         RGBSpectrum::default()
     }
 
-    fn sample_f(
-        &self,
-        wo: &Vec3,
-        wi: &mut Vec3,
-        _sample: &Point2,
-        pdf: &mut Float,
-        _sampled_type: &mut Option<BxDFType>,
-    ) -> RGBSpectrum {
+    fn sample(&self, wo: &Vec3, _u: &Point2) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
         // Determine which eta is incident or transmitted.
         let entering = cos_theta(wo) > 0.0;
         let eta_i = if entering { self.eta_a } else { self.eta_b };
         let eta_t = if entering { self.eta_b } else { self.eta_a };
 
         // Compute ray direction for specular transmission.
-        if !refract(
+        if let Some(wi) = refract(
             wo,
             &Normal::new(0.0, 0.0, 1.0).face_forward(&Normal::from(*wo)),
             eta_i / eta_t,
-            wi,
         ) {
-            return RGBSpectrum::default();
+            let mut factor =
+                self.t * (RGBSpectrum::new(1.0) - self.fresnel.evaluate(cos_theta(&wi)));
+
+            // Account for non-symmetry with transmission to different medium.
+            if let TransportMode::Radiance = self.mode {
+                factor *= (eta_i * eta_i) / (eta_t * eta_t);
+            }
+            factor /= abs_cos_theta(&wi);
+
+            (wi, factor, 1.0, None)
+        } else {
+            (Vec3::default(), RGBSpectrum::default(), 0.0, None)
         }
-
-        *pdf = 1.0;
-        let mut factor = self.t * (RGBSpectrum::new(1.0) - self.fresnel.evaluate(cos_theta(&wi)));
-
-        // Account for non-symmetry with transmission to different medium.
-        if let TransportMode::Radiance = self.mode {
-            factor *= (eta_i * eta_i) / (eta_t * eta_t);
-        }
-
-        factor / abs_cos_theta(&wi)
     }
 
     fn pdf(&self, _wo: &Vec3, _wi: &Vec3) -> Float {

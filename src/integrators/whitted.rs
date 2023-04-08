@@ -43,17 +43,10 @@ impl WhittedIntegrator {
     ) -> RGBSpectrum {
         // Compute specular reflection direction and BSDF.
         let wo = si.base.wo;
-        let mut wi = Vec3::default();
-        let mut pdf = 0.0;
-        let bxdf_type = BSDF_REFLECTION | BSDF_SPECULAR;
-
-        let f = si.bsdf.as_ref().unwrap().sample_f(
+        let (wi, f, pdf, _) = si.bsdf.as_ref().unwrap().sample(
             &wo,
-            &mut wi,
             &sampler.get_2d(),
-            &mut pdf,
-            bxdf_type,
-            &mut 0,
+            BSDF_REFLECTION | BSDF_SPECULAR,
         );
 
         // Return contribution of specular reflection.
@@ -97,18 +90,10 @@ impl WhittedIntegrator {
     ) -> RGBSpectrum {
         let p = si.base.p;
         let wo = si.base.wo;
-        let mut wi = Vec3::default();
         let bsdf = si.bsdf.as_ref().unwrap();
-        let mut pdf = 0.0;
 
-        let f = bsdf.sample_f(
-            &wo,
-            &mut wi,
-            &sampler.get_2d(),
-            &mut pdf,
-            BSDF_TRANSMISSION | BSDF_SPECULAR,
-            &mut 0,
-        );
+        let (wi, f, pdf, _) =
+            bsdf.sample(&wo, &sampler.get_2d(), BSDF_TRANSMISSION | BSDF_SPECULAR);
 
         let mut l = RGBSpectrum::default();
         let mut ns = Vec3::from(si.shading.n);

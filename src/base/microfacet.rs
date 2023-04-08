@@ -1,12 +1,10 @@
-use dyn_clone::DynClone;
-
 use crate::{
     base::constants::{Float, PI},
     geometries::{point2::Point2, vec3::Vec3},
     utils::bxdf::{abs_cos_theta, cos2_phi, cos2_theta, sin2_phi, tan2_theta, tan_theta},
 };
 
-pub trait MicrofacetDistribution: Send + Sync + DynClone {
+pub trait MicrofacetDistribution: Send + Sync {
     fn d(&self, wh: &Vec3) -> Float;
 
     fn lambda(&self, w: &Vec3) -> Float;
@@ -24,16 +22,12 @@ pub trait MicrofacetDistribution: Send + Sync + DynClone {
     fn pdf(&self, wo: &Vec3, wh: &Vec3) -> Float;
 }
 
-dyn_clone::clone_trait_object!(MicrofacetDistribution);
-
-#[derive(Clone)]
 pub struct BeckmannDistribution {
     sample_visible_area: bool,
     alpha_x: Float,
     alpha_y: Float,
 }
 
-#[derive(Clone)]
 pub struct TrowbridgeReitzDistribution {
     sample_visible_area: bool,
     alpha_x: Float,

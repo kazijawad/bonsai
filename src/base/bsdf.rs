@@ -10,7 +10,6 @@ use crate::{
     spectra::rgb::RGBSpectrum,
 };
 
-#[derive(Clone)]
 pub struct BSDF {
     pub eta: Float,
     ns: Normal,
@@ -115,22 +114,15 @@ impl BSDF {
         ret
     }
 
-    pub fn sample_f(
+    pub fn sample(
         &self,
         wo_world: &Vec3,
-        wi_world: &mut Vec3,
         u: &Point2,
-        pdf: &mut Float,
         bxdf_type: BxDFType,
-        sampled_type: &mut BxDFType,
-    ) -> RGBSpectrum {
+    ) -> (Vec3, RGBSpectrum, Float, BxDFType) {
         let matching_components = self.num_components(bxdf_type);
         if matching_components == 0 {
-            *pdf = 0.0;
-            if *sampled_type != 0 {
-                *sampled_type = 0;
-            }
-            return RGBSpectrum::default();
+            return (Vec3::default(), RGBSpectrum::default(), 0.0, 0);
         }
 
         let component = ((u.x * matching_components as Float).floor() as u32)
@@ -160,39 +152,33 @@ impl BSDF {
         );
 
         // Sample chosen BxDF.
-        let mut wi = Vec3::default();
         let wo = self.world_to_local(&wo_world);
         if wo.z == 0.0 {
-            return RGBSpectrum::default();
+            return (Vec3::default(), RGBSpectrum::default(), 0.0, 0);
         }
 
-        *pdf = 0.0;
-        if *sampled_type != 0 {
-            *sampled_type = bxdf.bxdf_type();
-        }
+        let (wi, mut f, mut pdf, bxdf_sampled_type) = bxdf.sample(&wo, &u_remapped);
+        let sampled_type = if let Some(bxdf_type) = bxdf_sampled_type {
+            bxdf_type
+        } else {
+            bxdf.bxdf_type()
+        };
 
-        let mut bxdf_sampled_type = Some(*sampled_type);
-        let mut f = bxdf.sample_f(&wo, &mut wi, &u_remapped, pdf, &mut bxdf_sampled_type);
-        *sampled_type = bxdf_sampled_type.unwrap();
-
-        if *pdf == 0.0 {
-            if *sampled_type != 0 {
-                *sampled_type = 0;
-            }
-            return RGBSpectrum::default();
+        if pdf == 0.0 {
+            return (Vec3::default(), RGBSpectrum::default(), 0.0, 0);
         }
-        *wi_world = self.local_to_world(&wi);
+        let wi_world = self.local_to_world(&wi);
 
         // Compute overall PDF with all matching BxDFs.
         if bxdf.bxdf_type() & BSDF_SPECULAR == 0 && matching_components > 1 {
             for b in self.bxdfs.iter() {
                 if !ptr::eq(b, bxdf) && b.matches_flags(bxdf_type) {
-                    *pdf += b.pdf(&wo, &wi);
+                    pdf += b.pdf(&wo, &wi);
                 }
             }
         }
         if matching_components > 1 {
-            *pdf /= matching_components as Float;
+            pdf /= matching_components as Float;
         }
 
         // Compute value of BSDF for sampled direction.
@@ -210,6 +196,6 @@ impl BSDF {
             }
         }
 
-        f
+        (wi_world, f, pdf, sampled_type)
     }
 }

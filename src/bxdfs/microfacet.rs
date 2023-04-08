@@ -11,7 +11,6 @@ use crate::{
     utils::bxdf::{abs_cos_theta, cos_theta, reflect, refract, same_hemisphere},
 };
 
-#[derive(Clone)]
 pub struct MicrofacetReflection {
     bxdf_type: BxDFType,
     r: RGBSpectrum,
@@ -19,7 +18,6 @@ pub struct MicrofacetReflection {
     fresnel: Box<dyn Fresnel>,
 }
 
-#[derive(Clone)]
 pub struct MicrofactTransmission {
     bxdf_type: BxDFType,
     t: RGBSpectrum,
@@ -92,33 +90,28 @@ impl BxDF for MicrofacetReflection {
             / (4.0 * cos_theta_i * cos_theta_o)
     }
 
-    fn sample_f(
-        &self,
-        wo: &Vec3,
-        wi: &mut Vec3,
-        sample: &Point2,
-        pdf: &mut Float,
-        _sampled_type: &mut Option<BxDFType>,
-    ) -> RGBSpectrum {
+    fn sample(&self, wo: &Vec3, u: &Point2) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
         // Sample microfacet orientation wh and reflected direction wi.
         if wo.z == 0.0 {
-            return RGBSpectrum::default();
+            return (Vec3::default(), RGBSpectrum::default(), 0.0, None);
         }
 
-        let wh = self.distribution.sample_wh(wo, sample);
+        let wh = self.distribution.sample_wh(wo, u);
         if wo.dot(&wh) < 0.0 {
-            return RGBSpectrum::default();
+            return (Vec3::default(), RGBSpectrum::default(), 0.0, None);
         }
 
-        *wi = reflect(wo, &wh);
+        let wi = reflect(wo, &wh);
         if !same_hemisphere(wo, &wi) {
-            return RGBSpectrum::default();
+            return (Vec3::default(), RGBSpectrum::default(), 0.0, None);
         }
+
+        let radiance = self.f(wo, &wi);
 
         // Compute PDF of wi for microfacet reflection.
-        *pdf = self.distribution.pdf(wo, &wh) / (4.0 * wo.dot(&wh));
+        let pdf = self.distribution.pdf(wo, &wh) / (4.0 * wo.dot(&wh));
 
-        self.f(wo, &wi)
+        (wi, radiance, pdf, None)
     }
 
     fn pdf(&self, wo: &Vec3, wi: &Vec3) -> Float {
@@ -192,21 +185,14 @@ impl BxDF for MicrofactTransmission {
                 .abs()
     }
 
-    fn sample_f(
-        &self,
-        wo: &Vec3,
-        wi: &mut Vec3,
-        sample: &Point2,
-        pdf: &mut Float,
-        _sampled_type: &mut Option<BxDFType>,
-    ) -> RGBSpectrum {
+    fn sample(&self, wo: &Vec3, u: &Point2) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
         if wo.z == 0.0 {
-            return RGBSpectrum::default();
+            return (Vec3::default(), RGBSpectrum::default(), 0.0, None);
         }
 
-        let wh = self.distribution.sample_wh(wo, sample);
+        let wh = self.distribution.sample_wh(wo, u);
         if wo.dot(&wh) < 0.0 {
-            return RGBSpectrum::default();
+            return (Vec3::default(), RGBSpectrum::default(), 0.0, None);
         }
 
         let eta = if cos_theta(wo) > 0.0 {
@@ -215,13 +201,13 @@ impl BxDF for MicrofactTransmission {
             self.eta_b / self.eta_a
         };
 
-        if !refract(wo, &Normal::from(wh), eta, wi) {
-            return RGBSpectrum::default();
+        if let Some(wi) = refract(wo, &Normal::from(wh), eta) {
+            let radiance = self.f(wo, &wi);
+            let pdf = self.pdf(wo, &wi);
+            (wi, radiance, pdf, None)
+        } else {
+            (Vec3::default(), RGBSpectrum::default(), 0.0, None)
         }
-
-        *pdf = self.pdf(wo, &wi);
-
-        self.f(wo, &wi)
     }
 
     fn pdf(&self, wo: &Vec3, wi: &Vec3) -> Float {

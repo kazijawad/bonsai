@@ -1,5 +1,3 @@
-use dyn_clone::DynClone;
-
 use crate::{
     base::{
         constants::{Float, PI},
@@ -20,33 +18,25 @@ pub const BSDF_SPECULAR: BxDFType = 1 << 4;
 pub const BSDF_ALL: BxDFType =
     BSDF_DIFFUSE | BSDF_GLOSSY | BSDF_SPECULAR | BSDF_REFLECTION | BSDF_TRANSMISSION;
 
-pub trait BxDF: Send + Sync + DynClone {
+pub trait BxDF: Send + Sync {
     fn f(&self, wo: &Vec3, wi: &Vec3) -> RGBSpectrum;
 
-    fn sample_f(
-        &self,
-        wo: &Vec3,
-        wi: &mut Vec3,
-        sample: &Point2,
-        pdf: &mut Float,
-        _sampled_type: &mut Option<BxDFType>,
-    ) -> RGBSpectrum {
+    fn sample(&self, wo: &Vec3, u: &Point2) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
         // Cosine-sample the hemisphere, flipping the direction if necessary.
-        *wi = cosine_sample_hemisphere(sample);
+        let mut wi = cosine_sample_hemisphere(u);
         if wo.z < 0.0 {
             wi.z *= -1.0;
         }
-        *pdf = self.pdf(wo, wi);
-        self.f(wo, wi)
+        let radiance = self.f(wo, &wi);
+        let pdf = self.pdf(wo, &wi);
+        (wi, radiance, pdf, None)
     }
 
     fn rho_hd(&self, wo: &Vec3, num_samples: usize, samples: &[Point2]) -> RGBSpectrum {
         let mut reflection_factor = RGBSpectrum::default();
 
         for i in 0..num_samples {
-            let mut wi = Vec3::default();
-            let mut pdf = 0.0;
-            let factor = self.sample_f(wo, &mut wi, &samples[i], &mut pdf, &mut None);
+            let (wi, factor, pdf, _) = self.sample(wo, &samples[i]);
             if pdf > 0.0 {
                 reflection_factor += factor * abs_cos_theta(&wi) / pdf;
             }
@@ -60,12 +50,10 @@ pub trait BxDF: Send + Sync + DynClone {
 
         for i in 0..num_samples {
             let wo = uniform_sample_hemisphere(&u1[i]);
-            let mut wi = Vec3::default();
-
             let pdf_o = uniform_hemisphere_pdf();
-            let mut pdf_i = 0.0;
 
-            let factor = self.sample_f(&wo, &mut wi, &u2[i], &mut pdf_i, &mut None);
+            let (wi, factor, pdf_i, _) = self.sample(&wo, &u2[i]);
+
             if pdf_i > 0.0 {
                 reflection_factor +=
                     factor * abs_cos_theta(&wi) * abs_cos_theta(&wo) / (pdf_o * pdf_i);
@@ -87,5 +75,3 @@ pub trait BxDF: Send + Sync + DynClone {
 
     fn bxdf_type(&self) -> BxDFType;
 }
-
-dyn_clone::clone_trait_object!(BxDF);

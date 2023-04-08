@@ -72,9 +72,9 @@ pub fn latin_hypercube(
     }
 }
 
-pub fn concentric_sample_disk(sample: &Point2) -> Point2 {
+pub fn concentric_sample_disk(u: &Point2) -> Point2 {
     // Map uniform values to [-1, 1].
-    let offset = 2.0 * sample - Vec2::new(1.0, 1.0);
+    let offset = 2.0 * u - Vec2::new(1.0, 1.0);
 
     // Handle degeneracy at the origin.
     if offset.x == 0.0 && offset.y == 0.0 {
@@ -91,21 +91,21 @@ pub fn concentric_sample_disk(sample: &Point2) -> Point2 {
     radius * Point2::new(theta.cos(), theta.sin())
 }
 
-pub fn uniform_sample_hemisphere(sample: &Point2) -> Vec3 {
-    let z = sample[0];
-    let r = Float::max(0.0, 1.0 - z * z).sqrt();
-    let phi = 2.0 * PI * sample[1];
+pub fn uniform_sample_hemisphere(u: &Point2) -> Vec3 {
+    let z = u[0];
+    let r = (1.0 - z * z).max(0.0).sqrt();
+    let phi = 2.0 * PI * u[1];
     Vec3::new(r * phi.cos(), r * phi.sin(), z)
 }
 
 pub fn uniform_hemisphere_pdf() -> Float {
-    (1.0 / PI) / 2.0
+    1.0 / (2.0 * PI)
 }
 
-pub fn uniform_sample_sphere(sample: &Point2) -> Vec3 {
-    let z = 1.0 - 2.0 * sample[0];
-    let r = Float::max(0.0, 1.0 - z * z).sqrt();
-    let phi = 2.0 * PI * sample[1];
+pub fn uniform_sample_sphere(u: &Point2) -> Vec3 {
+    let z = 1.0 - 2.0 * u[0];
+    let r = (1.0 - z * z).max(0.0).sqrt();
+    let phi = 2.0 * PI * u[1];
     Vec3::new(r * phi.cos(), r * phi.sin(), z)
 }
 
@@ -113,10 +113,10 @@ pub fn uniform_sphere_pdf() -> Float {
     1.0 / (4.0 * PI)
 }
 
-pub fn uniform_sample_cone(sample: &Point2, cos_theta_max: Float) -> Vec3 {
-    let cos_theta = (1.0 - sample[0]) + sample[0] * cos_theta_max;
+pub fn uniform_sample_cone(u: &Point2, cos_theta_max: Float) -> Vec3 {
+    let cos_theta = (1.0 - u[0]) + u[0] * cos_theta_max;
     let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
-    let phi = sample[1] * 2.0 * PI;
+    let phi = u[1] * 2.0 * PI;
     Vec3::new(phi.cos() * sin_theta, phi.sin() * sin_theta, cos_theta)
 }
 
@@ -124,9 +124,9 @@ pub fn uniform_cone_pdf(cos_theta_max: Float) -> Float {
     1.0 / (2.0 * PI * (1.0 - cos_theta_max))
 }
 
-pub fn cosine_sample_hemisphere(sample: &Point2) -> Vec3 {
-    let d = concentric_sample_disk(sample);
-    let z = Float::max(0.0, 1.0 - d.x * d.x - d.y * d.y).sqrt();
+pub fn cosine_sample_hemisphere(u: &Point2) -> Vec3 {
+    let d = concentric_sample_disk(u);
+    let z = (1.0 - d.x * d.x - d.y * d.y).max(0.0).sqrt();
     Vec3::new(d.x, d.y, z)
 }
 

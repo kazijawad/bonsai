@@ -1,31 +1,24 @@
-use dyn_clone::DynClone;
-
 use crate::{
     base::constants::Float,
     spectra::rgb::RGBSpectrum,
     utils::bxdf::{fresnel_conductor, fresnel_dielectric},
 };
 
-pub trait Fresnel: Send + Sync + DynClone {
+pub trait Fresnel: Send + Sync {
     fn evaluate(&self, cos_theta_i: Float) -> RGBSpectrum;
 }
 
-dyn_clone::clone_trait_object!(Fresnel);
-
-#[derive(Clone)]
 pub struct FresnelConductor {
     eta_i: RGBSpectrum,
     eta_t: RGBSpectrum,
     k: RGBSpectrum,
 }
 
-#[derive(Clone)]
 pub struct FresnelDielectric {
     eta_i: Float,
     eta_t: Float,
 }
 
-#[derive(Clone)]
 pub struct FresnelNoOp;
 
 impl FresnelConductor {
