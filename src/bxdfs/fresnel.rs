@@ -166,7 +166,7 @@ impl BxDF for FresnelBlend {
             u[0] = (2.0 * (u[0] - 0.5)).min(1.0 - Float::EPSILON);
 
             // Sample microfacet orientation wh and reflected direction wi.
-            let wh = self.distribution.sample_wh(wo, &u);
+            let wh = self.distribution.sample(wo, &u);
             wi = reflect(wo, &wh);
             if !same_hemisphere(wo, &wi) {
                 return (wi, RGBSpectrum::default(), 0.0, None);

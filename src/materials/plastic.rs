@@ -61,8 +61,7 @@ impl Material for PlasticMaterial {
                 roughness = TrowbridgeReitzDistribution::roughness_to_alpha(roughness);
             }
 
-            let distribution =
-                Box::new(TrowbridgeReitzDistribution::new(roughness, roughness, true));
+            let distribution = Box::new(TrowbridgeReitzDistribution::new(roughness, roughness));
             let specular = Box::new(MicrofacetReflection::new(ks, distribution, fresnel));
             bsdf.add(specular);
         }

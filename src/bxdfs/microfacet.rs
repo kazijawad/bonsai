@@ -18,7 +18,7 @@ pub struct MicrofacetReflection {
     fresnel: Box<dyn Fresnel>,
 }
 
-pub struct MicrofactTransmission {
+pub struct MicrofacetTransmission {
     bxdf_type: BxDFType,
     t: RGBSpectrum,
     distribution: Box<dyn MicrofacetDistribution>,
@@ -43,7 +43,7 @@ impl MicrofacetReflection {
     }
 }
 
-impl MicrofactTransmission {
+impl MicrofacetTransmission {
     pub fn new(
         t: RGBSpectrum,
         distribution: Box<dyn MicrofacetDistribution>,
@@ -96,7 +96,7 @@ impl BxDF for MicrofacetReflection {
             return (Vec3::default(), RGBSpectrum::default(), 0.0, None);
         }
 
-        let wh = self.distribution.sample_wh(wo, u);
+        let wh = self.distribution.sample(wo, u);
         if wo.dot(&wh) < 0.0 {
             return (Vec3::default(), RGBSpectrum::default(), 0.0, None);
         }
@@ -133,7 +133,7 @@ impl BxDF for MicrofacetReflection {
     }
 }
 
-impl BxDF for MicrofactTransmission {
+impl BxDF for MicrofacetTransmission {
     fn f(&self, wo: &Vec3, wi: &Vec3) -> RGBSpectrum {
         if same_hemisphere(wo, wi) {
             return RGBSpectrum::default();
@@ -190,7 +190,7 @@ impl BxDF for MicrofactTransmission {
             return (Vec3::default(), RGBSpectrum::default(), 0.0, None);
         }
 
-        let wh = self.distribution.sample_wh(wo, u);
+        let wh = self.distribution.sample(wo, u);
         if wo.dot(&wh) < 0.0 {
             return (Vec3::default(), RGBSpectrum::default(), 0.0, None);
         }
