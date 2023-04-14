@@ -138,7 +138,7 @@ impl BSDF {
             count -= 1;
         }
         if bxdf.is_none() {
-            panic!("BSDF::sample_f BxDF was not initialized")
+            panic!("BSDF::sample BxDF was not initialized")
         }
         let bxdf = bxdf.unwrap();
 
@@ -197,5 +197,32 @@ impl BSDF {
         }
 
         (wi_world, f, pdf, sampled_type)
+    }
+
+    pub fn pdf(self, wo_world: &Vec3, wi_world: &Vec3, flags: BxDFType) -> Float {
+        if self.bxdfs.len() == 0 {
+            return 0.0;
+        }
+
+        let wo = self.world_to_local(wo_world);
+        let wi = self.world_to_local(wi_world);
+        if wo.z == 0.0 {
+            return 0.0;
+        }
+
+        let mut ret = 0.0;
+        let mut components = 0.0;
+        for bxdf in self.bxdfs.iter() {
+            if bxdf.matches_flags(flags) {
+                components += 1.0;
+                ret += bxdf.pdf(&wo, &wi);
+            }
+        }
+
+        if components > 0.0 {
+            ret / components
+        } else {
+            0.0
+        }
     }
 }

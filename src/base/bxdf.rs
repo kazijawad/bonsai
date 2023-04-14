@@ -32,35 +32,28 @@ pub trait BxDF: Send + Sync {
         (wi, radiance, pdf, None)
     }
 
-    fn rho_hd(&self, wo: &Vec3, num_samples: usize, samples: &[Point2]) -> RGBSpectrum {
-        let mut reflection_factor = RGBSpectrum::default();
-
+    fn rho_hd(&self, wo: &Vec3, num_samples: usize, u: &[Point2]) -> RGBSpectrum {
+        let mut reflectance = RGBSpectrum::default();
         for i in 0..num_samples {
-            let (wi, factor, pdf, _) = self.sample(wo, &samples[i]);
+            let (wi, factor, pdf, _) = self.sample(wo, &u[i]);
             if pdf > 0.0 {
-                reflection_factor += factor * abs_cos_theta(&wi) / pdf;
+                reflectance += factor * abs_cos_theta(&wi) / pdf;
             }
         }
-
-        reflection_factor / RGBSpectrum::new(num_samples as Float)
+        reflectance / (num_samples as Float)
     }
 
     fn rho_hh(&self, num_samples: usize, u1: &[Point2], u2: &[Point2]) -> RGBSpectrum {
-        let mut reflection_factor = RGBSpectrum::default();
-
+        let mut reflectance = RGBSpectrum::default();
         for i in 0..num_samples {
             let wo = uniform_sample_hemisphere(&u1[i]);
             let pdf_o = uniform_hemisphere_pdf();
-
             let (wi, factor, pdf_i, _) = self.sample(&wo, &u2[i]);
-
             if pdf_i > 0.0 {
-                reflection_factor +=
-                    factor * abs_cos_theta(&wi) * abs_cos_theta(&wo) / (pdf_o * pdf_i);
+                reflectance += factor * abs_cos_theta(&wi) * abs_cos_theta(&wo) / (pdf_o * pdf_i);
             }
         }
-
-        reflection_factor / (PI * num_samples as Float)
+        reflectance / (PI * num_samples as Float)
     }
 
     fn pdf(&self, wo: &Vec3, wi: &Vec3) -> Float {
