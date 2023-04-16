@@ -6,7 +6,7 @@ use crate::{
         bounds3::Bounds3, interval::Interval, mat4::Mat4, point3::Point3, quaternion::Quaternion,
         vec3::Vec3,
     },
-    utils::math::{gamma, lerp},
+    utils::math::lerp,
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -71,40 +71,6 @@ impl Transform {
         // Scale canonical perspective view to specified field of view.
         let inverse_tan_angle = 1.0 / (fov.to_radians() / 2.0).tan();
         Self::scale(inverse_tan_angle, inverse_tan_angle, 1.0) * Self::new(mat, inverse_mat)
-    }
-
-    pub fn transform_vec(&self, v: &Vec3) -> Vec3 {
-        let x = v.x;
-        let y = v.y;
-        let z = v.z;
-        Vec3::new(
-            self.m.m[0][0] * x + self.m.m[0][1] * y + self.m.m[0][2] * z,
-            self.m.m[1][0] * x + self.m.m[1][1] * y + self.m.m[1][2] * z,
-            self.m.m[2][0] * x + self.m.m[2][1] * y + self.m.m[2][2] * z,
-        )
-    }
-
-    pub fn transform_vec_with_error(&self, v: &Vec3, error: &mut Vec3) -> Vec3 {
-        let x = v.x;
-        let y = v.y;
-        let z = v.z;
-        error.x = gamma(3.0)
-            * ((self.m.m[0][0] * v.x).abs()
-                + (self.m.m[0][1] * v.y).abs()
-                + (self.m.m[0][2] * v.z).abs());
-        error.y = gamma(3.0)
-            * ((self.m.m[1][0] * v.x).abs()
-                + (self.m.m[1][1] * v.y).abs()
-                + (self.m.m[1][2] * v.z).abs());
-        error.z = gamma(3.0)
-            * ((self.m.m[2][0] * v.x).abs()
-                + (self.m.m[2][1] * v.y).abs()
-                + (self.m.m[2][2] * v.z).abs());
-        Vec3::new(
-            self.m.m[0][0] * x + self.m.m[0][1] * y + self.m.m[0][2] * z,
-            self.m.m[1][0] * x + self.m.m[1][1] * y + self.m.m[1][2] * z,
-            self.m.m[2][0] * x + self.m.m[2][1] * y + self.m.m[2][2] * z,
-        )
     }
 
     pub fn transform_bounds(&self, b: &Bounds3) -> Bounds3 {
@@ -290,18 +256,19 @@ impl Transform {
     }
 
     pub fn has_scale(&self) -> bool {
-        let la2 = self
-            .transform_vec(&Vec3::new(1.0, 0.0, 0.0))
+        let la2 = Vec3::new(1.0, 0.0, 0.0)
+            .transform(self, false)
+            .0
             .length_squared();
-        let lb2 = self
-            .transform_vec(&Vec3::new(0.0, 1.0, 0.0))
+        let lb2 = Vec3::new(0.0, 1.0, 0.0)
+            .transform(self, false)
+            .0
             .length_squared();
-        let lc2 = self
-            .transform_vec(&Vec3::new(0.0, 0.0, 1.0))
+        let lc2 = Vec3::new(0.0, 0.0, 1.0)
+            .transform(self, false)
+            .0
             .length_squared();
-
         let not_one = |x: Float| -> bool { x < 0.999 || x > 1.001 };
-
         not_one(la2) || not_one(lb2) || not_one(lc2)
     }
 }
@@ -1558,18 +1525,6 @@ impl AnimatedTransform {
                 * Transform::from(rotate)
                 * Transform::new(scaling, scaling_inverse)),
         );
-    }
-
-    pub fn transform_vec(&self, v: &Vec3, time: Float) -> Vec3 {
-        if !self.is_animated || time <= self.start_time {
-            self.start_transform.transform_vec(v)
-        } else if time >= self.end_time {
-            self.end_transform.transform_vec(v)
-        } else {
-            let mut t = Transform::default();
-            self.interpolate(time, &mut t);
-            t.transform_vec(v)
-        }
     }
 
     pub fn motion_bounds(&self, b: &Bounds3) -> Bounds3 {

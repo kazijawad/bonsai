@@ -47,7 +47,7 @@ impl TriangleMesh {
 
         let mut world_tangents = Vec::with_capacity(tangents.len());
         for tangent in tangents.iter() {
-            world_tangents.push(object_to_world.transform_vec(tangent));
+            world_tangents.push(tangent.transform(object_to_world, false).0);
         }
 
         let mut world_normals = Vec::with_capacity(normals.len());

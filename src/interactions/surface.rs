@@ -215,17 +215,17 @@ impl SurfaceInteraction {
             .transform_with_point_error(t, &self.base.p_error, &mut p_error);
 
         let time = self.base.time;
-        let wo = t.transform_vec(&self.base.wo);
+        let wo = self.base.wo.transform(t, false).0;
         let n = self.base.n.transform(t).normalize();
         let uv = self.uv;
-        let dpdu = t.transform_vec(&self.dpdu);
-        let dpdv = t.transform_vec(&self.dpdv);
+        let dpdu = self.dpdu.transform(t, false).0;
+        let dpdv = self.dpdv.transform(t, false).0;
         let dndu = self.dndu.transform(t);
         let dndv = self.dndv.transform(t);
         let shading = Shading {
             n: self.shading.n.transform(t).normalize().face_forward(&n),
-            dpdu: t.transform_vec(&self.shading.dpdu),
-            dpdv: t.transform_vec(&self.shading.dpdv),
+            dpdu: self.shading.dpdu.transform(t, false).0,
+            dpdv: self.shading.dpdv.transform(t, false).0,
             dndu: self.shading.dndu.transform(t),
             dndv: self.shading.dndv.transform(t),
         };
@@ -235,8 +235,8 @@ impl SurfaceInteraction {
         let dvdx = self.dvdx;
         let dudy = self.dudy;
         let dvdy = self.dvdy;
-        let dpdx = t.transform_vec(&self.dpdx);
-        let dpdy = t.transform_vec(&self.dpdy);
+        let dpdx = self.dpdx.transform(t, false).0;
+        let dpdy = self.dpdy.transform(t, false).0;
 
         Self {
             base: BaseInteraction {

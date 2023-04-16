@@ -160,8 +160,8 @@ impl TextureMapping2D for PlanarMapping2D {
 
 impl TextureMapping3D for IdentityMapping3D {
     fn map(&self, si: &SurfaceInteraction, dpdx: &mut Vec3, dpdy: &mut Vec3) -> Point3 {
-        *dpdx = self.world_to_texture.transform_vec(&si.dpdx);
-        *dpdy = self.world_to_texture.transform_vec(&si.dpdy);
+        (*dpdx, _) = si.dpdx.transform(&self.world_to_texture, false);
+        (*dpdy, _) = si.dpdy.transform(&self.world_to_texture, false);
         si.base.p.transform(&self.world_to_texture)
     }
 }

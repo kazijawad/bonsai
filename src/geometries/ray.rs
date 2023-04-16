@@ -49,7 +49,7 @@ impl Ray {
         let mut origin_error = Vec3::default();
         let mut origin = self.origin.transform_with_error(t, &mut origin_error);
 
-        let direction = t.transform_vec(&self.direction);
+        let direction = self.direction.transform(t, false).0;
         // Offset ray origin to edge of error bounds and compute max.
         let length_squared = direction.length_squared();
         let mut t_max = self.t_max;
@@ -70,7 +70,10 @@ impl Ray {
         direction_error: &mut Vec3,
     ) -> Self {
         let mut origin = self.origin.transform_with_error(t, origin_error);
-        let direction = t.transform_vec_with_error(&self.direction, direction_error);
+
+        let transformed = self.direction.transform(t, true);
+        let direction = transformed.0;
+        *direction_error = transformed.1.unwrap();
 
         let t_max = self.t_max;
         let length_squared = direction.length_squared();
@@ -88,8 +91,8 @@ impl Ray {
         ray.has_differentials = self.has_differentials;
         ray.rx_origin = self.rx_origin.transform(t);
         ray.ry_origin = self.ry_origin.transform(t);
-        ray.rx_direction = t.transform_vec(&self.rx_direction);
-        ray.ry_direction = t.transform_vec(&self.ry_direction);
+        ray.rx_direction = self.rx_direction.transform(t, false).0;
+        ray.ry_direction = self.ry_direction.transform(t, false).0;
         ray
     }
 
