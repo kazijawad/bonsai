@@ -22,15 +22,15 @@ pub trait Shape: Send + Sync {
 
     fn intersect_test(&self, ray: &Ray, include_alpha: bool) -> bool;
 
-    fn sample(&self, point: &Point2, pdf: &mut Float) -> Box<dyn Interaction>;
+    fn sample(&self, u: &Point2, pdf: &mut Float) -> Box<dyn Interaction>;
 
     fn sample_from_ref(
         &self,
         reference: &dyn Interaction,
-        point: &Point2,
+        u: &Point2,
         pdf: &mut Float,
     ) -> Box<dyn Interaction> {
-        let interaction = self.sample(point, pdf);
+        let interaction = self.sample(u, pdf);
 
         let mut wi = interaction.position() - reference.position();
         if wi.length_squared() == 0.0 {
