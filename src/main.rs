@@ -1,58 +1,61 @@
-use std::sync::Arc;
-
 use bonsai::*;
 
 fn main() {
-    let material = Arc::new(MatteMaterial {
-        kd: Box::new(ConstantTexture {
+    let material = MatteMaterial {
+        kd: &ConstantTexture {
             value: RGBSpectrum::new(0.5),
-        }),
-        sigma: Box::new(ConstantTexture { value: 0.0 }),
-    });
+        },
+        sigma: &ConstantTexture { value: 0.0 },
+    };
 
-    let sphere = Arc::new(Sphere::new(SphereOptions {
+    let sphere_shape = Sphere::new(SphereOptions {
         transform: Transform::default(),
         reverse_orientation: false,
         radius: 1.0,
         z_min: -1.0,
         z_max: 1.0,
         phi_max: 360.0,
-    }));
+    });
 
-    let disk = Arc::new(Disk::new(DiskOptions {
+    let sphere_prim = GeometricPrimitive {
+        shape: &sphere_shape,
+        material: &material,
+        area_light: None,
+    };
+
+    let disk_shape = Disk::new(DiskOptions {
         transform: Transform::translate(&Vec3::new(0.0, 0.0, 4.0)),
         reverse_orientation: false,
         height: 0.0,
         radius: 5.0,
         inner_radius: 0.0,
         phi_max: 360.0,
-    }));
+    });
 
-    let scene = Scene::new(
-        Box::new(BVH::new(
-            vec![Arc::new(GeometricPrimitive {
-                shape: sphere,
-                material,
-                area_light: None,
-            })],
-            4,
-        )),
-        vec![
-            Box::new(DiffuseAreaLight::new(DiffuseAreaLightOptions {
-                intensity: RGBSpectrum::new(10.0),
-                shape: disk,
-                double_sided: false,
-            })),
-            Box::new(SpotLight::new(SpotLightOptions {
-                transform: Transform::default(),
-                from: Point3::new(3.0, 0.0, 0.0),
-                to: Point3::new(0.0, 0.0, 0.0),
-                intensity: RGBSpectrum::new(1.0),
-                cone_angle: 90.0,
-                cone_delta_angle: 0.0,
-            })),
-        ],
-    );
+    let disk_light = DiffuseAreaLight::new(DiffuseAreaLightOptions {
+        intensity: RGBSpectrum::new(10.0),
+        shape: &disk_shape,
+        double_sided: false,
+    });
+
+    let disk_prim = GeometricPrimitive {
+        shape: &disk_shape,
+        material: &material,
+        area_light: Some(&disk_light),
+    };
+
+    let aggregate = BVH::new(vec![&sphere_prim, &disk_prim], 4);
+
+    let spot_light = SpotLight::new(SpotLightOptions {
+        transform: Transform::default(),
+        from: Point3::new(3.0, 0.0, 0.0),
+        to: Point3::new(0.0, 0.0, 0.0),
+        intensity: RGBSpectrum::new(1.0),
+        cone_angle: 90.0,
+        cone_delta_angle: 0.0,
+    });
+
+    let scene = Scene::new(&aggregate, vec![&disk_light, &spot_light]);
 
     let film = Film::new(FilmOptions {
         resolution: Point2::new(1024.0, 1024.0),

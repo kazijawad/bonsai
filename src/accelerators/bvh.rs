@@ -1,4 +1,4 @@
-use std::{mem, sync::Arc};
+use std::mem;
 
 use itertools::partition;
 
@@ -12,8 +12,8 @@ use crate::{
     interactions::surface::SurfaceInteraction,
 };
 
-pub struct BVH {
-    primitives: Vec<Arc<dyn Primitive>>,
+pub struct BVH<'a> {
+    primitives: Vec<&'a (dyn Primitive<'a> + 'a)>,
     max_primitives_in_node: u32,
     nodes: Vec<LinearBVHNode>,
 }
@@ -51,8 +51,8 @@ struct BucketInfo {
     bounds: Bounds3,
 }
 
-impl BVH {
-    pub fn new(primitives: Vec<Arc<dyn Primitive>>, max_primitives_in_node: u32) -> Self {
+impl<'a> BVH<'a> {
+    pub fn new(primitives: Vec<&'a (dyn Primitive<'a> + 'a)>, max_primitives_in_node: u32) -> Self {
         let mut bvh = Self {
             primitives,
             max_primitives_in_node: max_primitives_in_node.min(255),
@@ -70,7 +70,7 @@ impl BVH {
 
         // Build BVH tree for primitives.
         let mut total_nodes = 0;
-        let mut ordered_prims: Vec<Arc<dyn Primitive>> = Vec::with_capacity(bvh.primitives.len());
+        let mut ordered_prims: Vec<&dyn Primitive> = Vec::with_capacity(bvh.primitives.len());
         let root = bvh.recursive_build(
             &mut prim_info,
             0,
@@ -96,7 +96,7 @@ impl BVH {
         start: usize,
         end: usize,
         total_nodes: &mut u32,
-        ordered_prims: &mut Vec<Arc<dyn Primitive>>,
+        ordered_prims: &mut Vec<&'a (dyn Primitive<'a> + 'a)>,
     ) -> BVHBuildNode {
         let mut node = BVHBuildNode::default();
         *total_nodes += 1;
@@ -113,7 +113,7 @@ impl BVH {
             let first_prim_offset = ordered_prims.len();
             for i in start..end {
                 let prim_index = prim_info[i].prim_index;
-                ordered_prims.push(self.primitives[prim_index].clone());
+                ordered_prims.push(self.primitives[prim_index]);
             }
             node.init_leaf(first_prim_offset, num_prims, &bounds);
             return node;
@@ -132,7 +132,7 @@ impl BVH {
                 let first_prim_offset = ordered_prims.len();
                 for i in start..end {
                     let prim_index = prim_info[i].prim_index;
-                    ordered_prims.push(self.primitives[prim_index].clone());
+                    ordered_prims.push(self.primitives[prim_index]);
                 }
                 node.init_leaf(first_prim_offset, num_prims, &bounds);
                 return node;
@@ -212,7 +212,7 @@ impl BVH {
                         let first_prim_offset = ordered_prims.len();
                         for i in start..end {
                             let prim_index = prim_info[i].prim_index;
-                            ordered_prims.push(self.primitives[prim_index].clone());
+                            ordered_prims.push(self.primitives[prim_index]);
                         }
                         node.init_leaf(first_prim_offset, num_prims, &bounds);
                         return node;
@@ -252,7 +252,7 @@ impl BVH {
     }
 }
 
-impl Primitive for BVH {
+impl<'a> Primitive<'a> for BVH<'a> {
     fn world_bound(&self) -> Bounds3 {
         if !self.nodes.is_empty() {
             self.nodes[0].bounds
@@ -261,7 +261,7 @@ impl Primitive for BVH {
         }
     }
 
-    fn intersect(&self, ray: &mut Ray, interaction: &mut SurfaceInteraction) -> bool {
+    fn intersect(&self, ray: &mut Ray, it: &mut SurfaceInteraction<'a>) -> bool {
         if self.nodes.is_empty() {
             return false;
         }
@@ -291,7 +291,8 @@ impl Primitive for BVH {
                 if node.num_prims > 0 {
                     // Intersect ray with primitives in leaf BVH node.
                     for i in 0..node.num_prims {
-                        if self.primitives[node.prims_offset + i].intersect(ray, interaction) {
+                        let primitive = self.primitives[node.prims_offset + i];
+                        if primitive.intersect(ray, it) {
                             hit = true;
                         }
                     }

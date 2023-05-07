@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     base::{
         bsdf::BSDF,
@@ -50,6 +48,6 @@ impl Material for PlasticMaterial {
             bsdf.add(specular);
         }
 
-        si.bsdf = Some(Arc::new(bsdf));
+        si.bsdf = Some(bsdf);
     }
 }

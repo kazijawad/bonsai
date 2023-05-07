@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     base::{
         bsdf::BSDF,
@@ -13,12 +11,12 @@ use crate::{
     spectra::rgb::RGBSpectrum,
 };
 
-pub struct MatteMaterial {
-    pub kd: Box<dyn Texture<RGBSpectrum>>,
-    pub sigma: Box<dyn Texture<Float>>,
+pub struct MatteMaterial<'a> {
+    pub kd: &'a (dyn Texture<RGBSpectrum> + 'a),
+    pub sigma: &'a (dyn Texture<Float> + 'a),
 }
 
-impl Material for MatteMaterial {
+impl<'a> Material for MatteMaterial<'a> {
     fn compute_scattering_functions(
         &self,
         si: &mut SurfaceInteraction,
@@ -36,6 +34,6 @@ impl Material for MatteMaterial {
             }
         }
 
-        si.bsdf = Some(Arc::new(bsdf));
+        si.bsdf = Some(bsdf);
     }
 }

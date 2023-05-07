@@ -203,8 +203,8 @@ impl Shape for Cylinder {
             ray.time,
             self.reverse_orientation,
             self.transform_swaps_handedness,
-        )
-        .transform(&self.object_to_world);
+        );
+        interaction.transform(&self.object_to_world);
 
         // Update hit for quadric intersection.
         *t_hit = Float::from(t_shape_hit);

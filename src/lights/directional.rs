@@ -18,7 +18,8 @@ pub struct DirectionalLight {
     world_radius: Float,
 }
 
-pub struct DirectionalLightOptions {
+pub struct DirectionalLightOptions<'a> {
+    pub scene: &'a Scene<'a>,
     pub from: Point3,
     pub to: Point3,
     pub intensity: RGBSpectrum,
@@ -27,22 +28,23 @@ pub struct DirectionalLightOptions {
 impl DirectionalLight {
     pub fn new(opts: DirectionalLightOptions) -> Self {
         let direction = opts.from - opts.to;
+
+        let mut world_center = Point3::default();
+        let mut world_radius = 0.0;
+        opts.scene
+            .world_bound()
+            .bounding_sphere(&mut world_center, &mut world_radius);
+
         Self {
             intensity: opts.intensity,
             direction,
-            world_center: Point3::default(),
-            world_radius: 0.0,
+            world_center,
+            world_radius,
         }
     }
 }
 
 impl Light for DirectionalLight {
-    fn preprocess(&mut self, scene: &Scene) {
-        scene
-            .world_bound()
-            .bounding_sphere(&mut self.world_center, &mut self.world_radius);
-    }
-
     fn power(&self) -> RGBSpectrum {
         self.intensity * PI * self.world_radius * self.world_radius
     }

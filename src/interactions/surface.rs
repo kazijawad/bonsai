@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     base::{
         bsdf::BSDF, constants::Float, interaction::Interaction, material::TransportMode,
@@ -11,7 +9,6 @@ use crate::{
     utils::math::solve_linear_system_2x2,
 };
 
-#[derive(Clone)]
 pub struct Shading {
     pub n: Normal,
     pub dpdu: Vec3,
@@ -20,8 +17,7 @@ pub struct Shading {
     pub dndv: Normal,
 }
 
-#[derive(Clone)]
-pub struct SurfaceInteraction {
+pub struct SurfaceInteraction<'a> {
     pub base: BaseInteraction,
     pub uv: Point2,
     pub dpdu: Vec3,
@@ -29,8 +25,8 @@ pub struct SurfaceInteraction {
     pub dndu: Normal,
     pub dndv: Normal,
     pub shading: Shading,
-    pub bsdf: Option<Arc<BSDF>>,
-    pub primitive: Option<Arc<dyn Primitive>>,
+    pub bsdf: Option<BSDF>,
+    pub primitive: Option<&'a (dyn Primitive<'a> + 'a)>,
     pub dpdx: Vec3,
     pub dpdy: Vec3,
     pub dudx: Float,
@@ -39,7 +35,7 @@ pub struct SurfaceInteraction {
     pub dvdy: Float,
 }
 
-impl SurfaceInteraction {
+impl<'a> SurfaceInteraction<'a> {
     pub fn new(
         p: Point3,
         p_error: Vec3,
@@ -207,64 +203,41 @@ impl SurfaceInteraction {
         RGBSpectrum::default()
     }
 
-    pub fn transform(&self, t: &Transform) -> Self {
+    pub fn transform(&mut self, t: &Transform) {
         let mut p_error = Vec3::default();
-        let p = self
+        self.base.p = self
             .base
             .p
             .transform_with_point_error(t, &self.base.p_error, &mut p_error);
+        self.base.p_error = p_error;
 
-        let time = self.base.time;
-        let wo = self.base.wo.transform(t, false).0;
-        let n = self.base.n.transform(t).normalize();
-        let uv = self.uv;
-        let dpdu = self.dpdu.transform(t, false).0;
-        let dpdv = self.dpdv.transform(t, false).0;
-        let dndu = self.dndu.transform(t);
-        let dndv = self.dndv.transform(t);
-        let shading = Shading {
-            n: self.shading.n.transform(t).normalize().face_forward(&n),
+        self.base.wo = self.base.wo.transform(t, false).0;
+        self.base.n = self.base.n.transform(t).normalize();
+
+        self.dpdu = self.dpdu.transform(t, false).0;
+        self.dpdv = self.dpdv.transform(t, false).0;
+        self.dndu = self.dndu.transform(t);
+        self.dndv = self.dndv.transform(t);
+
+        self.shading = Shading {
+            n: self
+                .shading
+                .n
+                .transform(t)
+                .normalize()
+                .face_forward(&self.base.n),
             dpdu: self.shading.dpdu.transform(t, false).0,
             dpdv: self.shading.dpdv.transform(t, false).0,
             dndu: self.shading.dndu.transform(t),
             dndv: self.shading.dndv.transform(t),
         };
-        let bsdf = self.bsdf.clone();
-        let primitive = self.primitive.clone();
-        let dudx = self.dudx;
-        let dvdx = self.dvdx;
-        let dudy = self.dudy;
-        let dvdy = self.dvdy;
-        let dpdx = self.dpdx.transform(t, false).0;
-        let dpdy = self.dpdy.transform(t, false).0;
 
-        Self {
-            base: BaseInteraction {
-                p,
-                p_error,
-                time,
-                wo,
-                n,
-            },
-            uv,
-            dpdu,
-            dpdv,
-            dndu,
-            dndv,
-            shading,
-            bsdf,
-            primitive,
-            dpdx,
-            dpdy,
-            dudx,
-            dvdx,
-            dudy,
-            dvdy,
-        }
+        self.dpdx = self.dpdx.transform(t, false).0;
+        self.dpdy = self.dpdy.transform(t, false).0;
     }
 }
 
-impl Interaction for SurfaceInteraction {
+impl<'a> Interaction for SurfaceInteraction<'a> {
     fn position(&self) -> Point3 {
         self.base.p
     }
@@ -314,7 +287,7 @@ impl Interaction for SurfaceInteraction {
     }
 }
 
-impl Default for SurfaceInteraction {
+impl<'a> Default for SurfaceInteraction<'a> {
     fn default() -> Self {
         Self {
             base: BaseInteraction {

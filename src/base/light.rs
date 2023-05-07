@@ -6,8 +6,6 @@ use crate::{
 };
 
 pub trait Light: Send + Sync {
-    fn preprocess(&mut self, _scene: &Scene) {}
-
     fn power(&self) -> RGBSpectrum;
 
     fn sample_point(

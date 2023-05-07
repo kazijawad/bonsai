@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     base::{
         constants::{Float, PI},
@@ -13,21 +11,21 @@ use crate::{
     spectra::rgb::RGBSpectrum,
 };
 
-pub struct DiffuseAreaLight {
+pub struct DiffuseAreaLight<'a> {
     intensity: RGBSpectrum,
-    shape: Arc<dyn Shape>,
+    shape: &'a (dyn Shape + 'a),
     double_sided: bool,
     area: Float,
 }
 
-pub struct DiffuseAreaLightOptions {
+pub struct DiffuseAreaLightOptions<'a> {
     pub intensity: RGBSpectrum,
-    pub shape: Arc<dyn Shape>,
+    pub shape: &'a (dyn Shape + 'a),
     pub double_sided: bool,
 }
 
-impl DiffuseAreaLight {
-    pub fn new(opts: DiffuseAreaLightOptions) -> Self {
+impl<'a> DiffuseAreaLight<'a> {
+    pub fn new(opts: DiffuseAreaLightOptions<'a>) -> Self {
         let area = opts.shape.area();
         Self {
             intensity: opts.intensity,
@@ -38,7 +36,7 @@ impl DiffuseAreaLight {
     }
 }
 
-impl Light for DiffuseAreaLight {
+impl<'a> Light for DiffuseAreaLight<'a> {
     fn power(&self) -> RGBSpectrum {
         if self.double_sided {
             2.0 * self.intensity * self.area * PI
@@ -134,7 +132,7 @@ impl Light for DiffuseAreaLight {
     }
 }
 
-impl AreaLight for DiffuseAreaLight {
+impl<'a> AreaLight for DiffuseAreaLight<'a> {
     fn emission(&self, interaction: &dyn Interaction, direction: &Vec3) -> RGBSpectrum {
         if self.double_sided || interaction.normal().dot(&Normal::from(*direction)) > 0.0 {
             self.intensity

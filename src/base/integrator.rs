@@ -4,16 +4,14 @@ use crate::{
     spectra::rgb::RGBSpectrum,
 };
 
-pub trait Integrator: Send + Sync {
-    fn preprocess(&self, scene: &Scene);
-
+pub trait Integrator<'a>: Send + Sync {
     fn radiance(
         &self,
         sampler: &mut Box<dyn Sampler>,
         ray: &mut Ray,
-        scene: &Scene,
+        scene: &Scene<'a>,
         depth: u32,
     ) -> RGBSpectrum;
 
-    fn render(&mut self, scene: &Scene);
+    fn render(&mut self, scene: &Scene<'a>);
 }

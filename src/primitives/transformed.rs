@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     base::{
         light::AreaLight,
@@ -11,18 +9,18 @@ use crate::{
     interactions::surface::SurfaceInteraction,
 };
 
-pub struct TransformedPrimitive {
-    primitive: Arc<dyn Primitive>,
+pub struct TransformedPrimitive<'a> {
+    primitive: &'a (dyn Primitive<'a> + 'a),
     primitive_to_world: AnimatedTransform,
 }
 
-impl Primitive for TransformedPrimitive {
+impl<'a> Primitive<'a> for TransformedPrimitive<'a> {
     fn world_bound(&self) -> Bounds3 {
         self.primitive_to_world
             .motion_bounds(&self.primitive.world_bound())
     }
 
-    fn intersect(&self, ray: &mut Ray, si: &mut SurfaceInteraction) -> bool {
+    fn intersect(&self, ray: &mut Ray, si: &mut SurfaceInteraction<'a>) -> bool {
         let mut interpolated_primitive_to_world = Transform::default();
 
         // Compute ray after transformation applied by primitive_to_world.
@@ -36,7 +34,7 @@ impl Primitive for TransformedPrimitive {
 
         // Transform instance's intersection data to world space.
         if !interpolated_primitive_to_world.is_identity() {
-            *si = si.transform(&interpolated_primitive_to_world);
+            si.transform(&interpolated_primitive_to_world);
         }
 
         true

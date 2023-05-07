@@ -1,47 +1,39 @@
-use std::sync::Arc;
-
 use crate::{
     base::{light::Light, primitive::Primitive},
     geometries::{bounds3::Bounds3, ray::Ray},
     interactions::surface::SurfaceInteraction,
 };
 
-pub struct Scene {
-    pub lights: Vec<Arc<dyn Light>>,
-    pub infinite_lights: Vec<Arc<dyn Light>>,
-    aggregate: Box<dyn Primitive>,
+pub struct Scene<'a> {
+    pub lights: Vec<&'a (dyn Light + 'a)>,
+    pub infinite_lights: Vec<&'a (dyn Light + 'a)>,
+    aggregate: &'a (dyn Primitive<'a> + 'a),
     bounds: Bounds3,
 }
 
-impl Scene {
-    pub fn new(aggregate: Box<dyn Primitive>, lights: Vec<Box<dyn Light>>) -> Self {
+impl<'a> Scene<'a> {
+    pub fn new(aggregate: &'a (dyn Primitive<'a> + 'a), lights: Vec<&'a (dyn Light + 'a)>) -> Self {
         let bounds = aggregate.world_bound();
-        let mut scene = Self {
+
+        let infinite_lights = lights
+            .iter()
+            .map(|v| *v)
+            .filter(|v| v.is_infinite())
+            .collect();
+
+        Self {
             bounds,
-            lights: Vec::with_capacity(lights.len()),
-            infinite_lights: vec![],
+            lights,
+            infinite_lights,
             aggregate,
-        };
-
-        for mut light in lights {
-            light.preprocess(&mut scene);
-            let light: Arc<dyn Light> = Arc::from(light);
-
-            if light.is_infinite() {
-                scene.infinite_lights.push(light.clone());
-            }
-
-            scene.lights.push(light);
         }
-
-        scene
     }
 
     pub fn world_bound(&self) -> Bounds3 {
         self.bounds
     }
 
-    pub fn intersect(&self, ray: &mut Ray, interaction: &mut SurfaceInteraction) -> bool {
+    pub fn intersect(&self, ray: &mut Ray, interaction: &mut SurfaceInteraction<'a>) -> bool {
         self.aggregate.intersect(ray, interaction)
     }
 

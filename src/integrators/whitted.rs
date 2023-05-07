@@ -24,7 +24,7 @@ pub struct WhittedIntegrator {
     max_depth: u32,
 }
 
-impl WhittedIntegrator {
+impl<'a> WhittedIntegrator {
     pub fn new(camera: Box<dyn Camera>, sampler: Box<dyn Sampler>, max_depth: u32) -> Self {
         Self {
             camera,
@@ -38,7 +38,7 @@ impl WhittedIntegrator {
         sampler: &mut Box<dyn Sampler>,
         ray: &Ray,
         si: &SurfaceInteraction,
-        scene: &Scene,
+        scene: &Scene<'a>,
         depth: u32,
     ) -> RGBSpectrum {
         // Compute specular reflection direction and BSDF.
@@ -85,7 +85,7 @@ impl WhittedIntegrator {
         sampler: &mut Box<dyn Sampler>,
         ray: &Ray,
         si: &SurfaceInteraction,
-        scene: &Scene,
+        scene: &Scene<'a>,
         depth: u32,
     ) -> RGBSpectrum {
         let p = si.base.p;
@@ -138,14 +138,12 @@ impl WhittedIntegrator {
     }
 }
 
-impl Integrator for WhittedIntegrator {
-    fn preprocess(&self, _scene: &Scene) {}
-
+impl<'a> Integrator<'a> for WhittedIntegrator {
     fn radiance(
         &self,
         sampler: &mut Box<dyn Sampler>,
         ray: &mut Ray,
-        scene: &Scene,
+        scene: &Scene<'a>,
         depth: u32,
     ) -> RGBSpectrum {
         let mut result = RGBSpectrum::default();
@@ -195,7 +193,7 @@ impl Integrator for WhittedIntegrator {
         result
     }
 
-    fn render(&mut self, scene: &Scene) {
+    fn render(&mut self, scene: &Scene<'a>) {
         let bounds = self.camera.film().bounds;
         let width = bounds.max.x - bounds.min.x;
 
