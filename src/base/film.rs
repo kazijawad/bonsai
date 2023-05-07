@@ -37,24 +37,26 @@ pub struct Film {
     max_sample_luminance: Float,
 }
 
+pub struct FilmOptions {
+    pub resolution: Point2,
+    pub crop_window: Bounds2,
+    pub filter: Box<dyn Filter>,
+    pub filename: String,
+    pub scale: Float,
+    pub max_sample_luminance: Float,
+}
+
 impl Film {
-    pub fn new(
-        resolution: &Point2,
-        crop_window: &Bounds2,
-        filter: Box<dyn Filter>,
-        filename: String,
-        scale: Float,
-        max_sample_luminance: Float,
-    ) -> Self {
+    pub fn new(opts: FilmOptions) -> Self {
         // Compute film image bounds.
         let bounds = Bounds2::new(
             &Point2::new(
-                (resolution.x * crop_window.min.x).ceil(),
-                (resolution.y * crop_window.min.y).ceil(),
+                (opts.resolution.x * opts.crop_window.min.x).ceil(),
+                (opts.resolution.y * opts.crop_window.min.y).ceil(),
             ),
             &Point2::new(
-                (resolution.x * crop_window.max.x).ceil(),
-                (resolution.y * crop_window.max.y).ceil(),
+                (opts.resolution.x * opts.crop_window.max.x).ceil(),
+                (opts.resolution.y * opts.crop_window.max.y).ceil(),
             ),
         );
 
@@ -66,22 +68,22 @@ impl Film {
         let mut filter_table = [0.0; FILTER_TABLE_WIDTH * FILTER_TABLE_WIDTH];
         for y in 0..FILTER_TABLE_WIDTH {
             for x in 0..FILTER_TABLE_WIDTH {
-                let px = (x as Float + 0.5) * filter.radius().x / FILTER_TABLE_WIDTH as Float;
-                let py = (y as Float + 0.5) * filter.radius().y / FILTER_TABLE_WIDTH as Float;
-                filter_table[offset] = filter.evaluate(&Point2::new(px, py));
+                let px = (x as Float + 0.5) * opts.filter.radius().x / FILTER_TABLE_WIDTH as Float;
+                let py = (y as Float + 0.5) * opts.filter.radius().y / FILTER_TABLE_WIDTH as Float;
+                filter_table[offset] = opts.filter.evaluate(&Point2::new(px, py));
                 offset += 1;
             }
         }
 
         Self {
-            full_resolution: resolution.clone(),
-            filter,
-            filename,
+            full_resolution: opts.resolution,
+            filter: opts.filter,
+            filename: opts.filename,
             bounds,
             pixels,
             filter_table,
-            scale,
-            max_sample_luminance,
+            scale: opts.scale,
+            max_sample_luminance: opts.max_sample_luminance,
         }
     }
 

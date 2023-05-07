@@ -16,26 +16,10 @@ use crate::{
 };
 
 pub struct PlasticMaterial {
-    kd: Arc<dyn Texture<RGBSpectrum>>,
-    ks: Arc<dyn Texture<RGBSpectrum>>,
-    roughness: Arc<dyn Texture<Float>>,
-    remap_roughness: bool,
-}
-
-impl PlasticMaterial {
-    pub fn new(
-        kd: Arc<dyn Texture<RGBSpectrum>>,
-        ks: Arc<dyn Texture<RGBSpectrum>>,
-        roughness: Arc<dyn Texture<Float>>,
-        remap_roughness: bool,
-    ) -> Self {
-        Self {
-            kd,
-            ks,
-            roughness,
-            remap_roughness,
-        }
-    }
+    pub kd: Box<dyn Texture<RGBSpectrum>>,
+    pub ks: Box<dyn Texture<RGBSpectrum>>,
+    pub roughness: Box<dyn Texture<Float>>,
+    pub remap_roughness: bool,
 }
 
 impl Material for PlasticMaterial {

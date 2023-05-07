@@ -3,96 +3,94 @@ use std::sync::Arc;
 use bonsai::*;
 
 fn main() {
-    let filter = Box::new(BoxFilter::new(Vec2::new(0.5, 0.5)));
+    let material = Arc::new(MatteMaterial {
+        kd: Box::new(ConstantTexture {
+            value: RGBSpectrum::new(0.5),
+        }),
+        sigma: Box::new(ConstantTexture { value: 0.0 }),
+    });
 
-    let film = Film::new(
-        &Point2::new(1024.0, 1024.0),
-        &Bounds2::new(&Point2::new(0.0, 0.0), &Point2::new(1.0, 1.0)),
-        filter,
-        String::from("result.exr"),
-        1.0,
-        Float::INFINITY,
-    );
+    let sphere = Arc::new(Sphere::new(SphereOptions {
+        transform: Transform::default(),
+        reverse_orientation: false,
+        radius: 1.0,
+        z_min: -1.0,
+        z_max: 1.0,
+        phi_max: 360.0,
+    }));
 
-    let material = Arc::new(MatteMaterial::new(
-        Arc::new(ConstantTexture::new(RGBSpectrum::new(0.5))),
-        Arc::new(ConstantTexture::new(0.0)),
-    ));
-
-    let sphere_transform = Arc::new(Transform::default());
-    let sphere = Arc::new(Sphere::new(
-        sphere_transform.clone(),
-        sphere_transform,
-        false,
-        1.0,
-        -1.0,
-        1.0,
-        360.0,
-    ));
-
-    let disk_transform = Arc::new(Transform::translate(&Vec3::new(0.0, 0.0, 2.0)));
-    let disk = Arc::new(Disk::new(
-        disk_transform.clone(),
-        Arc::new(disk_transform.inverse()),
-        false,
-        0.0,
-        1.0,
-        0.0,
-        360.0,
-    ));
-
-    let spot_from = Point3::new(2.0, 0.0, 0.0);
-    let spot_dir = (Point3::new(0.0, 0.0, 2.0) - spot_from).normalize();
-    let (spot_du, spot_dv) = Vec3::coordinate_system(&spot_dir);
-    let spot_transform = Transform::translate(&spot_from.into())
-        * Transform::from(Mat4::new(
-            spot_du.x, spot_du.y, spot_du.z, 0.0, spot_dv.x, spot_dv.y, spot_dv.z, 0.0, spot_dir.x,
-            spot_dir.y, spot_dir.z, 0.0, 0.0, 0.0, 0.0, 1.0,
-        ))
-        .inverse();
-    let spot_light = Box::new(SpotLight::new(
-        spot_transform,
-        RGBSpectrum::new(1.0),
-        30.0,
-        25.0,
-    ));
+    let disk = Arc::new(Disk::new(DiskOptions {
+        transform: Transform::translate(&Vec3::new(0.0, 0.0, 4.0)),
+        reverse_orientation: false,
+        height: 0.0,
+        radius: 5.0,
+        inner_radius: 0.0,
+        phi_max: 360.0,
+    }));
 
     let scene = Scene::new(
         Box::new(BVH::new(
-            vec![
-                Arc::new(GeometricPrimitive::new(sphere, material.clone(), None)),
-                Arc::new(GeometricPrimitive::new(disk.clone(), material, None)),
-            ],
+            vec![Arc::new(GeometricPrimitive {
+                shape: sphere,
+                material,
+                area_light: None,
+            })],
             4,
         )),
         vec![
-            spot_light,
-            Box::new(PointLight::new(
-                Transform::translate(&Vec3::new(2.0, 0.0, 0.0)),
-                RGBSpectrum::new(1.0),
-            )),
-            Box::new(DiffuseAreaLight::new(RGBSpectrum::new(1.0), disk, false)),
+            Box::new(DiffuseAreaLight::new(DiffuseAreaLightOptions {
+                intensity: RGBSpectrum::new(10.0),
+                shape: disk,
+                double_sided: false,
+            })),
+            Box::new(SpotLight::new(SpotLightOptions {
+                transform: Transform::default(),
+                from: Point3::new(3.0, 0.0, 0.0),
+                to: Point3::new(0.0, 0.0, 0.0),
+                intensity: RGBSpectrum::new(1.0),
+                cone_angle: 90.0,
+                cone_delta_angle: 0.0,
+            })),
         ],
     );
 
-    let camera_transform = Arc::new(Transform::look_at(
+    let film = Film::new(FilmOptions {
+        resolution: Point2::new(1024.0, 1024.0),
+        crop_window: Bounds2::new(&Point2::new(0.0, 0.0), &Point2::new(1.0, 1.0)),
+        filter: Box::new(BoxFilter::new(Vec2::new(0.5, 0.5))),
+        filename: String::from("result.exr"),
+        scale: 1.0,
+        max_sample_luminance: Float::INFINITY,
+    });
+
+    let camera_transform = Transform::look_at(
         &Point3::new(10.0, 0.0, 0.0),
         &Point3::new(0.0, 0.0, 0.0),
         &Vec3::new(0.0, 0.0, 1.0),
-    ));
-    let camera = Box::new(PerspectiveCamera::new(
-        AnimatedTransform::new(camera_transform.clone(), 0.0, camera_transform, 1.0),
-        0.0,
-        1.0,
-        0.0,
-        1e6,
-        45.0,
-        0.1,
-        1000.0,
+    );
+    let camera = Box::new(PerspectiveCamera::new(PerspectiveCameraOptions {
+        animated_transform: AnimatedTransform::new(
+            camera_transform.clone(),
+            0.0,
+            camera_transform,
+            1.0,
+        ),
+        shutter_open: 0.0,
+        shutter_close: 1.0,
+        lens_radius: 0.0,
+        focal_distance: 1e6,
+        fov: 45.0,
+        near: 0.1,
+        far: 1000.0,
         film,
-    ));
+    }));
 
-    let sampler = Box::new(StratifiedSampler::new(4, 4, true, 4));
+    let sampler = Box::new(StratifiedSampler::new(StratifiedSamplerOptions {
+        x_pixel_samples: 4,
+        y_pixel_samples: 4,
+        dimensions: 4,
+        jitter_samples: true,
+    }));
 
     let mut integrator = WhittedIntegrator::new(camera, sampler, 5);
     integrator.render(&scene);

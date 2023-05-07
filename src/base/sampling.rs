@@ -124,6 +124,11 @@ pub fn uniform_cone_pdf(cos_theta_max: Float) -> Float {
     1.0 / (2.0 * PI * (1.0 - cos_theta_max))
 }
 
+pub fn uniform_sample_triangle(u: &Point2) -> Point2 {
+    let sqrt0 = u[0].sqrt();
+    Point2::new(1.0 - sqrt0, u[1] * sqrt0)
+}
+
 pub fn cosine_sample_hemisphere(u: &Point2) -> Vec3 {
     let d = concentric_sample_disk(u);
     let z = (1.0 - d.x * d.x - d.y * d.y).max(0.0).sqrt();

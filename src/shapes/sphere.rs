@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     base::{
         constants::{Float, PI},
@@ -16,8 +14,8 @@ use crate::{
 };
 
 pub struct Sphere {
-    object_to_world: Arc<Transform>,
-    world_to_object: Arc<Transform>,
+    object_to_world: Transform,
+    world_to_object: Transform,
     reverse_orientation: bool,
     transform_swaps_handedness: bool,
     radius: Float,
@@ -28,29 +26,41 @@ pub struct Sphere {
     phi_max: Float,
 }
 
+pub struct SphereOptions {
+    pub transform: Transform,
+    pub reverse_orientation: bool,
+    pub radius: Float,
+    pub z_min: Float,
+    pub z_max: Float,
+    pub phi_max: Float,
+}
+
 impl Sphere {
-    pub fn new(
-        object_to_world: Arc<Transform>,
-        world_to_object: Arc<Transform>,
-        reverse_orientation: bool,
-        radius: Float,
-        z_min: Float,
-        z_max: Float,
-        phi_max: Float,
-    ) -> Self {
+    pub fn new(opts: SphereOptions) -> Self {
+        let object_to_world = opts.transform;
+        let world_to_object = if object_to_world.is_identity() {
+            object_to_world.clone()
+        } else {
+            object_to_world.inverse()
+        };
+
         let transform_swaps_handedness = object_to_world.swaps_handedness();
 
         Self {
             object_to_world,
             world_to_object,
-            reverse_orientation,
+            reverse_orientation: opts.reverse_orientation,
             transform_swaps_handedness,
-            radius,
-            z_min: z_min.min(z_max).clamp(-radius, radius),
-            z_max: z_min.max(z_max).clamp(-radius, radius),
-            theta_min: (z_min.min(z_max) / radius).clamp(-1.0, 1.0).acos(),
-            theta_max: (z_min.max(z_max) / radius).clamp(-1.0, 1.0).acos(),
-            phi_max: phi_max.clamp(0.0, 360.0).to_radians(),
+            radius: opts.radius,
+            z_min: opts.z_min.min(opts.z_max).clamp(-opts.radius, opts.radius),
+            z_max: opts.z_min.max(opts.z_max).clamp(-opts.radius, opts.radius),
+            theta_min: (opts.z_min.min(opts.z_max) / opts.radius)
+                .clamp(-1.0, 1.0)
+                .acos(),
+            theta_max: (opts.z_min.max(opts.z_max) / opts.radius)
+                .clamp(-1.0, 1.0)
+                .acos(),
+            phi_max: opts.phi_max.clamp(0.0, 360.0).to_radians(),
         }
     }
 }

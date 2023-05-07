@@ -19,7 +19,7 @@ pub use accelerators::bvh::BVH;
 pub use base::{
     camera::Camera,
     constants::Float,
-    film::Film,
+    film::{Film, FilmOptions},
     filter::Filter,
     integrator::Integrator,
     light::{AreaLight, Light},
@@ -32,7 +32,7 @@ pub use base::{
     },
     transform::{AnimatedTransform, Transform},
 };
-pub use cameras::perspective::PerspectiveCamera;
+pub use cameras::perspective::{PerspectiveCamera, PerspectiveCameraOptions};
 pub use filters::{
     gaussian::GaussianFilter, mitchell::MitchellFilter, r#box::BoxFilter, sinc::LanczosSincFilter,
     triangle::TriangleFilter,
@@ -43,11 +43,20 @@ pub use geometries::{
 };
 pub use integrators::whitted::WhittedIntegrator;
 pub use lights::{
-    diffuse::DiffuseAreaLight, directional::DirectionalLight, point::PointLight, spot::SpotLight,
+    diffuse::{DiffuseAreaLight, DiffuseAreaLightOptions},
+    directional::{DirectionalLight, DirectionalLightOptions},
+    point::{PointLight, PointLightOptions},
+    spot::{SpotLight, SpotLightOptions},
 };
 pub use materials::{matte::MatteMaterial, plastic::PlasticMaterial};
 pub use primitives::{geometric::GeometricPrimitive, transformed::TransformedPrimitive};
-pub use samplers::stratified::StratifiedSampler;
-pub use shapes::{cone::Cone, cylinder::Cylinder, disk::Disk, sphere::Sphere, triangle::Triangle};
+pub use samplers::stratified::{StratifiedSampler, StratifiedSamplerOptions};
+pub use shapes::{
+    cone::{Cone, ConeOptions},
+    cylinder::{Cylinder, CylinderOptions},
+    disk::{Disk, DiskOptions},
+    sphere::{Sphere, SphereOptions},
+    triangle::{Triangle, TriangleMesh, TriangleMeshOptions, TriangleOptions},
+};
 pub use spectra::rgb::RGBSpectrum;
 pub use textures::{constant::ConstantTexture, uv::UVTexture};

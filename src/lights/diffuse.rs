@@ -20,13 +20,19 @@ pub struct DiffuseAreaLight {
     area: Float,
 }
 
+pub struct DiffuseAreaLightOptions {
+    pub intensity: RGBSpectrum,
+    pub shape: Arc<dyn Shape>,
+    pub double_sided: bool,
+}
+
 impl DiffuseAreaLight {
-    pub fn new(intensity: RGBSpectrum, shape: Arc<dyn Shape>, double_sided: bool) -> Self {
-        let area = shape.area();
+    pub fn new(opts: DiffuseAreaLightOptions) -> Self {
+        let area = opts.shape.area();
         Self {
-            intensity,
-            shape,
-            double_sided,
+            intensity: opts.intensity,
+            shape: opts.shape,
+            double_sided: opts.double_sided,
             area,
         }
     }

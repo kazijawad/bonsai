@@ -16,12 +16,17 @@ pub struct PointLight {
     intensity: RGBSpectrum,
 }
 
+pub struct PointLightOptions {
+    pub transform: Transform,
+    pub intensity: RGBSpectrum,
+}
+
 impl PointLight {
-    pub fn new(light_to_world: Transform, intensity: RGBSpectrum) -> Self {
-        let position = Point3::default().transform(&light_to_world);
+    pub fn new(opts: PointLightOptions) -> Self {
+        let position = Point3::default().transform(&opts.transform);
         Self {
             position,
-            intensity,
+            intensity: opts.intensity,
         }
     }
 }

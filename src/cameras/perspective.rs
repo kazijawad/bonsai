@@ -22,19 +22,24 @@ pub struct PerspectiveCamera {
     film: Film,
 }
 
+pub struct PerspectiveCameraOptions {
+    pub animated_transform: AnimatedTransform,
+    pub shutter_open: Float,
+    pub shutter_close: Float,
+    pub lens_radius: Float,
+    pub focal_distance: Float,
+    pub fov: Float,
+    pub near: Float,
+    pub far: Float,
+    pub film: Film,
+}
+
 impl PerspectiveCamera {
-    pub fn new(
-        camera_to_world: AnimatedTransform,
-        shutter_open: Float,
-        shutter_close: Float,
-        lens_radius: Float,
-        focal_distance: Float,
-        fov: Float,
-        near: Float,
-        far: Float,
-        film: Film,
-    ) -> Self {
-        let camera_to_screen = Transform::perspective(fov, near, far);
+    pub fn new(opts: PerspectiveCameraOptions) -> Self {
+        let film = opts.film;
+
+        let camera_to_world = opts.animated_transform;
+        let camera_to_screen = Transform::perspective(opts.fov, opts.near, opts.far);
 
         let mut screen_window = Bounds2::default();
         let frame = film.full_resolution.x / film.full_resolution.y;
@@ -70,10 +75,10 @@ impl PerspectiveCamera {
         Self {
             camera_to_world,
             raster_to_camera,
-            shutter_open,
-            shutter_close,
-            lens_radius,
-            focal_distance,
+            shutter_open: opts.shutter_open,
+            shutter_close: opts.shutter_close,
+            lens_radius: opts.lens_radius,
+            focal_distance: opts.focal_distance,
             dx_camera,
             dy_camera,
             film,

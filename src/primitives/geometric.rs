@@ -19,20 +19,6 @@ pub struct GeometricPrimitive {
     pub area_light: Option<Arc<dyn AreaLight>>,
 }
 
-impl GeometricPrimitive {
-    pub fn new(
-        shape: Arc<dyn Shape>,
-        material: Arc<dyn Material>,
-        area_light: Option<Arc<dyn AreaLight>>,
-    ) -> Self {
-        Self {
-            shape,
-            material,
-            area_light,
-        }
-    }
-}
-
 impl Primitive for GeometricPrimitive {
     fn world_bound(&self) -> Bounds3 {
         self.shape.world_bound()

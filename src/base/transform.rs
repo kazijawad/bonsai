@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, ops::Mul, sync::Arc};
+use std::{cmp::Ordering, ops::Mul};
 
 use crate::{
     base::constants::Float,
@@ -17,8 +17,8 @@ pub struct Transform {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct AnimatedTransform {
-    pub start_transform: Arc<Transform>,
-    pub end_transform: Arc<Transform>,
+    pub start_transform: Transform,
+    pub end_transform: Transform,
     pub start_time: Float,
     pub end_time: Float,
     pub is_animated: bool,
@@ -275,12 +275,12 @@ impl Transform {
 
 impl AnimatedTransform {
     pub fn new(
-        start_transform: Arc<Transform>,
+        start_transform: Transform,
         start_time: Float,
-        end_transform: Arc<Transform>,
+        end_transform: Transform,
         end_time: Float,
     ) -> Self {
-        if Arc::ptr_eq(&start_transform, &end_transform) {
+        if start_transform == end_transform {
             return Self {
                 start_transform,
                 start_time,

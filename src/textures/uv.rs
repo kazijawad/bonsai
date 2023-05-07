@@ -9,13 +9,7 @@ use crate::{
 };
 
 pub struct UVTexture {
-    mapping: Box<dyn TextureMapping2D>,
-}
-
-impl UVTexture {
-    pub fn new(mapping: Box<dyn TextureMapping2D>) -> Self {
-        Self { mapping }
-    }
+    pub mapping: Box<dyn TextureMapping2D>,
 }
 
 impl Texture<RGBSpectrum> for UVTexture {

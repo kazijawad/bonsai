@@ -18,10 +18,17 @@ pub struct DirectionalLight {
     world_radius: Float,
 }
 
+pub struct DirectionalLightOptions {
+    pub from: Point3,
+    pub to: Point3,
+    pub intensity: RGBSpectrum,
+}
+
 impl DirectionalLight {
-    pub fn new(intensity: RGBSpectrum, direction: Vec3) -> Self {
+    pub fn new(opts: DirectionalLightOptions) -> Self {
+        let direction = opts.from - opts.to;
         Self {
-            intensity,
+            intensity: opts.intensity,
             direction,
             world_center: Point3::default(),
             world_radius: 0.0,

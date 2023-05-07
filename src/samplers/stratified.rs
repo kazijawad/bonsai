@@ -38,13 +38,20 @@ pub struct StratifiedSampler {
     rng: StdRng,
 }
 
+pub struct StratifiedSamplerOptions {
+    pub x_pixel_samples: usize,
+    pub y_pixel_samples: usize,
+    pub dimensions: usize,
+    pub jitter_samples: bool,
+}
+
 impl StratifiedSampler {
-    pub fn new(
-        x_pixel_samples: usize,
-        y_pixel_samples: usize,
-        jitter_samples: bool,
-        num_sampled_dimensions: usize,
-    ) -> Self {
+    pub fn new(opts: StratifiedSamplerOptions) -> Self {
+        let x_pixel_samples = opts.x_pixel_samples;
+        let y_pixel_samples = opts.y_pixel_samples;
+        let num_sampled_dimensions = opts.dimensions;
+        let jitter_samples = opts.jitter_samples;
+
         let samples_per_pixel = x_pixel_samples * y_pixel_samples;
 
         let samples_1d: Vec<Vec<Float>> =

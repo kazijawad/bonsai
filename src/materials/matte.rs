@@ -14,14 +14,8 @@ use crate::{
 };
 
 pub struct MatteMaterial {
-    kd: Arc<dyn Texture<RGBSpectrum>>,
-    sigma: Arc<dyn Texture<Float>>,
-}
-
-impl MatteMaterial {
-    pub fn new(kd: Arc<dyn Texture<RGBSpectrum>>, sigma: Arc<dyn Texture<Float>>) -> Self {
-        Self { kd, sigma }
-    }
+    pub kd: Box<dyn Texture<RGBSpectrum>>,
+    pub sigma: Box<dyn Texture<Float>>,
 }
 
 impl Material for MatteMaterial {

@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     base::{
         constants::{Float, PI},
@@ -15,8 +13,8 @@ use crate::{
 };
 
 pub struct Cone {
-    object_to_world: Arc<Transform>,
-    world_to_object: Arc<Transform>,
+    object_to_world: Transform,
+    world_to_object: Transform,
     reverse_orientation: bool,
     transform_swaps_handedness: bool,
     height: Float,
@@ -24,25 +22,33 @@ pub struct Cone {
     phi_max: Float,
 }
 
+pub struct ConeOptions {
+    pub transform: Transform,
+    pub reverse_orientation: bool,
+    pub height: Float,
+    pub radius: Float,
+    pub phi_max: Float,
+}
+
 impl Cone {
-    pub fn new(
-        object_to_world: Arc<Transform>,
-        world_to_object: Arc<Transform>,
-        reverse_orientation: bool,
-        height: Float,
-        radius: Float,
-        phi_max: Float,
-    ) -> Self {
+    pub fn new(opts: ConeOptions) -> Self {
+        let object_to_world = opts.transform;
+        let world_to_object = if object_to_world.is_identity() {
+            object_to_world.clone()
+        } else {
+            object_to_world.inverse()
+        };
+
         let transform_swaps_handedness = object_to_world.swaps_handedness();
 
         Self {
             object_to_world,
             world_to_object,
-            reverse_orientation,
+            reverse_orientation: opts.reverse_orientation,
             transform_swaps_handedness,
-            height,
-            radius,
-            phi_max: phi_max.clamp(0.0, 360.0).to_radians(),
+            height: opts.height,
+            radius: opts.radius,
+            phi_max: opts.phi_max.clamp(0.0, 360.0).to_radians(),
         }
     }
 }

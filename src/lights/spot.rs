@@ -6,7 +6,9 @@ use crate::{
         sampling::{uniform_cone_pdf, uniform_sample_cone},
         transform::Transform,
     },
-    geometries::{normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3},
+    geometries::{
+        mat4::Mat4, normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3,
+    },
     interactions::base::BaseInteraction,
     spectra::rgb::RGBSpectrum,
     utils::bxdf::cos_theta,
@@ -21,22 +23,39 @@ pub struct SpotLight {
     cos_falloff_start: Float,
 }
 
+pub struct SpotLightOptions {
+    pub transform: Transform,
+    pub from: Point3,
+    pub to: Point3,
+    pub intensity: RGBSpectrum,
+    pub cone_angle: Float,
+    pub cone_delta_angle: Float,
+}
+
 impl SpotLight {
-    pub fn new(
-        light_to_world: Transform,
-        intensity: RGBSpectrum,
-        total_width: Float,
-        falloff_start: Float,
-    ) -> Self {
+    pub fn new(opts: SpotLightOptions) -> Self {
+        let dir = (opts.to - opts.from).normalize();
+        let (du, dv) = Vec3::coordinate_system(&dir);
+
+        let light_to_world = opts.transform
+            * Transform::translate(&opts.from.into())
+            * Transform::from(Mat4::new(
+                du.x, du.y, du.z, 0.0, dv.x, dv.y, dv.z, 0.0, dir.x, dir.y, dir.z, 0.0, 0.0, 0.0,
+                0.0, 1.0,
+            ))
+            .inverse();
+
         let world_to_light = light_to_world.inverse();
+
         let position = Point3::default().transform(&light_to_world);
+
         Self {
             light_to_world,
             world_to_light,
             position,
-            intensity,
-            cos_total_width: total_width.to_radians().cos(),
-            cos_falloff_start: falloff_start.to_radians().cos(),
+            intensity: opts.intensity,
+            cos_total_width: opts.cone_angle.to_radians().cos(),
+            cos_falloff_start: (opts.cone_angle - opts.cone_delta_angle).to_radians().cos(),
         }
     }
 

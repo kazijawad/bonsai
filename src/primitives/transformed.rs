@@ -13,16 +13,7 @@ use crate::{
 
 pub struct TransformedPrimitive {
     primitive: Arc<dyn Primitive>,
-    primitive_to_world: Arc<AnimatedTransform>,
-}
-
-impl TransformedPrimitive {
-    pub fn new(primitive: Arc<dyn Primitive>, primitive_to_world: Arc<AnimatedTransform>) -> Self {
-        Self {
-            primitive,
-            primitive_to_world,
-        }
-    }
+    primitive_to_world: AnimatedTransform,
 }
 
 impl Primitive for TransformedPrimitive {
