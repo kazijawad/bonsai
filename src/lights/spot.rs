@@ -60,9 +60,9 @@ impl SpotLight {
     }
 
     fn falloff(&self, w: &Vec3) -> Float {
-        let wl = w.transform(&self.world_to_light, false).0.normalize();
+        let w_light = w.transform(&self.world_to_light, false).0.normalize();
 
-        let cos_theta = wl.z;
+        let cos_theta = w_light.z;
         if cos_theta < self.cos_total_width {
             return 0.0;
         }

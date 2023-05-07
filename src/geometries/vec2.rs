@@ -248,15 +248,26 @@ impl ops::Neg for &Vec2 {
 
 // INDEXING
 
-impl ops::Index<u32> for Vec2 {
+impl ops::Index<usize> for Vec2 {
     type Output = Float;
 
-    fn index(&self, index: u32) -> &Self::Output {
+    fn index(&self, index: usize) -> &Self::Output {
         debug_assert!(index <= 1);
         if index == 0 {
             &self.x
         } else {
             &self.y
+        }
+    }
+}
+
+impl ops::IndexMut<usize> for Vec2 {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        debug_assert!(index < 2);
+        if index == 0 {
+            &mut self.x
+        } else {
+            &mut self.y
         }
     }
 }

@@ -50,8 +50,8 @@ impl<'a> WhittedIntegrator {
         );
 
         // Return contribution of specular reflection.
-        let ns = Vec3::from(si.shading.n);
-        if pdf > 0.0 && !f.is_black() && wi.abs_dot(&ns) != 0.0 {
+        let ns = si.shading.n;
+        if pdf > 0.0 && !f.is_black() && wi.abs_dot_normal(&ns) != 0.0 {
             // Compute ray differential for specular reflection.
             let mut ray_diff = si.spawn_ray(&wi);
             if ray.has_differentials {
@@ -66,15 +66,16 @@ impl<'a> WhittedIntegrator {
                 let dwodx = -ray.rx_direction - wo;
                 let dwody = -ray.ry_direction - wo;
 
-                let ddndx = dwodx.dot(&ns) + wo.dot(&Vec3::from(dndx));
-                let ddndy = dwody.dot(&ns) + wo.dot(&Vec3::from(dndy));
+                let ddndx = dwodx.dot_normal(&ns) + wo.dot_normal(&dndx);
+                let ddndy = dwody.dot_normal(&ns) + wo.dot_normal(&dndy);
                 ray_diff.rx_direction =
-                    wi - dwodx + 2.0 * (Vec3::from(wo.dot(&ns) * dndx) + ddndx * ns);
+                    wi - dwodx + 2.0 * Vec3::from(wo.dot_normal(&ns) * dndx + ddndx * ns);
                 ray_diff.ry_direction =
-                    wi - dwody + 2.0 * (Vec3::from(wo.dot(&ns) * dndy) + ddndy * ns);
+                    wi - dwody + 2.0 * Vec3::from(wo.dot_normal(&ns) * dndy + ddndy * ns);
             }
 
-            f * self.radiance(sampler, &mut ray_diff, scene, depth + 1) * wi.abs_dot(&ns) / pdf
+            f * self.radiance(sampler, &mut ray_diff, scene, depth + 1) * wi.abs_dot_normal(&ns)
+                / pdf
         } else {
             RGBSpectrum::default()
         }
@@ -95,9 +96,9 @@ impl<'a> WhittedIntegrator {
         let (wi, f, pdf, _) =
             bsdf.sample(&wo, &sampler.get_2d(), BSDF_TRANSMISSION | BSDF_SPECULAR);
 
-        let mut l = RGBSpectrum::default();
-        let mut ns = Vec3::from(si.shading.n);
-        if pdf > 0.0 && !f.is_black() && wi.abs_dot(&ns) != 0.0 {
+        let mut result = RGBSpectrum::default();
+        let mut ns = si.shading.n;
+        if pdf > 0.0 && !f.is_black() && wi.abs_dot_normal(&ns) != 0.0 {
             // Compute ray differential for specular reflection.
             let mut ray_diff = si.spawn_ray(&wi);
             if ray.has_differentials {
@@ -110,7 +111,7 @@ impl<'a> WhittedIntegrator {
                 let mut dndy = si.shading.dndu * si.dudy + si.shading.dndv * si.dvdy;
 
                 let mut eta = 1.0 / bsdf.eta;
-                if wo.dot(&ns) < 0.0 {
+                if wo.dot_normal(&ns) < 0.0 {
                     eta = 1.0 / eta;
                     ns = -ns;
                     dndx = -dndx;
@@ -120,21 +121,26 @@ impl<'a> WhittedIntegrator {
                 let dwodx = -ray.rx_direction - wo;
                 let dwody = -ray.ry_direction - wo;
 
-                let ddndx = dwodx.dot(&ns) + wo.dot(&Vec3::from(dndx));
-                let ddndy = dwody.dot(&ns) + wo.dot(&Vec3::from(dndy));
+                let ddndx = dwodx.dot_normal(&ns) + wo.dot_normal(&dndx);
+                let ddndy = dwody.dot_normal(&ns) + wo.dot_normal(&dndy);
 
-                let mu = eta * wo.dot(&ns) - wi.abs_dot(&ns);
-                let dmudx = (eta - (eta * eta * wo.dot(&ns)) / wi.abs_dot(&ns)) * ddndx;
-                let dmudy = (eta - (eta * eta * wo.dot(&ns)) / wi.abs_dot(&ns)) * ddndy;
+                let mu = eta * wo.dot_normal(&ns) - wi.abs_dot_normal(&ns);
+                let dmudx =
+                    (eta - (eta * eta * wo.dot_normal(&ns)) / wi.abs_dot_normal(&ns)) * ddndx;
+                let dmudy =
+                    (eta - (eta * eta * wo.dot_normal(&ns)) / wi.abs_dot_normal(&ns)) * ddndy;
 
-                ray_diff.rx_direction = wi - eta * dwodx + (Vec3::from(mu * dndx) + dmudx * ns);
-                ray_diff.ry_direction = wi - eta * dwody + (Vec3::from(mu * dndy) + dmudy * ns);
+                ray_diff.rx_direction = wi - eta * dwodx + Vec3::from(mu * dndx + dmudx * ns);
+                ray_diff.ry_direction = wi - eta * dwody + Vec3::from(mu * dndy + dmudy * ns);
             }
 
-            l = f * self.radiance(sampler, &mut ray_diff, scene, depth + 1);
+            result = f
+                * self.radiance(sampler, &mut ray_diff, scene, depth + 1)
+                * wi.abs_dot_normal(&ns)
+                / pdf;
         }
 
-        l
+        result
     }
 }
 
@@ -172,15 +178,14 @@ impl<'a> Integrator<'a> for WhittedIntegrator {
 
         // Add contribution of each light source.
         for light in scene.lights.iter() {
-            let (emitted_radiance, incident_dir, pdf, visibility) =
-                light.sample_point(&si, &sampler.get_2d());
-            if emitted_radiance.is_black() || pdf == 0.0 {
+            let (emission, wi, pdf, visibility) = light.sample_point(&si, &sampler.get_2d());
+            if emission.is_black() || pdf == 0.0 {
                 continue;
             }
 
-            let f = si.bsdf.as_ref().unwrap().f(&wo, &incident_dir, BSDF_ALL);
+            let f = si.bsdf.as_ref().unwrap().f(&wo, &wi, BSDF_ALL);
             if !f.is_black() && visibility.is_unoccluded(scene) {
-                result += f * emitted_radiance * incident_dir.abs_dot(&Vec3::from(n)) / pdf;
+                result += f * emission * wi.abs_dot_normal(&n) / pdf;
             }
         }
 

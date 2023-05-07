@@ -6,6 +6,7 @@ mod filters;
 mod geometries;
 mod integrators;
 mod interactions;
+mod io;
 mod lights;
 mod materials;
 mod primitives;
@@ -24,6 +25,7 @@ pub use base::{
     integrator::Integrator,
     light::{AreaLight, Light},
     material::Material,
+    mipmap::ImageWrap,
     primitive::Primitive,
     sampler::Sampler,
     scene::Scene,
@@ -46,6 +48,7 @@ pub use integrators::whitted::WhittedIntegrator;
 pub use lights::{
     diffuse::{DiffuseAreaLight, DiffuseAreaLightOptions},
     directional::{DirectionalLight, DirectionalLightOptions},
+    infinite::InfiniteAreaLight,
     point::{PointLight, PointLightOptions},
     spot::{SpotLight, SpotLightOptions},
 };
@@ -60,4 +63,8 @@ pub use shapes::{
     triangle::{Triangle, TriangleMesh, TriangleMeshOptions, TriangleOptions},
 };
 pub use spectra::rgb::RGBSpectrum;
-pub use textures::{constant::ConstantTexture, uv::UVTexture};
+pub use textures::{
+    constant::ConstantTexture,
+    image::{ImageTexture, ImageTextureOptions},
+    uv::UVTexture,
+};

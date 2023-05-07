@@ -1,9 +1,20 @@
 use bonsai::*;
 
 fn main() {
-    let material = MatteMaterial {
-        kd: &ConstantTexture {
-            value: RGBSpectrum::new(0.5),
+    let image_material = MatteMaterial {
+        kd: &ImageTexture::new(ImageTextureOptions {
+            path: "assets/textures/lines.exr",
+            mapping: Box::new(UVMapping2D::default()),
+            max_anisotropy: 8.0,
+            wrap_mode: ImageWrap::Repeat,
+            is_gamma_corrected: false,
+        }),
+        sigma: &ConstantTexture { value: 0.0 },
+    };
+
+    let uv_material = MatteMaterial {
+        kd: &UVTexture {
+            mapping: Box::new(UVMapping2D::default()),
         },
         sigma: &ConstantTexture { value: 0.0 },
     };
@@ -19,32 +30,11 @@ fn main() {
 
     let sphere_prim = GeometricPrimitive {
         shape: &sphere_shape,
-        material: &material,
+        material: &uv_material,
         area_light: None,
     };
 
-    let disk_shape = Disk::new(DiskOptions {
-        transform: Transform::translate(&Vec3::new(0.0, 0.0, 4.0)),
-        reverse_orientation: false,
-        height: 0.0,
-        radius: 5.0,
-        inner_radius: 0.0,
-        phi_max: 360.0,
-    });
-
-    let disk_light = DiffuseAreaLight::new(DiffuseAreaLightOptions {
-        intensity: RGBSpectrum::new(10.0),
-        shape: &disk_shape,
-        double_sided: false,
-    });
-
-    let disk_prim = GeometricPrimitive {
-        shape: &disk_shape,
-        material: &material,
-        area_light: Some(&disk_light),
-    };
-
-    let aggregate = BVH::new(vec![&sphere_prim, &disk_prim], 4);
+    let aggregate = BVH::new(vec![&sphere_prim], 4);
 
     let spot_light = SpotLight::new(SpotLightOptions {
         transform: Transform::default(),
@@ -55,7 +45,7 @@ fn main() {
         cone_delta_angle: 0.0,
     });
 
-    let scene = Scene::new(&aggregate, vec![&disk_light, &spot_light]);
+    let scene = Scene::new(&aggregate, vec![&spot_light]);
 
     let film = Film::new(FilmOptions {
         resolution: Point2::new(1024.0, 1024.0),
@@ -67,7 +57,7 @@ fn main() {
     });
 
     let camera_transform = Transform::look_at(
-        &Point3::new(10.0, 0.0, 0.0),
+        &Point3::new(5.0, 0.0, 0.0),
         &Point3::new(0.0, 0.0, 0.0),
         &Vec3::new(0.0, 0.0, 1.0),
     );

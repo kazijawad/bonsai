@@ -40,6 +40,15 @@ pub fn next_up(mut v: Float) -> Float {
     Float::from_bits(ui)
 }
 
+pub fn modulo(a: i32, b: i32) -> i32 {
+    let result = a - (a / b) * b;
+    if result < 0 {
+        result + b
+    } else {
+        result
+    }
+}
+
 pub fn solve_linear_system_2x2(
     a: [[Float; 2]; 2],
     b: [Float; 2],

@@ -20,42 +20,32 @@ pub trait TextureMapping3D: Send + Sync {
 }
 
 pub struct UVMapping2D {
-    su: Float,
-    sv: Float,
-    du: Float,
-    dv: Float,
+    pub su: Float,
+    pub sv: Float,
+    pub du: Float,
+    pub dv: Float,
 }
 
 pub struct SphericalMapping2D {
-    world_to_texture: Transform,
+    pub world_to_texture: Transform,
 }
 
 pub struct CylindricalMapping2D {
-    world_to_texture: Transform,
+    pub world_to_texture: Transform,
 }
 
 pub struct PlanarMapping2D {
-    vs: Vec3,
-    vt: Vec3,
-    ds: Float,
-    dt: Float,
+    pub vs: Vec3,
+    pub vt: Vec3,
+    pub ds: Float,
+    pub dt: Float,
 }
 
 pub struct IdentityMapping3D {
     world_to_texture: Transform,
 }
 
-impl UVMapping2D {
-    pub fn new(su: Float, sv: Float, du: Float, dv: Float) -> Self {
-        Self { su, sv, du, dv }
-    }
-}
-
 impl SphericalMapping2D {
-    pub fn new(world_to_texture: Transform) -> Self {
-        Self { world_to_texture }
-    }
-
     fn sphere(&self, p: &Point3) -> Point2 {
         let v = (p.transform(&self.world_to_texture) - Point3::default()).normalize();
         let theta = v.spherical_theta();
@@ -65,25 +55,9 @@ impl SphericalMapping2D {
 }
 
 impl CylindricalMapping2D {
-    pub fn new(world_to_texture: Transform) -> Self {
-        Self { world_to_texture }
-    }
-
     fn cylinder(&self, p: &Point3) -> Point2 {
         let v = (p.transform(&self.world_to_texture) - Point3::default()).normalize();
         Point2::new((PI + v.y.atan2(v.x)) * (1.0 / (2.0 * PI)), v.z)
-    }
-}
-
-impl PlanarMapping2D {
-    pub fn new(vs: Vec3, vt: Vec3, ds: Float, dt: Float) -> Self {
-        Self { vs, vt, ds, dt }
-    }
-}
-
-impl IdentityMapping3D {
-    pub fn new(world_to_texture: Transform) -> Self {
-        Self { world_to_texture }
     }
 }
 
@@ -164,4 +138,29 @@ impl TextureMapping3D for IdentityMapping3D {
         (*dpdy, _) = si.dpdy.transform(&self.world_to_texture, false);
         si.base.p.transform(&self.world_to_texture)
     }
+}
+
+impl Default for UVMapping2D {
+    fn default() -> Self {
+        Self {
+            su: 1.0,
+            sv: 1.0,
+            du: 0.0,
+            dv: 0.0,
+        }
+    }
+}
+
+pub fn lanczos(x: Float, tau: Float) -> Float {
+    let mut x = x.abs();
+    if x < 1e-5 {
+        return 1.0;
+    }
+    if x > 1.0 {
+        return 0.0;
+    }
+    x *= PI;
+    let s = (x * tau).sin() / (x * tau);
+    let lanczos = x.sin() / x;
+    s * lanczos
 }
