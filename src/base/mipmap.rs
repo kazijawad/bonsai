@@ -117,7 +117,7 @@ impl MIPMap {
         }
 
         // Initialize levels of MIPMap from image.
-        let num_levels = 1 + (resolution[0].max(resolution[1])).log2() as usize;
+        let num_levels = 1 + resolution[0].max(resolution[1]).log2() as usize;
         let mut pyramid: Vec<PyramidLevel> = Vec::with_capacity(num_levels);
 
         // Initialize most detailed level of MIPMap.
@@ -153,10 +153,10 @@ impl MIPMap {
 
         // Initialize EWA filter weights if needed.
         let mut weight_lut = [0.0 as Float; WEIGHT_LUT_SIZE];
+        let alpha = -2.0;
         for i in 0..WEIGHT_LUT_SIZE {
-            let alpha = 2.0;
             let r2 = i as Float / (WEIGHT_LUT_SIZE - 1) as Float;
-            weight_lut[i] = (-alpha * r2).exp() - (-alpha).exp();
+            weight_lut[i] = (alpha * r2).exp() - alpha.exp();
         }
 
         Self {
@@ -267,12 +267,14 @@ impl MIPMap {
         // Scan over ellipse bound and compute quadratic equation.
         let mut sum = RGBSpectrum::default();
         let mut sum_weights = 0.0;
-        for it in (t0 as i32)..(t1 as i32) {
+        for it in (t0 as i32)..=(t1 as i32) {
             let tt = it as Float - st[1];
-            for is in (s0 as i32)..(s1 as i32) {
+            for is in (s0 as i32)..=(s1 as i32) {
                 let ss = is as Float - st[0];
+
                 // Compute squared radius and filter texel if inside ellipse.
                 let r2 = a * ss * ss + b * ss * tt + c * tt * tt;
+
                 if r2 < 1.0 {
                     let index = (r2 * WEIGHT_LUT_SIZE as Float).min(WEIGHT_LUT_SIZE as Float - 1.0)
                         as usize;
@@ -300,7 +302,7 @@ impl MIPMap {
 
             for j in 0..4 {
                 let p = first_texel + j as Float + 0.5;
-                weight[j] = lanczos((p - filter_width) + 0.5, 2.0);
+                weight[j] = lanczos((p - center) / filter_width, 2.0);
             }
 
             // Normalize filter weights for texel resampling.

@@ -12,13 +12,6 @@ fn main() {
         sigma: &ConstantTexture { value: 0.0 },
     };
 
-    let uv_material = MatteMaterial {
-        kd: &UVTexture {
-            mapping: Box::new(UVMapping2D::default()),
-        },
-        sigma: &ConstantTexture { value: 0.0 },
-    };
-
     let sphere_shape = Sphere::new(SphereOptions {
         transform: Transform::default(),
         reverse_orientation: false,
@@ -30,7 +23,7 @@ fn main() {
 
     let sphere_prim = GeometricPrimitive {
         shape: &sphere_shape,
-        material: &uv_material,
+        material: &image_material,
         area_light: None,
     };
 
