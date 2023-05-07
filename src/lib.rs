@@ -24,6 +24,7 @@ pub use base::{
     integrator::Integrator,
     light::{AreaLight, Light},
     material::Material,
+    primitive::Primitive,
     sampler::Sampler,
     scene::Scene,
     texture::{
