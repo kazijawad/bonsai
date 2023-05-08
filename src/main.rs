@@ -8,6 +8,7 @@ fn main() {
             max_anisotropy: 8.0,
             wrap_mode: ImageWrap::Repeat,
             is_gamma_corrected: false,
+            use_trilinear: false,
         }),
         sigma: &ConstantTexture { value: 0.0 },
     };

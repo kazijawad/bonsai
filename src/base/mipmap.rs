@@ -9,30 +9,27 @@ use crate::{
 
 const WEIGHT_LUT_SIZE: usize = 128;
 
-#[derive(Debug)]
 pub enum ImageWrap {
     Repeat,
     Black,
     Clamp,
 }
 
-#[derive(Debug)]
 pub struct MIPMap {
     resolution: Point2,
+    pyramid: Vec<Image>,
+    weight_lut: [Float; WEIGHT_LUT_SIZE],
     max_anisotropy: Float,
     wrap_mode: ImageWrap,
-    pyramid: Vec<PyramidLevel>,
-    weight_lut: [Float; WEIGHT_LUT_SIZE],
+    use_trilinear: bool,
 }
 
-#[derive(Debug)]
-struct PyramidLevel {
+struct Image {
     pub data: Vec<RGBSpectrum>,
-    pub s_size: i32,
-    pub t_size: i32,
+    pub width: i32,
+    pub height: i32,
 }
 
-#[derive(Debug)]
 struct ResampleWeight {
     first_texel: i32,
     weight: [Float; 4],
@@ -44,6 +41,7 @@ impl MIPMap {
         resolution: &mut Point2,
         max_anisotropy: Float,
         wrap_mode: ImageWrap,
+        use_trilinear: bool,
     ) -> Self {
         let width = resolution[0] as u32;
         let height = resolution[1] as u32;
@@ -58,14 +56,12 @@ impl MIPMap {
 
             // Resample image in s direction.
             let s_weights = Self::resample_weights(width, width_pow2);
-            let mut resampled_image =
-                vec![RGBSpectrum::default(); (width_pow2 * height_pow2) as usize];
+            let mut resampled_image = Vec::with_capacity((width_pow2 * height_pow2) as usize);
 
             // Apply weights to zoom in s direction.
             for t in 0..height {
                 for s in 0..width_pow2 {
                     // Compute (s,t) texel in s-zoomed image.
-                    let image_i = (t * width_pow2 + s) as usize;
                     let resample_weight = &s_weights[s as usize];
 
                     for j in 0..4usize {
@@ -78,8 +74,9 @@ impl MIPMap {
                         }
 
                         if source_s >= 0 && source_s < width {
-                            resampled_image[image_i] += &image[(t * width + source_s) as usize]
-                                * &resample_weight.weight[j];
+                            resampled_image.push(
+                                image[(t * width + source_s) as usize] * resample_weight.weight[j],
+                            );
                         }
                     }
                 }
@@ -118,54 +115,59 @@ impl MIPMap {
 
         // Initialize levels of MIPMap from image.
         let num_levels = 1 + resolution[0].max(resolution[1]).log2() as usize;
-        let mut pyramid: Vec<PyramidLevel> = Vec::with_capacity(num_levels);
+
+        let mut mipmap = Self {
+            resolution: resolution.clone(),
+            pyramid: Vec::with_capacity(num_levels),
+            weight_lut: [0.0 as Float; WEIGHT_LUT_SIZE],
+            max_anisotropy,
+            wrap_mode,
+            use_trilinear,
+        };
 
         // Initialize most detailed level of MIPMap.
-        pyramid.push(PyramidLevel {
+        mipmap.pyramid.push(Image {
             data: image,
-            s_size: resolution[0] as i32,
-            t_size: resolution[1] as i32,
+            width: resolution[0] as i32,
+            height: resolution[1] as i32,
         });
+
         for i in 1..num_levels {
             // Initialize ith MIPMap level from i-1 level.
-            let last_level = &pyramid[i - 1];
-            let s_size = (last_level.s_size / 2).max(1);
-            let t_size = (last_level.t_size / 2).max(1);
+            let last_image = &mipmap.pyramid[i - 1];
+            let width = (last_image.width / 2).max(1);
+            let height = (last_image.height / 2).max(1);
 
             // Filter four texels from finer level of pyramid.
-            let mut level = PyramidLevel {
-                data: vec![RGBSpectrum::default(); (s_size * t_size) as usize],
-                s_size,
-                t_size,
-            };
-            for t in 0..t_size {
-                for s in 0..s_size {
-                    level.data[(t * s_size + s) as usize] = 0.25
-                        * (Self::texel(last_level, &wrap_mode, 2 * s, 2 * t)
-                            + Self::texel(last_level, &wrap_mode, 2 * s + 1, 2 * t)
-                            + Self::texel(last_level, &wrap_mode, 2 * s, 2 * t + 1)
-                            + Self::texel(last_level, &wrap_mode, 2 * s + 1, 2 * t + 1));
+            let mut data = Vec::with_capacity((width * height) as usize);
+            for t in 0..height {
+                for s in 0..width {
+                    data.push(
+                        0.25 * (mipmap.texel(i - 1, 2 * s, 2 * t)
+                            + mipmap.texel(i - 1, 2 * s + 1, 2 * t)
+                            + mipmap.texel(i - 1, 2 * s, 2 * t + 1)
+                            + mipmap.texel(i - 1, 2 * s + 1, 2 * t + 1)),
+                    );
                 }
             }
 
-            pyramid.push(level)
+            mipmap.pyramid.push(Image {
+                data,
+                width,
+                height,
+            })
         }
 
         // Initialize EWA filter weights if needed.
-        let mut weight_lut = [0.0 as Float; WEIGHT_LUT_SIZE];
-        let alpha = -2.0;
-        for i in 0..WEIGHT_LUT_SIZE {
-            let r2 = i as Float / (WEIGHT_LUT_SIZE - 1) as Float;
-            weight_lut[i] = (alpha * r2).exp() - alpha.exp();
+        if !use_trilinear {
+            let alpha = -2.0;
+            for i in 0..WEIGHT_LUT_SIZE {
+                let r2 = i as Float / (WEIGHT_LUT_SIZE - 1) as Float;
+                mipmap.weight_lut[i] = (alpha * r2).exp() - alpha.exp();
+            }
         }
 
-        Self {
-            resolution: resolution.clone(),
-            max_anisotropy,
-            wrap_mode,
-            pyramid,
-            weight_lut,
-        }
+        mipmap
     }
 
     pub fn width(&self) -> Float {
@@ -176,7 +178,20 @@ impl MIPMap {
         self.resolution.y
     }
 
+    pub fn levels(&self) -> usize {
+        self.pyramid.len()
+    }
+
     pub fn lookup(&self, st: &mut Point2, dst0: &mut Vec2, dst1: &mut Vec2) -> RGBSpectrum {
+        if self.use_trilinear {
+            let width = dst0[0]
+                .abs()
+                .max(dst0[1].abs())
+                .max(dst1[0].abs())
+                .max(dst1[1].abs());
+            return self.trilinear(st, width);
+        }
+
         // Compute ellipse minor and major axes.
         if dst0.length_squared() < dst1.length_squared() {
             mem::swap(dst0, dst1);
@@ -196,24 +211,40 @@ impl MIPMap {
 
         // Choose level of detail for EWA lookup and perform EWA filtering.
         let lod = (self.pyramid.len() as Float - 1.0 + minor_length.log2()).max(0.0);
-        let lodf = lod.floor();
+        let floor_lod = lod.floor();
         RGBSpectrum::lerp(
-            lod - lodf,
-            &self.ewa(lodf as usize, st, dst0, dst1),
-            &self.ewa(lodf as usize + 1, st, dst0, dst1),
+            lod - floor_lod,
+            &self.ewa(floor_lod as usize, st, dst0, dst1),
+            &self.ewa(floor_lod as usize + 1, st, dst0, dst1),
         )
     }
 
-    fn levels(&self) -> usize {
-        self.pyramid.len()
+    pub fn trilinear(&self, st: &Point2, width: Float) -> RGBSpectrum {
+        // Compute MIPMap level for trilinear filtering.
+        let level = self.levels() as Float - 1.0 + width.max(1e-8).log2();
+
+        // Perform trilinear interpolation at appropriate MIPMap level.
+        if level < 0.0 {
+            self.triangle(0, st)
+        } else if level >= self.levels() as Float - 1.0 {
+            self.texel(self.levels() - 1, 0, 0)
+        } else {
+            let level_floor = level.floor() as usize;
+            let delta = level - level_floor as Float;
+            RGBSpectrum::lerp(
+                delta,
+                &self.triangle(level_floor, st),
+                &self.triangle(level_floor + 1, st),
+            )
+        }
     }
 
     fn triangle(&self, level: usize, st: &Point2) -> RGBSpectrum {
         let level = level.clamp(0, self.levels() - 1);
-        let level = &self.pyramid[level];
+        let image = &self.pyramid[level];
 
-        let s = st[0] * level.s_size as Float - 0.5;
-        let t = st[1] * level.t_size as Float - 0.5;
+        let s = st[0] * image.width as Float - 0.5;
+        let t = st[1] * image.height as Float - 0.5;
 
         let sf = s.floor();
         let tf = t.floor();
@@ -224,26 +255,26 @@ impl MIPMap {
         let sf = sf as i32;
         let tf = tf as i32;
 
-        (1.0 - ds) * (1.0 - dt) * Self::texel(level, &self.wrap_mode, sf, tf)
-            + (1.0 - ds) * dt * Self::texel(level, &self.wrap_mode, sf, tf + 1)
-            + ds * (1.0 - dt) * Self::texel(level, &self.wrap_mode, sf + 1, tf)
-            + ds * dt * Self::texel(level, &self.wrap_mode, sf + 1, tf + 1)
+        (1.0 - ds) * (1.0 - dt) * self.texel(level, sf, tf)
+            + (1.0 - ds) * dt * self.texel(level, sf, tf + 1)
+            + ds * (1.0 - dt) * self.texel(level, sf + 1, tf)
+            + ds * dt * self.texel(level, sf + 1, tf + 1)
     }
 
     fn ewa(&self, level: usize, st: &mut Point2, dst0: &mut Vec2, dst1: &mut Vec2) -> RGBSpectrum {
         if level >= self.levels() {
-            return Self::texel(&self.pyramid[self.levels() - 1], &self.wrap_mode, 0, 0);
+            return self.texel(self.levels() - 1, 0, 0);
         }
 
-        let level = &self.pyramid[level];
+        let image = &self.pyramid[level];
 
         // Convert EWA coordinates to appropriate scale for level.
-        st[0] = st[0] * level.s_size as Float - 0.5;
-        st[1] = st[1] * level.t_size as Float - 0.5;
-        dst0[0] *= level.s_size as Float;
-        dst0[1] *= level.t_size as Float;
-        dst1[0] *= level.s_size as Float;
-        dst1[1] *= level.t_size as Float;
+        st[0] = st[0] * image.width as Float - 0.5;
+        st[1] = st[1] * image.height as Float - 0.5;
+        dst0[0] *= image.width as Float;
+        dst0[1] *= image.height as Float;
+        dst1[0] *= image.width as Float;
+        dst1[1] *= image.height as Float;
 
         // Compute ellipse coefficients to bound EWA filter region.
         let mut a = dst0[1] * dst0[1] + dst1[1] * dst1[1] + 1.0;
@@ -279,13 +310,37 @@ impl MIPMap {
                     let index = (r2 * WEIGHT_LUT_SIZE as Float).min(WEIGHT_LUT_SIZE as Float - 1.0)
                         as usize;
                     let weight = self.weight_lut[index];
-                    sum += Self::texel(level, &self.wrap_mode, is, it) * weight;
+                    sum += self.texel(level, is, it) * weight;
                     sum_weights += weight;
                 }
             }
         }
 
         sum / sum_weights
+    }
+
+    fn texel(&self, level: usize, mut s: i32, mut t: i32) -> RGBSpectrum {
+        let image = &self.pyramid[level];
+
+        // Compute texel (s,t) accounting for boundary conditions.
+        match self.wrap_mode {
+            ImageWrap::Repeat => {
+                s = modulo(s, image.width);
+                t = modulo(t, image.height);
+            }
+            ImageWrap::Clamp => {
+                s = s.clamp(0, image.width - 1);
+                t = t.clamp(0, image.height - 1);
+            }
+            ImageWrap::Black => {
+                let black = RGBSpectrum::default();
+                if s < 0 || s >= image.width || t < 0 || t >= image.height {
+                    return black;
+                }
+            }
+        }
+
+        image.data[(t * image.width + s) as usize]
     }
 
     fn resample_weights(old: i32, new: i32) -> Vec<ResampleWeight> {
@@ -318,26 +373,5 @@ impl MIPMap {
         }
 
         weights
-    }
-
-    fn texel(level: &PyramidLevel, wrap_mode: &ImageWrap, mut s: i32, mut t: i32) -> RGBSpectrum {
-        // Compute texel (s,t) accounting for boundary conditions.
-        match wrap_mode {
-            ImageWrap::Repeat => {
-                s = modulo(s, level.s_size);
-                t = modulo(t, level.t_size);
-            }
-            ImageWrap::Clamp => {
-                s = s.clamp(0, level.s_size - 1);
-                t = t.clamp(0, level.t_size - 1);
-            }
-            ImageWrap::Black => {
-                let black = RGBSpectrum::default();
-                if s < 0 || s >= level.s_size || t < 0 || t >= level.t_size {
-                    return black;
-                }
-            }
-        }
-        level.data[(t * level.s_size + s) as usize]
     }
 }

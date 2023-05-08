@@ -21,6 +21,7 @@ pub struct ImageTextureOptions<'a> {
     pub max_anisotropy: Float,
     pub wrap_mode: ImageWrap,
     pub is_gamma_corrected: bool,
+    pub use_trilinear: bool,
 }
 
 impl ImageTexture {
@@ -44,7 +45,13 @@ impl ImageTexture {
             }
         }
 
-        let mipmap = MIPMap::new(texels, &mut resolution, opts.max_anisotropy, opts.wrap_mode);
+        let mipmap = MIPMap::new(
+            texels,
+            &mut resolution,
+            opts.max_anisotropy,
+            opts.wrap_mode,
+            opts.use_trilinear,
+        );
 
         Self {
             mapping: opts.mapping,

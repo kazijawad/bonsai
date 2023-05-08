@@ -8,11 +8,11 @@ pub fn read_image(path: &str) -> (Point2, Vec<RGBSpectrum>) {
     let image = image::open(path).unwrap().into_rgb32f();
     let (width, height) = image.dimensions();
 
-    let mut spectra = vec![RGBSpectrum::default(); (width * height) as usize];
+    let mut spectra = Vec::with_capacity((width * height) as usize);
     for y in 0..height {
         for x in 0..width {
             let pixel = image.get_pixel(x, y).0;
-            spectra[(y * width + x) as usize] = RGBSpectrum::from_rgb(&pixel);
+            spectra.push(RGBSpectrum::from_rgb(&pixel));
         }
     }
 
