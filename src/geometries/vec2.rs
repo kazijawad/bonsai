@@ -1,22 +1,25 @@
-use std::ops;
-
-use crate::{
-    base::constants::Float,
-    geometries::{point2::Point2, point3::Point3},
+use std::ops::{
+    Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign,
 };
 
+use crate::base::constants::Float;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Vec2 {
-    pub x: Float,
-    pub y: Float,
+pub struct Vec2<T> {
+    pub x: T,
+    pub y: T,
 }
 
-impl Vec2 {
-    pub fn new(x: Float, y: Float) -> Self {
-        debug_assert!(!x.is_nan() && !y.is_nan());
+pub type Vec2I = Vec2<i32>;
+pub type Vec2F = Vec2<Float>;
+
+impl<T> Vec2<T> {
+    pub fn new(x: T, y: T) -> Self {
         Self { x, y }
     }
+}
 
+impl Vec2F {
     pub fn length_squared(&self) -> Float {
         self.x * self.x + self.y * self.y
     }
@@ -48,37 +51,19 @@ impl Vec2 {
     }
 }
 
-impl Default for Vec2 {
+impl Default for Vec2I {
+    fn default() -> Self {
+        Self { x: 0, y: 0 }
+    }
+}
+
+impl Default for Vec2F {
     fn default() -> Self {
         Self { x: 0.0, y: 0.0 }
     }
 }
 
-// TYPE CONVERSION
-
-impl From<Point2> for Vec2 {
-    fn from(point: Point2) -> Self {
-        debug_assert!(!point.x.is_nan() && !point.y.is_nan());
-        Self {
-            x: point.x,
-            y: point.y,
-        }
-    }
-}
-
-impl From<Point3> for Vec2 {
-    fn from(point: Point3) -> Self {
-        debug_assert!(!point.x.is_nan() && !point.y.is_nan());
-        Self {
-            x: point.x,
-            y: point.y,
-        }
-    }
-}
-
-// ADDITION
-
-impl ops::Add for Vec2 {
+impl<T: Add<Output = T>> Add for Vec2<T> {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -89,8 +74,8 @@ impl ops::Add for Vec2 {
     }
 }
 
-impl ops::Add for &Vec2 {
-    type Output = Vec2;
+impl<T: Copy + Add<Output = T>> Add for &Vec2<T> {
+    type Output = Vec2<T>;
 
     fn add(self, rhs: Self) -> Self::Output {
         Self::Output {
@@ -100,16 +85,14 @@ impl ops::Add for &Vec2 {
     }
 }
 
-impl ops::AddAssign for Vec2 {
+impl<T: AddAssign> AddAssign for Vec2<T> {
     fn add_assign(&mut self, rhs: Self) {
         self.x += rhs.x;
         self.y += rhs.y;
     }
 }
 
-// SUBTRACTION
-
-impl ops::Sub for Vec2 {
+impl<T: Sub<Output = T>> Sub for Vec2<T> {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -120,8 +103,8 @@ impl ops::Sub for Vec2 {
     }
 }
 
-impl ops::Sub for &Vec2 {
-    type Output = Vec2;
+impl<T: Copy + Sub<Output = T>> Sub for &Vec2<T> {
+    type Output = Vec2<T>;
 
     fn sub(self, rhs: Self) -> Self::Output {
         Self::Output {
@@ -131,19 +114,17 @@ impl ops::Sub for &Vec2 {
     }
 }
 
-impl ops::SubAssign for Vec2 {
+impl<T: SubAssign> SubAssign for Vec2<T> {
     fn sub_assign(&mut self, rhs: Self) {
         self.x -= rhs.x;
         self.y -= rhs.y;
     }
 }
 
-// MULTIPLICATION
-
-impl ops::Mul<Float> for Vec2 {
+impl<T: Copy + Mul<Output = T>> Mul<T> for Vec2<T> {
     type Output = Self;
 
-    fn mul(self, rhs: Float) -> Self::Output {
+    fn mul(self, rhs: T) -> Self::Output {
         Self::Output {
             x: self.x * rhs,
             y: self.y * rhs,
@@ -151,10 +132,10 @@ impl ops::Mul<Float> for Vec2 {
     }
 }
 
-impl ops::Mul<Float> for &Vec2 {
-    type Output = Vec2;
+impl<T: Copy + Mul<Output = T>> Mul<T> for &Vec2<T> {
+    type Output = Vec2<T>;
 
-    fn mul(self, rhs: Float) -> Self::Output {
+    fn mul(self, rhs: T) -> Self::Output {
         Self::Output {
             x: self.x * rhs,
             y: self.y * rhs,
@@ -162,69 +143,75 @@ impl ops::Mul<Float> for &Vec2 {
     }
 }
 
-impl ops::Mul<Vec2> for Float {
-    type Output = Vec2;
+impl Mul<Vec2I> for i32 {
+    type Output = Vec2I;
 
-    fn mul(self, rhs: Vec2) -> Self::Output {
+    fn mul(self, rhs: Vec2I) -> Self::Output {
         rhs * self
     }
 }
 
-impl ops::Mul<&Vec2> for Float {
-    type Output = Vec2;
+impl Mul<&Vec2I> for i32 {
+    type Output = Vec2I;
 
-    fn mul(self, rhs: &Vec2) -> Self::Output {
+    fn mul(self, rhs: &Vec2I) -> Self::Output {
         rhs * self
     }
 }
 
-impl ops::MulAssign<Float> for Vec2 {
-    fn mul_assign(&mut self, rhs: Float) {
+impl Mul<Vec2F> for Float {
+    type Output = Vec2F;
+
+    fn mul(self, rhs: Vec2F) -> Self::Output {
+        rhs * self
+    }
+}
+
+impl Mul<&Vec2F> for Float {
+    type Output = Vec2F;
+
+    fn mul(self, rhs: &Vec2F) -> Self::Output {
+        rhs * self
+    }
+}
+
+impl<T: Copy + MulAssign> MulAssign<T> for Vec2<T> {
+    fn mul_assign(&mut self, rhs: T) {
         self.x *= rhs;
         self.y *= rhs;
     }
 }
 
-// DIVISION
-
-impl ops::Div<Float> for Vec2 {
+impl<T: Copy + Div<Output = T>> Div<T> for Vec2<T> {
     type Output = Self;
 
-    fn div(self, rhs: Float) -> Self::Output {
-        debug_assert!(rhs != 0.0);
-        let inverse = 1.0 / rhs;
+    fn div(self, rhs: T) -> Self::Output {
         Self::Output {
-            x: self.x * inverse,
-            y: self.y * inverse,
+            x: self.x / rhs,
+            y: self.y / rhs,
         }
     }
 }
 
-impl ops::Div<Float> for &Vec2 {
-    type Output = Vec2;
+impl<T: Copy + Div<Output = T>> Div<T> for &Vec2<T> {
+    type Output = Vec2<T>;
 
-    fn div(self, rhs: Float) -> Self::Output {
-        debug_assert!(rhs != 0.0);
-        let inverse = 1.0 / rhs;
+    fn div(self, rhs: T) -> Self::Output {
         Self::Output {
-            x: self.x * inverse,
-            y: self.y * inverse,
+            x: self.x / rhs,
+            y: self.y / rhs,
         }
     }
 }
 
-impl ops::DivAssign<Float> for Vec2 {
-    fn div_assign(&mut self, rhs: Float) {
-        debug_assert!(rhs != 0.0);
-        let inverse = 1.0 / rhs;
-        self.x *= inverse;
-        self.y *= inverse;
+impl<T: Copy + DivAssign> DivAssign<T> for Vec2<T> {
+    fn div_assign(&mut self, rhs: T) {
+        self.x /= rhs;
+        self.y /= rhs;
     }
 }
 
-// NEGATION
-
-impl ops::Neg for Vec2 {
+impl<T: Neg<Output = T>> Neg for Vec2<T> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -235,8 +222,8 @@ impl ops::Neg for Vec2 {
     }
 }
 
-impl ops::Neg for &Vec2 {
-    type Output = Vec2;
+impl<T: Copy + Neg<Output = T>> Neg for &Vec2<T> {
+    type Output = Vec2<T>;
 
     fn neg(self) -> Self::Output {
         Self::Output {
@@ -246,10 +233,8 @@ impl ops::Neg for &Vec2 {
     }
 }
 
-// INDEXING
-
-impl ops::Index<usize> for Vec2 {
-    type Output = Float;
+impl<T> Index<usize> for Vec2<T> {
+    type Output = T;
 
     fn index(&self, index: usize) -> &Self::Output {
         debug_assert!(index <= 1);
@@ -261,7 +246,7 @@ impl ops::Index<usize> for Vec2 {
     }
 }
 
-impl ops::IndexMut<usize> for Vec2 {
+impl<T> IndexMut<usize> for Vec2<T> {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         debug_assert!(index < 2);
         if index == 0 {

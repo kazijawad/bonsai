@@ -4,15 +4,18 @@ fn main() {
     let image_texture = ImageTexture::new(ImageTextureOptions {
         path: "assets/textures/lines.exr",
         mapping: Box::new(UVMapping2D::default()),
-        max_anisotropy: 8.0,
-        wrap_mode: ImageWrap::Repeat,
-        is_gamma_corrected: false,
-        use_trilinear: true,
+        wrap_mode: ImageWrapMode::Repeat,
     });
-    image_texture.mipmap.export();
 
     let image_material = MatteMaterial {
         kd: &image_texture,
+        sigma: &ConstantTexture { value: 0.0 },
+    };
+
+    let uv_material = MatteMaterial {
+        kd: &UVTexture {
+            mapping: Box::new(UVMapping2D::default()),
+        },
         sigma: &ConstantTexture { value: 0.0 },
     };
 
@@ -27,28 +30,24 @@ fn main() {
 
     let sphere_prim = GeometricPrimitive {
         shape: &sphere_shape,
-        material: &image_material,
+        material: &uv_material,
         area_light: None,
     };
 
     let aggregate = BVH::new(vec![&sphere_prim], 4);
 
-    let spot_light = SpotLight::new(SpotLightOptions {
-        transform: Transform::default(),
-        from: Point3::new(3.0, 0.0, 0.0),
-        to: Point3::new(0.0, 0.0, 0.0),
+    let point_light = PointLight::new(PointLightOptions {
+        transform: Transform::translate(&Vec3::new(3.0, 0.0, 0.0)),
         intensity: RGBSpectrum::new(1.0),
-        cone_angle: 90.0,
-        cone_delta_angle: 0.0,
     });
 
-    let scene = Scene::new(&aggregate, vec![&spot_light]);
+    let scene = Scene::new(&aggregate, vec![&point_light]);
 
     let film = Film::new(FilmOptions {
-        resolution: Point2::new(1024.0, 1024.0),
-        crop_window: Bounds2::new(&Point2::new(0.0, 0.0), &Point2::new(1.0, 1.0)),
+        resolution: Point2F::new(1024.0, 1024.0),
+        crop_window: Bounds2F::new(&Point2F::new(0.0, 0.0), &Point2F::new(1.0, 1.0)),
         filter: Box::new(BoxFilter::new(Vec2::new(0.5, 0.5))),
-        filename: "result.exr",
+        filename: "dist/result.exr",
         scale: 1.0,
         max_sample_luminance: Float::INFINITY,
     });

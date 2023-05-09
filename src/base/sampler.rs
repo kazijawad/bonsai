@@ -2,18 +2,18 @@ use dyn_clone::DynClone;
 
 use crate::{
     base::{camera::CameraSample, constants::Float},
-    geometries::point2::Point2,
+    geometries::point2::Point2F,
 };
 
 pub trait Sampler: Send + Sync + DynClone {
     fn seed(&mut self, x: u64);
 
-    fn start_pixel(&mut self, pixel: &Point2);
+    fn start_pixel(&mut self, pixel: &Point2F);
 
     fn get_1d(&mut self) -> Float;
-    fn get_2d(&mut self) -> Point2;
+    fn get_2d(&mut self) -> Point2F;
 
-    fn get_camera_sample(&mut self, pixel: &Point2) -> CameraSample {
+    fn get_camera_sample(&mut self, pixel: &Point2F) -> CameraSample {
         CameraSample {
             film: pixel + &self.get_2d(),
             lens: self.get_2d(),
@@ -25,7 +25,7 @@ pub trait Sampler: Send + Sync + DynClone {
     fn request_2d_vec(&mut self, n: usize);
 
     fn get_1d_vec(&mut self, n: usize) -> Vec<Float>;
-    fn get_2d_vec(&mut self, n: usize) -> Vec<Point2>;
+    fn get_2d_vec(&mut self, n: usize) -> Vec<Point2F>;
 
     fn start_next_sample(&mut self) -> bool;
     fn set_sample_number(&mut self, sample_number: usize) -> bool;

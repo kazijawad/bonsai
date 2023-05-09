@@ -6,7 +6,7 @@ use crate::{
         sampling::concentric_sample_disk,
         scene::Scene,
     },
-    geometries::{normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3},
+    geometries::{normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3},
     interactions::base::BaseInteraction,
     spectra::rgb::RGBSpectrum,
 };
@@ -52,7 +52,7 @@ impl Light for DirectionalLight {
     fn sample_point(
         &self,
         it: &dyn Interaction,
-        _sample: &Point2,
+        _sample: &Point2F,
     ) -> (RGBSpectrum, Vec3, Float, VisibilityTester) {
         let outside_point = it.position() + self.direction * (2.0 * self.world_radius);
         (
@@ -68,8 +68,8 @@ impl Light for DirectionalLight {
 
     fn sample_ray(
         &self,
-        origin_sample: &Point2,
-        _direction_sample: &Point2,
+        origin_sample: &Point2F,
+        _direction_sample: &Point2F,
         time: Float,
     ) -> (RGBSpectrum, Ray, Normal, Float, Float) {
         // Choose point on disk oriented toward infinite light direction.

@@ -3,7 +3,7 @@ use crate::{
         constants::{Float, PI},
         sampling::{cosine_sample_hemisphere, uniform_hemisphere_pdf, uniform_sample_hemisphere},
     },
-    geometries::{point2::Point2, vec3::Vec3},
+    geometries::{point2::Point2F, vec3::Vec3},
     spectra::rgb::RGBSpectrum,
     utils::bxdf::{abs_cos_theta, same_hemisphere},
 };
@@ -21,7 +21,7 @@ pub const BSDF_ALL: BxDFType =
 pub trait BxDF: Send + Sync {
     fn f(&self, wo: &Vec3, wi: &Vec3) -> RGBSpectrum;
 
-    fn sample(&self, wo: &Vec3, u: &Point2) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
+    fn sample(&self, wo: &Vec3, u: &Point2F) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
         // Cosine-sample the hemisphere, flipping the direction if necessary.
         let mut wi = cosine_sample_hemisphere(u);
         if wo.z < 0.0 {
@@ -32,7 +32,7 @@ pub trait BxDF: Send + Sync {
         (wi, radiance, pdf, None)
     }
 
-    fn rho_hd(&self, wo: &Vec3, num_samples: usize, u: &[Point2]) -> RGBSpectrum {
+    fn rho_hd(&self, wo: &Vec3, num_samples: usize, u: &[Point2F]) -> RGBSpectrum {
         let mut reflectance = RGBSpectrum::default();
         for i in 0..num_samples {
             let (wi, factor, pdf, _) = self.sample(wo, &u[i]);
@@ -43,7 +43,7 @@ pub trait BxDF: Send + Sync {
         reflectance / (num_samples as Float)
     }
 
-    fn rho_hh(&self, num_samples: usize, u1: &[Point2], u2: &[Point2]) -> RGBSpectrum {
+    fn rho_hh(&self, num_samples: usize, u1: &[Point2F], u2: &[Point2F]) -> RGBSpectrum {
         let mut reflectance = RGBSpectrum::default();
         for i in 0..num_samples {
             let wo = uniform_sample_hemisphere(&u1[i]);

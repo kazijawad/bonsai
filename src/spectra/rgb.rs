@@ -16,6 +16,12 @@ impl RGBSpectrum {
     pub fn new(v: Float) -> Self {
         Self { components: [v; 3] }
     }
+
+    pub fn splat(x: Float, y: Float, z: Float) -> Self {
+        Self {
+            components: [x, y, z],
+        }
+    }
 }
 
 impl Spectrum for RGBSpectrum {

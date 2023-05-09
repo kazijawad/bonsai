@@ -6,7 +6,7 @@ use crate::{
         transform::Transform,
     },
     geometries::{
-        bounds3::Bounds3, normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3,
+        bounds3::Bounds3, normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3,
     },
     interactions::surface::SurfaceInteraction,
     utils::efloat::EFloat,
@@ -185,7 +185,7 @@ impl Shape for Cone {
         *si = SurfaceInteraction::new(
             p_hit,
             p_error,
-            Point2::new(u, v),
+            Point2F::new(u, v),
             -ray.direction,
             dpdu,
             dpdv,
@@ -279,7 +279,7 @@ impl Shape for Cone {
         true
     }
 
-    fn sample(&self, _u: &Point2, _pdf: &mut Float) -> Box<dyn Interaction> {
+    fn sample(&self, _u: &Point2F, _pdf: &mut Float) -> Box<dyn Interaction> {
         unimplemented!();
     }
 

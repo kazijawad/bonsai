@@ -6,7 +6,7 @@ use crate::{
         transform::Transform,
     },
     geometries::{
-        bounds3::Bounds3, normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3,
+        bounds3::Bounds3, normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3,
     },
     interactions::{base::BaseInteraction, surface::SurfaceInteraction},
     utils::{
@@ -188,7 +188,7 @@ impl Shape for Cylinder {
         *si = SurfaceInteraction::new(
             p_hit,
             p_error,
-            Point2::new(u, v),
+            Point2F::new(u, v),
             -ray.direction,
             dpdu,
             dpdv,
@@ -286,7 +286,7 @@ impl Shape for Cylinder {
         true
     }
 
-    fn sample(&self, u: &Point2, pdf: &mut Float) -> Box<dyn Interaction> {
+    fn sample(&self, u: &Point2F, pdf: &mut Float) -> Box<dyn Interaction> {
         let z = lerp(u.x, self.z_min, self.z_max);
         let phi = u.y * self.phi_max;
         let mut object_point = Point3::new(self.radius * phi.cos(), self.radius * phi.sin(), z);

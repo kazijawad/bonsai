@@ -3,7 +3,7 @@ use crate::{
         constants::{Float, PI},
         transform::Transform,
     },
-    geometries::{point2::Point2, point3::Point3, vec2::Vec2, vec3::Vec3},
+    geometries::{point2::Point2F, point3::Point3, vec2::Vec2F, vec3::Vec3},
     interactions::surface::SurfaceInteraction,
 };
 
@@ -12,7 +12,7 @@ pub trait Texture<T: Send + Sync>: Send + Sync {
 }
 
 pub trait TextureMapping2D: Send + Sync {
-    fn map(&self, si: &SurfaceInteraction, dstdx: &mut Vec2, dstdy: &mut Vec2) -> Point2;
+    fn map(&self, si: &SurfaceInteraction, dstdx: &mut Vec2F, dstdy: &mut Vec2F) -> Point2F;
 }
 
 pub trait TextureMapping3D: Send + Sync {
@@ -46,31 +46,31 @@ pub struct IdentityMapping3D {
 }
 
 impl SphericalMapping2D {
-    fn sphere(&self, p: &Point3) -> Point2 {
+    fn sphere(&self, p: &Point3) -> Point2F {
         let v = (p.transform(&self.world_to_texture) - Point3::default()).normalize();
         let theta = v.spherical_theta();
         let phi = v.spherical_phi();
-        Point2::new(theta * (1.0 / PI), phi * (1.0 / PI))
+        Point2F::new(theta * (1.0 / PI), phi * (1.0 / PI))
     }
 }
 
 impl CylindricalMapping2D {
-    fn cylinder(&self, p: &Point3) -> Point2 {
+    fn cylinder(&self, p: &Point3) -> Point2F {
         let v = (p.transform(&self.world_to_texture) - Point3::default()).normalize();
-        Point2::new((PI + v.y.atan2(v.x)) * (1.0 / (2.0 * PI)), v.z)
+        Point2F::new((PI + v.y.atan2(v.x)) * (1.0 / (2.0 * PI)), v.z)
     }
 }
 
 impl TextureMapping2D for UVMapping2D {
-    fn map(&self, si: &SurfaceInteraction, dstdx: &mut Vec2, dstdy: &mut Vec2) -> Point2 {
-        *dstdx = Vec2::new(self.su * si.dudx, self.sv * si.dvdx);
-        *dstdy = Vec2::new(self.su * si.dudy, self.sv * si.dvdy);
-        Point2::new(self.su * si.uv.x + self.du, self.sv * si.uv.y + self.dv)
+    fn map(&self, si: &SurfaceInteraction, dstdx: &mut Vec2F, dstdy: &mut Vec2F) -> Point2F {
+        *dstdx = Vec2F::new(self.su * si.dudx, self.sv * si.dvdx);
+        *dstdy = Vec2F::new(self.su * si.dudy, self.sv * si.dvdy);
+        Point2F::new(self.su * si.uv.x + self.du, self.sv * si.uv.y + self.dv)
     }
 }
 
 impl TextureMapping2D for SphericalMapping2D {
-    fn map(&self, si: &SurfaceInteraction, dstdx: &mut Vec2, dstdy: &mut Vec2) -> Point2 {
+    fn map(&self, si: &SurfaceInteraction, dstdx: &mut Vec2F, dstdy: &mut Vec2F) -> Point2F {
         let st = self.sphere(&si.base.p);
 
         // Compute texture coordinate differentials for (u,v) mapping.
@@ -97,7 +97,7 @@ impl TextureMapping2D for SphericalMapping2D {
 }
 
 impl TextureMapping2D for CylindricalMapping2D {
-    fn map(&self, si: &SurfaceInteraction, dstdx: &mut Vec2, dstdy: &mut Vec2) -> Point2 {
+    fn map(&self, si: &SurfaceInteraction, dstdx: &mut Vec2F, dstdy: &mut Vec2F) -> Point2F {
         let st = self.cylinder(&si.base.p);
 
         // Compute texture coordinate differentials for (u,v) mapping.
@@ -124,11 +124,11 @@ impl TextureMapping2D for CylindricalMapping2D {
 }
 
 impl TextureMapping2D for PlanarMapping2D {
-    fn map(&self, si: &SurfaceInteraction, dstdx: &mut Vec2, dstdy: &mut Vec2) -> Point2 {
+    fn map(&self, si: &SurfaceInteraction, dstdx: &mut Vec2F, dstdy: &mut Vec2F) -> Point2F {
         let v = Vec3::from(si.base.p);
-        *dstdx = Vec2::new(si.dpdx.dot(&self.vs), si.dpdx.dot(&self.vt));
-        *dstdy = Vec2::new(si.dpdy.dot(&self.vs), si.dpdy.dot(&self.vt));
-        Point2::new(self.ds + v.dot(&self.vs), self.dt + v.dot(&self.vt))
+        *dstdx = Vec2F::new(si.dpdx.dot(&self.vs), si.dpdx.dot(&self.vt));
+        *dstdy = Vec2F::new(si.dpdy.dot(&self.vs), si.dpdy.dot(&self.vt));
+        Point2F::new(self.ds + v.dot(&self.vs), self.dt + v.dot(&self.vt))
     }
 }
 
@@ -149,18 +149,4 @@ impl Default for UVMapping2D {
             dv: 0.0,
         }
     }
-}
-
-pub fn lanczos(x: Float, tau: Float) -> Float {
-    let mut x = x.abs();
-    if x < 1e-5 {
-        return 1.0;
-    }
-    if x > 1.0 {
-        return 0.0;
-    }
-    x *= PI;
-    let s = (x * tau).sin() / (x * tau);
-    let lanczos = x.sin() / x;
-    s * lanczos
 }

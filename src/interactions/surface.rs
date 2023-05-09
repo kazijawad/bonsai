@@ -3,7 +3,7 @@ use crate::{
         bsdf::BSDF, constants::Float, interaction::Interaction, material::TransportMode,
         primitive::Primitive, transform::Transform,
     },
-    geometries::{normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3},
+    geometries::{normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3},
     interactions::base::BaseInteraction,
     spectra::rgb::RGBSpectrum,
     utils::math::solve_linear_system_2x2,
@@ -19,7 +19,7 @@ pub struct Shading {
 
 pub struct SurfaceInteraction<'a> {
     pub base: BaseInteraction,
-    pub uv: Point2,
+    pub uv: Point2F,
     pub dpdu: Vec3,
     pub dpdv: Vec3,
     pub dndu: Normal,
@@ -39,7 +39,7 @@ impl<'a> SurfaceInteraction<'a> {
     pub fn new(
         p: Point3,
         p_error: Vec3,
-        uv: Point2,
+        uv: Point2F,
         wo: Vec3,
         dpdu: Vec3,
         dpdv: Vec3,
@@ -295,7 +295,7 @@ impl<'a> Default for SurfaceInteraction<'a> {
                 wo: Vec3::default(),
                 n: Normal::default(),
             },
-            uv: Point2::default(),
+            uv: Point2F::default(),
             dpdu: Vec3::default(),
             dpdv: Vec3::default(),
             dndu: Normal::default(),

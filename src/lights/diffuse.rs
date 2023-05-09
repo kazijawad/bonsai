@@ -6,7 +6,7 @@ use crate::{
         sampling::{cosine_hemisphere_pdf, cosine_sample_hemisphere},
         shape::Shape,
     },
-    geometries::{normal::Normal, point2::Point2, ray::Ray, vec3::Vec3},
+    geometries::{normal::Normal, point2::Point2F, ray::Ray, vec3::Vec3},
     interactions::base::BaseInteraction,
     spectra::rgb::RGBSpectrum,
 };
@@ -48,7 +48,7 @@ impl<'a> Light for DiffuseAreaLight<'a> {
     fn sample_point(
         &self,
         it: &dyn Interaction,
-        sample: &Point2,
+        sample: &Point2F,
     ) -> (RGBSpectrum, Vec3, Float, VisibilityTester) {
         let mut pdf = 0.0;
         let point_it = self.shape.sample_from_ref(it, sample, &mut pdf);
@@ -72,8 +72,8 @@ impl<'a> Light for DiffuseAreaLight<'a> {
 
     fn sample_ray(
         &self,
-        origin_sample: &Point2,
-        direction_sample: &Point2,
+        origin_sample: &Point2F,
+        direction_sample: &Point2F,
         _time: Float,
     ) -> (RGBSpectrum, Ray, Normal, Float, Float) {
         let mut pdf_position = 0.0;

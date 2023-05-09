@@ -6,7 +6,7 @@ use crate::{
         material::TransportMode,
         microfacet::MicrofacetDistribution,
     },
-    geometries::{normal::Normal, point2::Point2, vec3::Vec3},
+    geometries::{normal::Normal, point2::Point2F, vec3::Vec3},
     spectra::rgb::RGBSpectrum,
     utils::bxdf::{abs_cos_theta, cos_theta, reflect, refract, same_hemisphere},
 };
@@ -90,7 +90,7 @@ impl BxDF for MicrofacetReflection {
             / (4.0 * cos_theta_i * cos_theta_o)
     }
 
-    fn sample(&self, wo: &Vec3, u: &Point2) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
+    fn sample(&self, wo: &Vec3, u: &Point2F) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
         // Sample microfacet orientation wh and reflected direction wi.
         if wo.z == 0.0 {
             return (Vec3::default(), RGBSpectrum::default(), 0.0, None);
@@ -181,7 +181,7 @@ impl BxDF for MicrofacetTransmission {
                 .abs()
     }
 
-    fn sample(&self, wo: &Vec3, u: &Point2) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
+    fn sample(&self, wo: &Vec3, u: &Point2F) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
         if wo.z == 0.0 {
             return (Vec3::default(), RGBSpectrum::default(), 0.0, None);
         }

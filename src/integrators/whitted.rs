@@ -13,7 +13,7 @@ use crate::{
         scene::Scene,
         spectrum::Spectrum,
     },
-    geometries::{point2::Point2, ray::Ray, vec3::Vec3},
+    geometries::{point2::Point2F, ray::Ray, vec3::Vec3},
     interactions::surface::SurfaceInteraction,
     spectra::rgb::RGBSpectrum,
 };
@@ -206,7 +206,7 @@ impl<'a> Integrator<'a> for WhittedIntegrator {
 
         for y in (bounds.min.y as usize)..(bounds.max.y as usize) {
             ((bounds.min.x as usize)..(bounds.max.x as usize)).into_par_iter().for_each(|x| {
-                let pixel = Point2::new(x as Float, y as Float);
+                let pixel = Point2F::new(x as Float, y as Float);
                 let mut sampled_pixel = SampledPixel::default();
 
                 let mut sampler = self.sampler.clone();

@@ -1,7 +1,7 @@
 use crate::{
     base::{constants::Float, interaction::Interaction},
     geometries::{
-        bounds3::Bounds3, normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3,
+        bounds3::Bounds3, normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3,
     },
     interactions::{base::BaseInteraction, surface::SurfaceInteraction},
     utils::discrepancy::radical_inverse,
@@ -16,12 +16,12 @@ pub trait Shape: Send + Sync {
 
     fn intersect_test(&self, ray: &Ray) -> bool;
 
-    fn sample(&self, u: &Point2, pdf: &mut Float) -> Box<dyn Interaction>;
+    fn sample(&self, u: &Point2F, pdf: &mut Float) -> Box<dyn Interaction>;
 
     fn sample_from_ref(
         &self,
         reference: &dyn Interaction,
-        u: &Point2,
+        u: &Point2F,
         pdf: &mut Float,
     ) -> Box<dyn Interaction> {
         let interaction = self.sample(u, pdf);
@@ -75,7 +75,7 @@ pub trait Shape: Send + Sync {
 
         let mut solid_angle = 0.0;
         for i in 0..(num_samples as u64) {
-            let u = Point2::new(radical_inverse(0, i), radical_inverse(1, i));
+            let u = Point2F::new(radical_inverse(0, i), radical_inverse(1, i));
 
             let mut pdf = 0.0;
             let shape_point = self.sample_from_ref(it.as_ref(), &u, &mut pdf);

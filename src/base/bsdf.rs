@@ -5,7 +5,7 @@ use crate::{
         bxdf::{BxDF, BxDFType, BSDF_REFLECTION, BSDF_SPECULAR, BSDF_TRANSMISSION},
         constants::Float,
     },
-    geometries::{normal::Normal, point2::Point2, vec3::Vec3},
+    geometries::{normal::Normal, point2::Point2F, vec3::Vec3},
     interactions::surface::SurfaceInteraction,
     spectra::rgb::RGBSpectrum,
 };
@@ -85,7 +85,7 @@ impl BSDF {
         &self,
         wo: &Vec3,
         num_samples: usize,
-        samples: &[Point2],
+        samples: &[Point2F],
         flags: BxDFType,
     ) -> RGBSpectrum {
         let wo = self.world_to_local(wo);
@@ -101,8 +101,8 @@ impl BSDF {
     pub fn rho_hh(
         &self,
         num_samples: usize,
-        u1: &[Point2],
-        u2: &[Point2],
+        u1: &[Point2F],
+        u2: &[Point2F],
         flags: BxDFType,
     ) -> RGBSpectrum {
         let mut ret = RGBSpectrum::default();
@@ -117,7 +117,7 @@ impl BSDF {
     pub fn sample(
         &self,
         wo_world: &Vec3,
-        u: &Point2,
+        u: &Point2F,
         bxdf_type: BxDFType,
     ) -> (Vec3, RGBSpectrum, Float, BxDFType) {
         let matching_components = self.num_components(bxdf_type);
@@ -140,7 +140,7 @@ impl BSDF {
         let bxdf = bxdf.expect("BSDF::sample BxDF was not initialized");
 
         // Remap BxDF sample to [0, 1].
-        let u_remapped = Point2::new(
+        let u_remapped = Point2F::new(
             (u[0] * matching_components as Float - component as Float).min(1.0 - Float::EPSILON),
             u[1],
         );

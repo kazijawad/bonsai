@@ -25,7 +25,7 @@ pub use base::{
     integrator::Integrator,
     light::{AreaLight, Light},
     material::Material,
-    mipmap::{ImageWrap, MIPMap},
+    mipmap::MIPMap,
     primitive::Primitive,
     sampler::Sampler,
     scene::Scene,
@@ -41,10 +41,20 @@ pub use filters::{
     triangle::TriangleFilter,
 };
 pub use geometries::{
-    bounds2::Bounds2, bounds3::Bounds3, interval::Interval, mat4::Mat4, normal::Normal,
-    point2::Point2, point3::Point3, quaternion::Quaternion, ray::Ray, vec2::Vec2, vec3::Vec3,
+    bounds2::{Bounds2, Bounds2F, Bounds2I},
+    bounds3::Bounds3,
+    interval::Interval,
+    mat4::Mat4,
+    normal::Normal,
+    point2::{Point2, Point2F, Point2I},
+    point3::Point3,
+    quaternion::Quaternion,
+    ray::Ray,
+    vec2::{Vec2, Vec2F, Vec2I},
+    vec3::Vec3,
 };
 pub use integrators::whitted::WhittedIntegrator;
+pub use io::image::{Image, ImageWrapMode};
 pub use lights::{
     diffuse::{DiffuseAreaLight, DiffuseAreaLightOptions},
     directional::{DirectionalLight, DirectionalLightOptions},

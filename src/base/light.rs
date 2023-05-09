@@ -1,6 +1,6 @@
 use crate::{
     base::{constants::Float, interaction::Interaction, scene::Scene},
-    geometries::{normal::Normal, point2::Point2, ray::Ray, vec3::Vec3},
+    geometries::{normal::Normal, point2::Point2F, ray::Ray, vec3::Vec3},
     interactions::base::BaseInteraction,
     spectra::rgb::RGBSpectrum,
 };
@@ -11,7 +11,7 @@ pub trait Light: Send + Sync {
     fn sample_point(
         &self,
         interaction: &dyn Interaction,
-        sample: &Point2,
+        sample: &Point2F,
     ) -> (RGBSpectrum, Vec3, Float, VisibilityTester);
 
     fn pdf(&self, _interaction: &dyn Interaction, _incident_direction: &Vec3) -> Float {
@@ -24,8 +24,8 @@ pub trait Light: Send + Sync {
 
     fn sample_ray(
         &self,
-        origin_sample: &Point2,
-        direction_sample: &Point2,
+        origin_sample: &Point2F,
+        direction_sample: &Point2F,
         time: Float,
     ) -> (RGBSpectrum, Ray, Normal, Float, Float);
 

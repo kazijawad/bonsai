@@ -7,7 +7,7 @@ use crate::{
         transform::Transform,
     },
     geometries::{
-        bounds3::Bounds3, normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3,
+        bounds3::Bounds3, normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3,
     },
     interactions::{base::BaseInteraction, surface::SurfaceInteraction},
     utils::{efloat::EFloat, math::gamma},
@@ -218,7 +218,7 @@ impl Shape for Sphere {
         *si = SurfaceInteraction::new(
             p_hit,
             p_error,
-            Point2::new(u, v),
+            Point2F::new(u, v),
             -ray.direction,
             dpdu,
             dpdv,
@@ -325,7 +325,7 @@ impl Shape for Sphere {
         true
     }
 
-    fn sample(&self, u: &Point2, pdf: &mut Float) -> Box<dyn Interaction> {
+    fn sample(&self, u: &Point2F, pdf: &mut Float) -> Box<dyn Interaction> {
         let mut object = Point3::default() + self.radius * uniform_sample_sphere(u);
 
         let mut n = Normal::from(object).transform(&self.object_to_world);
@@ -353,7 +353,7 @@ impl Shape for Sphere {
     fn sample_from_ref(
         &self,
         _it: &dyn Interaction,
-        _u: &Point2,
+        _u: &Point2F,
         _pdf: &mut Float,
     ) -> Box<dyn Interaction> {
         unimplemented!()

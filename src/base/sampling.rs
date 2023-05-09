@@ -2,7 +2,7 @@ use rand::prelude::*;
 
 use crate::{
     base::constants::{Float, PI},
-    geometries::{point2::Point2, vec2::Vec2, vec3::Vec3},
+    geometries::{point2::Point2F, vec2::Vec2, vec3::Vec3},
 };
 
 pub fn shuffle<T>(sample: &mut [T], count: usize, num_dims: usize, rng: &mut StdRng) {
@@ -28,7 +28,7 @@ pub fn stratified_sample_1d(
 }
 
 pub fn stratified_sample_2d(
-    samples: &mut [Point2],
+    samples: &mut [Point2F],
     nx: usize,
     ny: usize,
     rng: &mut StdRng,
@@ -49,7 +49,7 @@ pub fn stratified_sample_2d(
 }
 
 pub fn latin_hypercube(
-    samples: &mut [Point2],
+    samples: &mut [Point2F],
     num_samples: usize,
     num_dims: usize,
     rng: &mut StdRng,
@@ -72,13 +72,13 @@ pub fn latin_hypercube(
     }
 }
 
-pub fn concentric_sample_disk(u: &Point2) -> Point2 {
+pub fn concentric_sample_disk(u: &Point2F) -> Point2F {
     // Map uniform values to [-1, 1].
     let offset = 2.0 * u - Vec2::new(1.0, 1.0);
 
     // Handle degeneracy at the origin.
     if offset.x == 0.0 && offset.y == 0.0 {
-        return Point2::default();
+        return Point2F::default();
     }
 
     // Apply concentric mapping to point.
@@ -88,10 +88,10 @@ pub fn concentric_sample_disk(u: &Point2) -> Point2 {
         ((PI / 2.0) - (PI / 4.0) * (offset.x / offset.y), offset.y)
     };
 
-    radius * Point2::new(theta.cos(), theta.sin())
+    radius * Point2F::new(theta.cos(), theta.sin())
 }
 
-pub fn uniform_sample_hemisphere(u: &Point2) -> Vec3 {
+pub fn uniform_sample_hemisphere(u: &Point2F) -> Vec3 {
     let z = u[0];
     let r = (1.0 - z * z).max(0.0).sqrt();
     let phi = 2.0 * PI * u[1];
@@ -102,7 +102,7 @@ pub fn uniform_hemisphere_pdf() -> Float {
     1.0 / (2.0 * PI)
 }
 
-pub fn uniform_sample_sphere(u: &Point2) -> Vec3 {
+pub fn uniform_sample_sphere(u: &Point2F) -> Vec3 {
     let z = 1.0 - 2.0 * u[0];
     let r = (1.0 - z * z).max(0.0).sqrt();
     let phi = 2.0 * PI * u[1];
@@ -113,7 +113,7 @@ pub fn uniform_sphere_pdf() -> Float {
     1.0 / (4.0 * PI)
 }
 
-pub fn uniform_sample_cone(u: &Point2, cos_theta_max: Float) -> Vec3 {
+pub fn uniform_sample_cone(u: &Point2F, cos_theta_max: Float) -> Vec3 {
     let cos_theta = (1.0 - u[0]) + u[0] * cos_theta_max;
     let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
     let phi = u[1] * 2.0 * PI;
@@ -124,12 +124,12 @@ pub fn uniform_cone_pdf(cos_theta_max: Float) -> Float {
     1.0 / (2.0 * PI * (1.0 - cos_theta_max))
 }
 
-pub fn uniform_sample_triangle(u: &Point2) -> Point2 {
+pub fn uniform_sample_triangle(u: &Point2F) -> Point2F {
     let sqrt0 = u[0].sqrt();
-    Point2::new(1.0 - sqrt0, u[1] * sqrt0)
+    Point2F::new(1.0 - sqrt0, u[1] * sqrt0)
 }
 
-pub fn cosine_sample_hemisphere(u: &Point2) -> Vec3 {
+pub fn cosine_sample_hemisphere(u: &Point2F) -> Vec3 {
     let d = concentric_sample_disk(u);
     let z = (1.0 - d.x * d.x - d.y * d.y).max(0.0).sqrt();
     Vec3::new(d.x, d.y, z)

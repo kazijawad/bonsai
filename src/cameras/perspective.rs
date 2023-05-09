@@ -6,7 +6,7 @@ use crate::{
         sampling::concentric_sample_disk,
         transform::{AnimatedTransform, Transform},
     },
-    geometries::{bounds2::Bounds2, point3::Point3, ray::Ray, vec3::Vec3},
+    geometries::{bounds2::Bounds2F, point3::Point3, ray::Ray, vec3::Vec3},
     utils::math::lerp,
 };
 
@@ -41,7 +41,7 @@ impl PerspectiveCamera {
         let camera_to_world = opts.animated_transform;
         let camera_to_screen = Transform::perspective(opts.fov, opts.near, opts.far);
 
-        let mut screen_window = Bounds2::default();
+        let mut screen_window = Bounds2F::default();
         let frame = film.full_resolution.x / film.full_resolution.y;
         if frame > 1.0 {
             screen_window.min.x = -frame;

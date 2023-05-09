@@ -6,7 +6,7 @@ use crate::{
         microfacet::MicrofacetDistribution,
         sampling::cosine_sample_hemisphere,
     },
-    geometries::{normal::Normal, point2::Point2, vec3::Vec3},
+    geometries::{normal::Normal, point2::Point2F, vec3::Vec3},
     spectra::rgb::RGBSpectrum,
     utils::bxdf::{
         abs_cos_theta, cos_theta, fresnel_dielectric, reflect, refract, same_hemisphere,
@@ -73,7 +73,7 @@ impl BxDF for FresnelSpecular {
         RGBSpectrum::default()
     }
 
-    fn sample(&self, wo: &Vec3, u: &Point2) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
+    fn sample(&self, wo: &Vec3, u: &Point2F) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
         let f = fresnel_dielectric(cos_theta(wo), self.eta_a, self.eta_b);
         if u[0] < f {
             // Compute specular reflection.
@@ -146,7 +146,7 @@ impl BxDF for FresnelBlend {
         diffuse + specular
     }
 
-    fn sample(&self, wo: &Vec3, u: &Point2) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
+    fn sample(&self, wo: &Vec3, u: &Point2F) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
         let mut u = u.clone();
 
         let mut wi;

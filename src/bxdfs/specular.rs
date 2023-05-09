@@ -5,7 +5,7 @@ use crate::{
         fresnel::{Fresnel, FresnelDielectric},
         material::TransportMode,
     },
-    geometries::{normal::Normal, point2::Point2, vec3::Vec3},
+    geometries::{normal::Normal, point2::Point2F, vec3::Vec3},
     spectra::rgb::RGBSpectrum,
     utils::bxdf::{abs_cos_theta, cos_theta, refract},
 };
@@ -53,7 +53,7 @@ impl BxDF for SpecularReflection {
         RGBSpectrum::default()
     }
 
-    fn sample(&self, wo: &Vec3, _u: &Point2) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
+    fn sample(&self, wo: &Vec3, _u: &Point2F) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
         let wi = Vec3::new(-wo.x, -wo.y, wo.z);
         let radiance = self.fresnel.evaluate(cos_theta(&wi)) * self.r / abs_cos_theta(&wi);
         let pdf = 1.0;
@@ -74,7 +74,7 @@ impl BxDF for SpecularTransmission {
         RGBSpectrum::default()
     }
 
-    fn sample(&self, wo: &Vec3, _u: &Point2) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
+    fn sample(&self, wo: &Vec3, _u: &Point2F) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
         // Determine which eta is incident or transmitted.
         let entering = cos_theta(wo) > 0.0;
         let eta_i = if entering { self.eta_a } else { self.eta_b };

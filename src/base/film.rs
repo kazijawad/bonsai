@@ -8,7 +8,7 @@ use crate::{
         filter::Filter,
         spectrum::{xyz_to_rgb, Spectrum, RGB, XYZ},
     },
-    geometries::{bounds2::Bounds2, point2::Point2, vec2::Vec2},
+    geometries::{bounds2::Bounds2F, point2::Point2F, vec2::Vec2F},
     spectra::rgb::RGBSpectrum,
 };
 
@@ -26,8 +26,8 @@ pub struct SampledPixel {
 }
 
 pub struct Film {
-    pub full_resolution: Point2,
-    pub bounds: Bounds2,
+    pub full_resolution: Point2F,
+    pub bounds: Bounds2F,
     pub filter: Box<dyn Filter>,
     pub filename: String,
     pixels: Mutex<Vec<Pixel>>,
@@ -37,8 +37,8 @@ pub struct Film {
 }
 
 pub struct FilmOptions<'a> {
-    pub resolution: Point2,
-    pub crop_window: Bounds2,
+    pub resolution: Point2F,
+    pub crop_window: Bounds2F,
     pub filter: Box<dyn Filter>,
     pub filename: &'a str,
     pub scale: Float,
@@ -48,12 +48,12 @@ pub struct FilmOptions<'a> {
 impl Film {
     pub fn new(opts: FilmOptions) -> Self {
         // Compute film image bounds.
-        let bounds = Bounds2::new(
-            &Point2::new(
+        let bounds = Bounds2F::new(
+            &Point2F::new(
                 (opts.resolution.x * opts.crop_window.min.x).ceil(),
                 (opts.resolution.y * opts.crop_window.min.y).ceil(),
             ),
-            &Point2::new(
+            &Point2F::new(
                 (opts.resolution.x * opts.crop_window.max.x).ceil(),
                 (opts.resolution.y * opts.crop_window.max.y).ceil(),
             ),
@@ -69,7 +69,7 @@ impl Film {
             for x in 0..FILTER_TABLE_WIDTH {
                 let px = (x as Float + 0.5) * opts.filter.radius().x / FILTER_TABLE_WIDTH as Float;
                 let py = (y as Float + 0.5) * opts.filter.radius().y / FILTER_TABLE_WIDTH as Float;
-                filter_table[offset] = opts.filter.evaluate(&Point2::new(px, py));
+                filter_table[offset] = opts.filter.evaluate(&Point2F::new(px, py));
                 offset += 1;
             }
         }
@@ -89,7 +89,7 @@ impl Film {
     pub fn add_sample(
         &self,
         sampled_pixel: &mut SampledPixel,
-        film_point: &Point2,
+        film_point: &Point2F,
         mut radiance: RGBSpectrum,
         sample_weight: Float,
     ) {
@@ -98,11 +98,11 @@ impl Film {
         }
 
         // Compute sample's raster bounds.
-        let film_point = film_point - &Vec2::new(0.5, 0.5);
+        let film_point = film_point - &Vec2F::new(0.5, 0.5);
         let p0 = (film_point - self.filter.radius())
             .ceil()
             .max(&self.bounds.min);
-        let p1 = ((film_point + self.filter.radius()).floor() + Point2::new(1.0, 1.0))
+        let p1 = ((film_point + self.filter.radius()).floor() + Point2F::new(1.0, 1.0))
             .min(&self.bounds.max);
 
         // Precompute x and y filter table offsets.

@@ -1,12 +1,12 @@
 use crate::{
     base::{constants::Float, film::Film},
-    geometries::{point2::Point2, ray::Ray},
+    geometries::{point2::Point2F, ray::Ray},
 };
 
 #[derive(Debug, Clone, Copy)]
 pub struct CameraSample {
-    pub film: Point2,
-    pub lens: Point2,
+    pub film: Point2F,
+    pub lens: Point2F,
     pub time: Float,
 }
 

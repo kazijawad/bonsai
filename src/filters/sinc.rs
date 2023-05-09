@@ -3,20 +3,20 @@ use crate::{
         constants::{Float, PI},
         filter::Filter,
     },
-    geometries::{point2::Point2, vec2::Vec2},
+    geometries::{point2::Point2F, vec2::Vec2F},
 };
 
 pub struct LanczosSincFilter {
-    radius: Vec2,
-    inverse_radius: Vec2,
+    radius: Vec2F,
+    inverse_radius: Vec2F,
     tau: Float,
 }
 
 impl LanczosSincFilter {
-    pub fn new(radius: Vec2, tau: Float) -> Self {
+    pub fn new(radius: Vec2F, tau: Float) -> Self {
         Self {
             radius,
-            inverse_radius: Vec2::new(1.0 / radius.x, 1.0 / radius.y),
+            inverse_radius: Vec2F::new(1.0 / radius.x, 1.0 / radius.y),
             tau,
         }
     }
@@ -42,15 +42,15 @@ impl LanczosSincFilter {
 }
 
 impl Filter for LanczosSincFilter {
-    fn evaluate(&self, point: &Point2) -> Float {
+    fn evaluate(&self, point: &Point2F) -> Float {
         self.windowed_sinc(point.x, self.radius.x) * self.windowed_sinc(point.y, self.radius.y)
     }
 
-    fn radius(&self) -> Vec2 {
+    fn radius(&self) -> Vec2F {
         self.radius
     }
 
-    fn inverse_radius(&self) -> Vec2 {
+    fn inverse_radius(&self) -> Vec2F {
         self.inverse_radius
     }
 }

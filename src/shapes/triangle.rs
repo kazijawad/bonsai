@@ -9,7 +9,7 @@ use crate::{
         transform::Transform,
     },
     geometries::{
-        bounds3::Bounds3, normal::Normal, point2::Point2, point3::Point3, ray::Ray, vec3::Vec3,
+        bounds3::Bounds3, normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3,
     },
     interactions::{base::BaseInteraction, surface::SurfaceInteraction},
     utils::math::gamma,
@@ -20,7 +20,7 @@ pub struct TriangleMesh {
     position: Vec<Point3>,
     tangent: Option<Vec<Vec3>>,
     normal: Option<Vec<Normal>>,
-    uv: Option<Vec<Point2>>,
+    uv: Option<Vec<Point2F>>,
 }
 
 pub struct TriangleMeshOptions {
@@ -29,7 +29,7 @@ pub struct TriangleMeshOptions {
     pub position: Vec<Point3>,
     pub tangent: Option<Vec<Vec3>>,
     pub normal: Option<Vec<Normal>>,
-    pub uv: Option<Vec<Point2>>,
+    pub uv: Option<Vec<Point2F>>,
 }
 
 pub struct Triangle {
@@ -109,7 +109,7 @@ impl Triangle {
         }
     }
 
-    fn get_uvs(&self) -> [Point2; 3] {
+    fn get_uvs(&self) -> [Point2F; 3] {
         if let Some(uv) = &self.mesh.uv {
             [
                 uv[self.indices[0]],
@@ -118,9 +118,9 @@ impl Triangle {
             ]
         } else {
             [
-                Point2::default(),
-                Point2::new(1.0, 0.0),
-                Point2::new(1.0, 1.0),
+                Point2F::default(),
+                Point2F::new(1.0, 0.0),
+                Point2F::new(1.0, 1.0),
             ]
         }
     }
@@ -525,7 +525,7 @@ impl Shape for Triangle {
         true
     }
 
-    fn sample(&self, u: &Point2, pdf: &mut Float) -> Box<dyn Interaction> {
+    fn sample(&self, u: &Point2F, pdf: &mut Float) -> Box<dyn Interaction> {
         let b = uniform_sample_triangle(u);
 
         // Query triangle vertices.

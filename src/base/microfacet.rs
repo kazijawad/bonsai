@@ -1,6 +1,6 @@
 use crate::{
     base::constants::{Float, PI},
-    geometries::{point2::Point2, vec3::Vec3},
+    geometries::{point2::Point2F, vec3::Vec3},
     utils::bxdf::{
         abs_cos_theta, cos2_phi, cos2_theta, cos_phi, cos_theta, sin2_phi, sin_phi, tan2_theta,
         tan_theta,
@@ -20,7 +20,7 @@ pub trait MicrofacetDistribution: Send + Sync {
         1.0 / (1.0 + self.lambda(wo) + self.lambda(wi))
     }
 
-    fn sample(&self, wo: &Vec3, u: &Point2) -> Vec3;
+    fn sample(&self, wo: &Vec3, u: &Point2F) -> Vec3;
 
     fn pdf(&self, wo: &Vec3, wh: &Vec3) -> Float {
         self.d(wh) * self.g1(wo) * wo.abs_dot(wh) / abs_cos_theta(wo)
@@ -139,7 +139,7 @@ impl MicrofacetDistribution for TrowbridgeReitzDistribution {
         (-1.0 + (1.0 + alpha2_tan2_theta).sqrt()) / 2.0
     }
 
-    fn sample(&self, wo: &Vec3, u: &Point2) -> Vec3 {
+    fn sample(&self, wo: &Vec3, u: &Point2F) -> Vec3 {
         let flip = wo.z < 0.0;
         let wo = if flip { -wo } else { *wo };
         let wh = Self::sample(&wo, self.alpha_x, self.alpha_y, u[0], u[1]);

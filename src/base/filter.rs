@@ -1,11 +1,11 @@
 use crate::{
     base::constants::Float,
-    geometries::{point2::Point2, vec2::Vec2},
+    geometries::{point2::Point2F, vec2::Vec2F},
 };
 
 pub trait Filter: Send + Sync {
-    fn evaluate(&self, point: &Point2) -> Float;
+    fn evaluate(&self, point: &Point2F) -> Float;
 
-    fn radius(&self) -> Vec2;
-    fn inverse_radius(&self) -> Vec2;
+    fn radius(&self) -> Vec2F;
+    fn inverse_radius(&self) -> Vec2F;
 }

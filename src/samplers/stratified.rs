@@ -6,14 +6,14 @@ use crate::{
         sampler::Sampler,
         sampling::{latin_hypercube, shuffle, stratified_sample_1d, stratified_sample_2d},
     },
-    geometries::point2::Point2,
+    geometries::point2::Point2F,
 };
 
 #[derive(Clone)]
 pub struct StratifiedSampler {
     samples_per_pixel: usize,
 
-    current_pixel: Point2,
+    current_pixel: Point2F,
     current_pixel_sample_index: usize,
 
     samples_1d_sizes: Vec<usize>,
@@ -23,10 +23,10 @@ pub struct StratifiedSampler {
     offset_2d: usize,
 
     sample_vec_1d: Vec<Vec<Float>>,
-    sample_vec_2d: Vec<Vec<Point2>>,
+    sample_vec_2d: Vec<Vec<Point2F>>,
 
     samples_1d: Vec<Vec<Float>>,
-    samples_2d: Vec<Vec<Point2>>,
+    samples_2d: Vec<Vec<Point2F>>,
 
     current_1d_dim: usize,
     current_2d_dim: usize,
@@ -56,13 +56,13 @@ impl StratifiedSampler {
 
         let samples_1d: Vec<Vec<Float>> =
             vec![vec![0.0; samples_per_pixel]; num_sampled_dimensions];
-        let samples_2d: Vec<Vec<Point2>> =
-            vec![vec![Point2::default(); samples_per_pixel]; num_sampled_dimensions];
+        let samples_2d: Vec<Vec<Point2F>> =
+            vec![vec![Point2F::default(); samples_per_pixel]; num_sampled_dimensions];
 
         Self {
             samples_per_pixel,
 
-            current_pixel: Point2::default(),
+            current_pixel: Point2F::default(),
             current_pixel_sample_index: 0,
 
             samples_1d_sizes: vec![],
@@ -94,7 +94,7 @@ impl Sampler for StratifiedSampler {
         self.rng = StdRng::seed_from_u64(x);
     }
 
-    fn start_pixel(&mut self, pixel: &Point2) {
+    fn start_pixel(&mut self, pixel: &Point2F) {
         // Generate single stratified samples for pixel.
         for samples in self.samples_1d.iter_mut() {
             stratified_sample_1d(
@@ -165,14 +165,14 @@ impl Sampler for StratifiedSampler {
         }
     }
 
-    fn get_2d(&mut self) -> Point2 {
+    fn get_2d(&mut self) -> Point2F {
         debug_assert!(self.current_pixel_sample_index < self.samples_per_pixel);
         if self.current_2d_dim < self.samples_2d.len() {
             let dim = self.current_2d_dim;
             self.current_2d_dim += 1;
             self.samples_2d[dim][self.current_pixel_sample_index]
         } else {
-            Point2::new(self.rng.gen_range(0.0..1.0), self.rng.gen_range(0.0..1.0))
+            Point2F::new(self.rng.gen_range(0.0..1.0), self.rng.gen_range(0.0..1.0))
         }
     }
 
@@ -185,7 +185,7 @@ impl Sampler for StratifiedSampler {
     fn request_2d_vec(&mut self, n: usize) {
         self.samples_2d_sizes.push(n);
         self.sample_vec_2d
-            .push(vec![Point2::default(); n * self.samples_per_pixel]);
+            .push(vec![Point2F::default(); n * self.samples_per_pixel]);
     }
 
     fn get_1d_vec(&mut self, n: usize) -> Vec<Float> {
@@ -201,7 +201,7 @@ impl Sampler for StratifiedSampler {
         self.sample_vec_1d[dim][self.current_pixel_sample_index * n..].to_vec()
     }
 
-    fn get_2d_vec(&mut self, n: usize) -> Vec<Point2> {
+    fn get_2d_vec(&mut self, n: usize) -> Vec<Point2F> {
         if self.offset_2d == self.sample_vec_2d.len() {
             return vec![];
         }
