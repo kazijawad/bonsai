@@ -3,6 +3,7 @@ use std::mem;
 use crate::{
     base::{constants::Float, spectrum::Spectrum, texture::lanczos},
     geometries::{point2::Point2, vec2::Vec2},
+    io::image::write_image,
     spectra::rgb::RGBSpectrum,
     utils::math::modulo,
 };
@@ -237,6 +238,28 @@ impl MIPMap {
                 &self.triangle(level_i + 1, st),
             )
         }
+    }
+
+    pub fn export(&self) {
+        let images = &self.pyramid;
+
+        let width: i32 = images.iter().map(|v| v.width).sum();
+        let height: i32 = images.iter().map(|v| v.height).max().unwrap();
+
+        let mut pixels: Vec<RGBSpectrum> = Vec::with_capacity((width * height) as usize);
+        for y in 0..height {
+            for image in images.iter() {
+                for x in 0..image.width {
+                    if let Some(pixel) = image.data.get((y * image.width + x) as usize) {
+                        pixels.push(pixel.clone())
+                    } else {
+                        pixels.push(RGBSpectrum::default())
+                    }
+                }
+            }
+        }
+
+        write_image(pixels, width as u32, height as u32, "mipmap.exr");
     }
 
     fn triangle(&self, level: usize, st: &Point2) -> RGBSpectrum {

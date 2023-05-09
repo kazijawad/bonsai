@@ -25,7 +25,7 @@ pub use base::{
     integrator::Integrator,
     light::{AreaLight, Light},
     material::Material,
-    mipmap::ImageWrap,
+    mipmap::{ImageWrap, MIPMap},
     primitive::Primitive,
     sampler::Sampler,
     scene::Scene,

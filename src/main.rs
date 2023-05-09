@@ -1,15 +1,18 @@
 use bonsai::*;
 
 fn main() {
+    let image_texture = ImageTexture::new(ImageTextureOptions {
+        path: "assets/textures/lines.exr",
+        mapping: Box::new(UVMapping2D::default()),
+        max_anisotropy: 8.0,
+        wrap_mode: ImageWrap::Repeat,
+        is_gamma_corrected: false,
+        use_trilinear: true,
+    });
+    image_texture.mipmap.export();
+
     let image_material = MatteMaterial {
-        kd: &ImageTexture::new(ImageTextureOptions {
-            path: "assets/textures/lines.exr",
-            mapping: Box::new(UVMapping2D::default()),
-            max_anisotropy: 8.0,
-            wrap_mode: ImageWrap::Repeat,
-            is_gamma_corrected: false,
-            use_trilinear: true,
-        }),
+        kd: &image_texture,
         sigma: &ConstantTexture { value: 0.0 },
     };
 
@@ -45,7 +48,7 @@ fn main() {
         resolution: Point2::new(1024.0, 1024.0),
         crop_window: Bounds2::new(&Point2::new(0.0, 0.0), &Point2::new(1.0, 1.0)),
         filter: Box::new(BoxFilter::new(Vec2::new(0.5, 0.5))),
-        filename: String::from("result.exr"),
+        filename: "result.exr",
         scale: 1.0,
         max_sample_luminance: Float::INFINITY,
     });

@@ -11,8 +11,8 @@ use crate::{
 };
 
 pub struct ImageTexture {
+    pub mipmap: MIPMap,
     mapping: Box<dyn TextureMapping2D>,
-    mipmap: MIPMap,
 }
 
 pub struct ImageTextureOptions<'a> {
@@ -54,8 +54,8 @@ impl ImageTexture {
         );
 
         Self {
-            mapping: opts.mapping,
             mipmap,
+            mapping: opts.mapping,
         }
     }
 }

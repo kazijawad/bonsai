@@ -20,7 +20,6 @@ pub struct Pixel {
     filter_weight_sum: Float,
 }
 
-#[derive(Debug, Clone)]
 pub struct SampledPixel {
     contribution_sum: RGBSpectrum,
     filter_weight_sum: Float,
@@ -37,11 +36,11 @@ pub struct Film {
     max_sample_luminance: Float,
 }
 
-pub struct FilmOptions {
+pub struct FilmOptions<'a> {
     pub resolution: Point2,
     pub crop_window: Bounds2,
     pub filter: Box<dyn Filter>,
-    pub filename: String,
+    pub filename: &'a str,
     pub scale: Float,
     pub max_sample_luminance: Float,
 }
@@ -78,7 +77,7 @@ impl Film {
         Self {
             full_resolution: opts.resolution,
             filter: opts.filter,
-            filename: opts.filename,
+            filename: String::from(opts.filename),
             bounds,
             pixels,
             filter_table,
@@ -154,10 +153,10 @@ impl Film {
     }
 
     pub fn write_image(&self) {
-        let mut image = vec![0.0; self.bounds.area() as usize * 3];
-        let mut pixels = self.pixels.lock().unwrap();
+        let pixels = self.pixels.lock().unwrap();
+        let mut image = Vec::with_capacity(self.bounds.area() as usize * 3);
 
-        for (offset, pixel) in pixels.iter_mut().enumerate() {
+        for pixel in pixels.iter() {
             let mut rgb: RGB = [0.0; 3];
 
             // Convert pixel XYZ color to RGB.
@@ -178,9 +177,9 @@ impl Film {
             rgb[2] *= self.scale;
 
             // Copy over values to image vector.
-            image[3 * offset] = rgb[0];
-            image[3 * offset + 1] = rgb[1];
-            image[3 * offset + 2] = rgb[2];
+            image.push(rgb[0]);
+            image.push(rgb[1]);
+            image.push(rgb[2]);
         }
 
         // Write image.
@@ -189,9 +188,9 @@ impl Film {
             (self.bounds.max.y - self.bounds.min.y) as u32,
             image,
         )
-        .unwrap();
+        .expect("Failed to write image buffer");
 
-        match buf.save(self.filename.clone()) {
+        match buf.save(&self.filename) {
             Ok(_) => return,
             Err(err) => panic!("Failed to save file: {:?}", err),
         }
