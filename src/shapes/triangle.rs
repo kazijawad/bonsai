@@ -141,13 +141,7 @@ impl Shape for Triangle {
         Bounds3::new(&p0, &p1).union_point(&p2)
     }
 
-    fn intersect(
-        &self,
-        ray: &Ray,
-        t_hit: &mut Float,
-        si: &mut SurfaceInteraction,
-        _include_alpha: bool,
-    ) -> bool {
+    fn intersect(&self, ray: &Ray, t_hit: &mut Float, si: &mut SurfaceInteraction) -> bool {
         // Get triangle vertices.
         let p0 = &self.mesh.position[self.indices[0]];
         let p1 = &self.mesh.position[self.indices[1]];
@@ -399,7 +393,7 @@ impl Shape for Triangle {
         true
     }
 
-    fn intersect_test(&self, ray: &Ray, _include_alpha: bool) -> bool {
+    fn intersect_test(&self, ray: &Ray) -> bool {
         // Get triangle vertices.
         let p0 = &self.mesh.position[self.indices[0]];
         let p1 = &self.mesh.position[self.indices[1]];

@@ -12,15 +12,9 @@ pub trait Shape: Send + Sync {
 
     fn world_bound(&self) -> Bounds3;
 
-    fn intersect(
-        &self,
-        ray: &Ray,
-        t_hit: &mut Float,
-        interaction: &mut SurfaceInteraction,
-        include_alpha: bool,
-    ) -> bool;
+    fn intersect(&self, ray: &Ray, t_hit: &mut Float, si: &mut SurfaceInteraction) -> bool;
 
-    fn intersect_test(&self, ray: &Ray, include_alpha: bool) -> bool;
+    fn intersect_test(&self, ray: &Ray) -> bool;
 
     fn sample(&self, u: &Point2, pdf: &mut Float) -> Box<dyn Interaction>;
 
@@ -54,20 +48,18 @@ pub trait Shape: Send + Sync {
         1.0 / self.area()
     }
 
-    fn pdf_from_ref(&self, reference: &dyn Interaction, wi: &Vec3) -> Float {
-        let ray = reference.spawn_ray(wi);
+    fn pdf_from_ref(&self, it: &dyn Interaction, wi: &Vec3) -> Float {
+        let ray = it.spawn_ray(wi);
         let mut t_hit = 0.0;
 
-        let mut light_interaction = SurfaceInteraction::default();
-        if !self.intersect(&ray, &mut t_hit, &mut light_interaction, false) {
+        let mut si = SurfaceInteraction::default();
+        if !self.intersect(&ray, &mut t_hit, &mut si) {
             return 0.0;
         }
 
         // Convert light sample weight to solid angle measure.
-        let mut pdf = reference
-            .position()
-            .distance_squared(&light_interaction.base.p)
-            / (light_interaction.base.n.abs_dot(&Normal::from(-wi)) * self.area());
+        let mut pdf = it.position().distance_squared(&si.base.p)
+            / (si.base.n.abs_dot(&Normal::from(-wi)) * self.area());
         if pdf.is_infinite() {
             pdf = 0.0;
         }
@@ -78,21 +70,18 @@ pub trait Shape: Send + Sync {
     fn area(&self) -> Float;
 
     fn solid_angle(&self, p: &Point3, num_samples: u32) -> Float {
-        let mut reference = Box::new(BaseInteraction::new(p, 0.0));
-        reference.wo.z = 1.0;
+        let mut it = Box::new(BaseInteraction::new(p, 0.0));
+        it.wo.z = 1.0;
 
         let mut solid_angle = 0.0;
         for i in 0..(num_samples as u64) {
             let u = Point2::new(radical_inverse(0, i), radical_inverse(1, i));
 
             let mut pdf = 0.0;
-            let shape_point = self.sample_from_ref(reference.as_ref(), &u, &mut pdf);
+            let shape_point = self.sample_from_ref(it.as_ref(), &u, &mut pdf);
 
             if pdf > 0.0
-                && !self.intersect_test(
-                    &Ray::new(p, &(&shape_point.position() - p), 0.999, 0.0),
-                    true,
-                )
+                && !self.intersect_test(&Ray::new(p, &(&shape_point.position() - p), 0.999, 0.0))
             {
                 solid_angle += 1.0 / pdf;
             }

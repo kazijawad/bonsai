@@ -23,7 +23,7 @@ impl<'a> Primitive<'a> for GeometricPrimitive<'a> {
 
     fn intersect(&'a self, ray: &mut Ray, si: &mut SurfaceInteraction<'a>) -> bool {
         let mut t_hit: Float = 0.0;
-        if !self.shape.intersect(ray, &mut t_hit, si, true) {
+        if !self.shape.intersect(ray, &mut t_hit, si) {
             return false;
         }
         ray.t_max = t_hit;
@@ -32,7 +32,7 @@ impl<'a> Primitive<'a> for GeometricPrimitive<'a> {
     }
 
     fn intersect_test(&self, ray: &Ray) -> bool {
-        self.shape.intersect_test(ray, true)
+        self.shape.intersect_test(ray)
     }
 
     fn compute_scattering_functions(

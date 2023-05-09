@@ -77,13 +77,7 @@ impl Shape for Sphere {
         self.object_to_world.transform_bounds(&self.object_bound())
     }
 
-    fn intersect(
-        &self,
-        ray: &Ray,
-        t_hit: &mut Float,
-        interaction: &mut SurfaceInteraction,
-        _include_alpha: bool,
-    ) -> bool {
+    fn intersect(&self, ray: &Ray, t_hit: &mut Float, si: &mut SurfaceInteraction) -> bool {
         // Transform ray to object space.
         let mut o_error = Vec3::default();
         let mut d_error = Vec3::default();
@@ -219,7 +213,7 @@ impl Shape for Sphere {
         let p_error = gamma(5.0) * Vec3::from(p_hit).abs();
 
         // Initialize interaction from parametric information.
-        *interaction = SurfaceInteraction::new(
+        *si = SurfaceInteraction::new(
             p_hit,
             p_error,
             Point2::new(u, v),
@@ -232,7 +226,7 @@ impl Shape for Sphere {
             self.reverse_orientation,
             self.transform_swaps_handedness,
         );
-        interaction.transform(&self.object_to_world);
+        si.transform(&self.object_to_world);
 
         // Update hit for quadric intersection.
         *t_hit = Float::from(t_shape_hit);
@@ -240,11 +234,11 @@ impl Shape for Sphere {
         true
     }
 
-    fn intersect_test(&self, r: &Ray, _include_alpha: bool) -> bool {
+    fn intersect_test(&self, ray: &Ray) -> bool {
         // Transform ray to object space.
         let mut origin_error = Vec3::default();
         let mut direction_error = Vec3::default();
-        let ray = r.transform_with_error(
+        let ray = ray.transform_with_error(
             &self.world_to_object,
             &mut origin_error,
             &mut direction_error,
@@ -358,7 +352,7 @@ impl Shape for Sphere {
 
     fn sample_from_ref(
         &self,
-        _reference: &dyn Interaction,
+        _it: &dyn Interaction,
         _u: &Point2,
         _pdf: &mut Float,
     ) -> Box<dyn Interaction> {

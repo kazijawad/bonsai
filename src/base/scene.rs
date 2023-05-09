@@ -33,8 +33,8 @@ impl<'a> Scene<'a> {
         self.bounds
     }
 
-    pub fn intersect(&self, ray: &mut Ray, interaction: &mut SurfaceInteraction<'a>) -> bool {
-        self.aggregate.intersect(ray, interaction)
+    pub fn intersect(&self, ray: &mut Ray, si: &mut SurfaceInteraction<'a>) -> bool {
+        self.aggregate.intersect(ray, si)
     }
 
     pub fn intersect_test(&self, ray: &Ray) -> bool {

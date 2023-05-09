@@ -40,30 +40,31 @@ impl<'a> Primitive<'a> for TransformedPrimitive<'a> {
         true
     }
 
-    fn intersect_test(&self, r: &Ray) -> bool {
+    fn intersect_test(&self, ray: &Ray) -> bool {
         let mut interpolated_primitive_to_world = Transform::default();
         self.primitive_to_world
-            .interpolate(r.time, &mut interpolated_primitive_to_world);
+            .interpolate(ray.time, &mut interpolated_primitive_to_world);
 
         let interpolated_world_to_primitive = interpolated_primitive_to_world.inverse();
         self.primitive
-            .intersect_test(&r.transform(&interpolated_world_to_primitive))
+            .intersect_test(&ray.transform(&interpolated_world_to_primitive))
     }
 
     fn compute_scattering_functions(
         &self,
-        _interaction: &mut SurfaceInteraction,
-        _transport_mode: TransportMode,
-        _allow_multiple_lobes: bool,
+        si: &mut SurfaceInteraction,
+        mode: TransportMode,
+        allow_multiple_lobes: bool,
     ) {
-        panic!("TransformedPrimitive::compute_scattering_function should not be called")
+        self.primitive
+            .compute_scattering_functions(si, mode, allow_multiple_lobes)
     }
 
     fn material(&self) -> Option<&dyn Material> {
-        None
+        self.primitive.material()
     }
 
     fn area_light(&self) -> Option<&dyn AreaLight> {
-        None
+        self.primitive.area_light()
     }
 }

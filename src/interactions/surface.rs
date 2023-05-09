@@ -116,11 +116,9 @@ impl<'a> SurfaceInteraction<'a> {
         allow_multiple_lobes: bool,
     ) {
         self.compute_differentials(ray);
-        self.primitive
-            .as_ref()
-            .unwrap()
-            .clone()
-            .compute_scattering_functions(self, mode, allow_multiple_lobes);
+        if let Some(prim) = self.primitive {
+            prim.compute_scattering_functions(self, mode, allow_multiple_lobes);
+        }
     }
 
     pub fn compute_differentials(&mut self, ray: &Ray) {
@@ -135,18 +133,18 @@ impl<'a> SurfaceInteraction<'a> {
 
         if ray.has_differentials {
             // Compute auxiliary intersection points with plane.
-            let d = self.base.n.dot(&self.base.p.into());
+            let d = self.base.n.dot_point(&self.base.p);
 
-            let tx = -(self.base.n.dot(&ray.rx_origin.into()) - d)
-                / self.base.n.dot(&ray.rx_direction.into());
+            let tx = -(self.base.n.dot_point(&ray.rx_origin) - d)
+                / self.base.n.dot_vec(&ray.rx_direction);
             if tx.is_infinite() || tx.is_nan() {
                 fail();
                 return;
             }
             let px = ray.rx_origin + tx * ray.rx_direction;
 
-            let ty = -(self.base.n.dot(&ray.ry_origin.into()) - d)
-                / self.base.n.dot(&ray.ry_direction.into());
+            let ty = -(self.base.n.dot_point(&ray.ry_origin) - d)
+                / self.base.n.dot_vec(&ray.ry_direction);
             if ty.is_infinite() || ty.is_nan() {
                 fail();
                 return;
@@ -195,7 +193,7 @@ impl<'a> SurfaceInteraction<'a> {
     }
 
     pub fn emitted_radiance(&self, direction: &Vec3) -> RGBSpectrum {
-        if let Some(primitive) = self.primitive.as_ref() {
+        if let Some(primitive) = self.primitive {
             if let Some(area_light) = primitive.area_light() {
                 return area_light.emission(self, direction);
             }

@@ -45,7 +45,17 @@ impl Normal {
         self.length_squared().sqrt()
     }
 
-    pub fn dot(&self, v: &Self) -> Float {
+    pub fn dot(&self, n: &Self) -> Float {
+        debug_assert!(!self.is_nan() && !n.is_nan());
+        self.x * n.x + self.y * n.y + self.z * n.z
+    }
+
+    pub fn dot_point(&self, p: &Point3) -> Float {
+        debug_assert!(!self.is_nan() && !p.is_nan());
+        self.x * p.x + self.y * p.y + self.z * p.z
+    }
+
+    pub fn dot_vec(&self, v: &Vec3) -> Float {
         debug_assert!(!self.is_nan() && !v.is_nan());
         self.x * v.x + self.y * v.y + self.z * v.z
     }
@@ -336,6 +346,22 @@ mod tests {
         let b = Normal::new(2.0, 6.0, 1.0);
         let x = 37.0;
         assert_eq!(a.dot(&b), x);
+    }
+
+    #[test]
+    fn dot_point() {
+        let a = Normal::new(3.0, 4.0, 7.0);
+        let b = Point3::new(2.0, 6.0, 1.0);
+        let x = 37.0;
+        assert_eq!(a.dot_point(&b), x);
+    }
+
+    #[test]
+    fn dot_vec() {
+        let a = Normal::new(3.0, 4.0, 7.0);
+        let b = Vec3::new(2.0, 6.0, 1.0);
+        let x = 37.0;
+        assert_eq!(a.dot_vec(&b), x);
     }
 
     #[test]

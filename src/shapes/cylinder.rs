@@ -71,17 +71,11 @@ impl Shape for Cylinder {
         self.object_to_world.transform_bounds(&self.object_bound())
     }
 
-    fn intersect(
-        &self,
-        r: &Ray,
-        t_hit: &mut Float,
-        interaction: &mut SurfaceInteraction,
-        _include_alpha: bool,
-    ) -> bool {
+    fn intersect(&self, ray: &Ray, t_hit: &mut Float, si: &mut SurfaceInteraction) -> bool {
         // Transform ray to object space.
         let mut origin_error = Vec3::default();
         let mut direction_error = Vec3::default();
-        let ray = r.transform_with_error(
+        let ray = ray.transform_with_error(
             &self.world_to_object,
             &mut origin_error,
             &mut direction_error,
@@ -191,7 +185,7 @@ impl Shape for Cylinder {
         let p_error = gamma(3.0) * Vec3::new(p_hit.x, p_hit.y, 0.0).abs();
 
         // Initialize interaction from parametric information.
-        *interaction = SurfaceInteraction::new(
+        *si = SurfaceInteraction::new(
             p_hit,
             p_error,
             Point2::new(u, v),
@@ -204,7 +198,7 @@ impl Shape for Cylinder {
             self.reverse_orientation,
             self.transform_swaps_handedness,
         );
-        interaction.transform(&self.object_to_world);
+        si.transform(&self.object_to_world);
 
         // Update hit for quadric intersection.
         *t_hit = Float::from(t_shape_hit);
@@ -212,11 +206,11 @@ impl Shape for Cylinder {
         true
     }
 
-    fn intersect_test(&self, r: &Ray, _include_alpha: bool) -> bool {
+    fn intersect_test(&self, ray: &Ray) -> bool {
         // Transform ray to object space.
         let mut origin_error = Vec3::default();
         let mut direction_error = Vec3::default();
-        let ray = r.transform_with_error(
+        let ray = ray.transform_with_error(
             &self.world_to_object,
             &mut origin_error,
             &mut direction_error,
