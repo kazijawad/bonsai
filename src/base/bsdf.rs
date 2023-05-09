@@ -67,7 +67,7 @@ impl BSDF {
             return RGBSpectrum::default();
         }
 
-        let reflect = wi_world.dot(&self.ng.into()) * wo_world.dot(&self.ng.into()) > 0.0;
+        let reflect = wi_world.dot_normal(&self.ng) * wo_world.dot_normal(&self.ng) > 0.0;
         let mut f = RGBSpectrum::default();
         for bxdf in self.bxdfs.iter() {
             if bxdf.matches_flags(flags)
@@ -137,18 +137,12 @@ impl BSDF {
             }
             count -= 1;
         }
-        if bxdf.is_none() {
-            panic!("BSDF::sample BxDF was not initialized")
-        }
-        let bxdf = bxdf.unwrap();
+        let bxdf = bxdf.expect("BSDF::sample BxDF was not initialized");
 
         // Remap BxDF sample to [0, 1].
         let u_remapped = Point2::new(
-            Float::min(
-                u.x * matching_components as Float - component as Float,
-                1.0 - Float::EPSILON,
-            ),
-            u.y,
+            (u[0] * matching_components as Float - component as Float).min(1.0 - Float::EPSILON),
+            u[1],
         );
 
         // Sample chosen BxDF.

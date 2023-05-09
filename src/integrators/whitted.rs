@@ -43,11 +43,11 @@ impl<'a> WhittedIntegrator {
     ) -> RGBSpectrum {
         // Compute specular reflection direction and BSDF.
         let wo = si.base.wo;
-        let (wi, f, pdf, _) = si.bsdf.as_ref().unwrap().sample(
-            &wo,
-            &sampler.get_2d(),
-            BSDF_REFLECTION | BSDF_SPECULAR,
-        );
+        let (wi, f, pdf, _) = if let Some(bsdf) = si.bsdf.as_ref() {
+            bsdf.sample(&wo, &sampler.get_2d(), BSDF_REFLECTION | BSDF_SPECULAR)
+        } else {
+            panic!("WhittedIntegrator::specular_reflect BSDF is None in SurfaceInteraction")
+        };
 
         // Return contribution of specular reflection.
         let ns = si.shading.n;
@@ -183,9 +183,11 @@ impl<'a> Integrator<'a> for WhittedIntegrator {
                 continue;
             }
 
-            let f = si.bsdf.as_ref().unwrap().f(&wo, &wi, BSDF_ALL);
-            if !f.is_black() && visibility.is_unoccluded(scene) {
-                result += f * emission * wi.abs_dot_normal(&n) / pdf;
+            if let Some(bsdf) = si.bsdf.as_ref() {
+                let f = bsdf.f(&wo, &wi, BSDF_ALL);
+                if !f.is_black() && visibility.is_unoccluded(scene) {
+                    result += f * emission * wi.abs_dot_normal(&n) / pdf;
+                }
             }
         }
 

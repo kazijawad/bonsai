@@ -64,7 +64,10 @@ pub trait BxDF: Send + Sync {
         }
     }
 
-    fn matches_flags(&self, t: BxDFType) -> bool;
-
     fn bxdf_type(&self) -> BxDFType;
+
+    fn matches_flags(&self, flags: BxDFType) -> bool {
+        let bxdf_type = self.bxdf_type();
+        (bxdf_type & flags) == bxdf_type
+    }
 }

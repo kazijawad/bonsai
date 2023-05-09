@@ -229,12 +229,12 @@ impl MIPMap {
         } else if level >= self.levels() as Float - 1.0 {
             self.texel(self.levels() - 1, 0, 0)
         } else {
-            let level_floor = level.floor() as usize;
-            let delta = level - level_floor as Float;
+            let level_i = level.floor() as usize;
+            let delta = level - level_i as Float;
             RGBSpectrum::lerp(
                 delta,
-                &self.triangle(level_floor, st),
-                &self.triangle(level_floor + 1, st),
+                &self.triangle(level_i, st),
+                &self.triangle(level_i + 1, st),
             )
         }
     }
@@ -246,19 +246,16 @@ impl MIPMap {
         let s = st[0] * image.width as Float - 0.5;
         let t = st[1] * image.height as Float - 0.5;
 
-        let sf = s.floor();
-        let tf = t.floor();
+        let s0 = s.floor() as i32;
+        let t0 = t.floor() as i32;
 
-        let ds = s - sf;
-        let dt = t - tf;
+        let ds = s - s0 as Float;
+        let dt = t - t0 as Float;
 
-        let sf = sf as i32;
-        let tf = tf as i32;
-
-        (1.0 - ds) * (1.0 - dt) * self.texel(level, sf, tf)
-            + (1.0 - ds) * dt * self.texel(level, sf, tf + 1)
-            + ds * (1.0 - dt) * self.texel(level, sf + 1, tf)
-            + ds * dt * self.texel(level, sf + 1, tf + 1)
+        (1.0 - ds) * (1.0 - dt) * self.texel(level, s0, t0)
+            + (1.0 - ds) * dt * self.texel(level, s0, t0 + 1)
+            + ds * (1.0 - dt) * self.texel(level, s0 + 1, t0)
+            + ds * dt * self.texel(level, s0 + 1, t0 + 1)
     }
 
     fn ewa(&self, level: usize, st: &mut Point2, dst0: &mut Vec2, dst1: &mut Vec2) -> RGBSpectrum {

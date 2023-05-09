@@ -50,10 +50,6 @@ impl BxDF for LambertianReflection {
         self.r
     }
 
-    fn matches_flags(&self, t: BxDFType) -> bool {
-        (self.bxdf_type & t) == self.bxdf_type
-    }
-
     fn bxdf_type(&self) -> BxDFType {
         self.bxdf_type
     }
@@ -88,10 +84,6 @@ impl BxDF for LambertianTransmission {
         } else {
             0.0
         }
-    }
-
-    fn matches_flags(&self, t: BxDFType) -> bool {
-        (self.bxdf_type & t) == self.bxdf_type
     }
 
     fn bxdf_type(&self) -> BxDFType {

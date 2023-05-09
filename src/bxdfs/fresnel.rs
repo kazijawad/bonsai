@@ -117,10 +117,6 @@ impl BxDF for FresnelSpecular {
         0.0
     }
 
-    fn matches_flags(&self, t: BxDFType) -> bool {
-        (self.bxdf_type & t) == self.bxdf_type
-    }
-
     fn bxdf_type(&self) -> BxDFType {
         self.bxdf_type
     }
@@ -188,10 +184,6 @@ impl BxDF for FresnelBlend {
         let wh_pdf = self.distribution.pdf(wo, &wh);
 
         0.5 * (abs_cos_theta(wi) * (1.0 / PI) + wh_pdf / (4.0 * wo.dot(&wh)))
-    }
-
-    fn matches_flags(&self, t: BxDFType) -> bool {
-        (self.bxdf_type & t) == self.bxdf_type
     }
 
     fn bxdf_type(&self) -> BxDFType {
