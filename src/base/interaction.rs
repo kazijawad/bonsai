@@ -4,12 +4,37 @@ use crate::{
 };
 
 pub trait Interaction: Send + Sync {
-    fn position(&self) -> Point3;
-    fn position_error(&self) -> Vec3;
-    fn normal(&self) -> Normal;
+    fn p(&self) -> Point3;
+
+    fn p_error(&self) -> Vec3;
+
     fn time(&self) -> Float;
 
-    fn spawn_ray(&self, direction: &Vec3) -> Ray;
-    fn spawn_ray_to_point(&self, point: Point3) -> Ray;
-    fn spawn_ray_to_it(&self, interaction: &dyn Interaction) -> Ray;
+    fn wo(&self) -> Vec3;
+
+    fn n(&self) -> Normal;
+
+    fn spawn_ray(&self, dir: &Vec3) -> Ray {
+        let origin = self.p().offset_ray_origin(&self.p_error(), &self.n(), dir);
+        Ray::new(&origin, dir, 1.0 - 0.0001, self.time())
+    }
+
+    fn spawn_ray_to_point(&self, p: Point3) -> Ray {
+        let direction = p - self.p();
+        let origin = self
+            .p()
+            .offset_ray_origin(&self.p_error(), &self.n(), &direction);
+        Ray::new(&origin, &direction, 1.0 - 0.0001, self.time())
+    }
+
+    fn spawn_ray_to_it(&self, it: &dyn Interaction) -> Ray {
+        let origin = self
+            .p()
+            .offset_ray_origin(&self.p_error(), &self.n(), &(it.p() - self.p()));
+        let target = it
+            .p()
+            .offset_ray_origin(&it.p_error(), &it.n(), &(origin - it.p()));
+        let direction = target - origin;
+        Ray::new(&origin, &direction, 1.0 - 0.0001, self.time())
+    }
 }

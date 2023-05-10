@@ -3,7 +3,6 @@ use std::{mem, sync::Arc};
 use crate::{
     base::{
         constants::{Float, PI},
-        interaction::Interaction,
         math::gamma,
         sampling::uniform_sample_triangle,
         shape::Shape,
@@ -525,7 +524,7 @@ impl Shape for Triangle {
         true
     }
 
-    fn sample(&self, u: &Point2F, pdf: &mut Float) -> Box<dyn Interaction> {
+    fn sample(&self, u: &Point2F, pdf: &mut Float) -> BaseInteraction {
         let b = uniform_sample_triangle(u);
 
         // Query triangle vertices.
@@ -534,10 +533,9 @@ impl Shape for Triangle {
         let p2 = &self.mesh.position[self.indices[2]];
 
         let p = b[0] * p0 + b[1] * p1 + (1.0 - b[0] - b[1]) * p2;
-        let mut it = BaseInteraction::new(&p, 0.0);
 
         // Compute surface normal for sampled point on triangle.
-        it.n = Normal::from((p1 - p0).cross(&(p2 - p0)).normalize());
+        let mut n = Normal::from((p1 - p0).cross(&(p2 - p0)).normalize());
         // Ensure correct orientation of the geometric normal.
         if let Some(normal) = &self.mesh.normal {
             let ns = Normal::from(
@@ -545,18 +543,24 @@ impl Shape for Triangle {
                     + b[1] * normal[self.indices[1]]
                     + (1.0 - b[0] - b[1]) * normal[self.indices[2]],
             );
-            it.n = it.n.face_forward(&ns);
+            n = n.face_forward(&ns);
         } else if self.reverse_orientation ^ self.transform_swaps_handedness {
-            it.n *= -1.0;
+            n *= -1.0;
         }
 
         // Compute error bounds for sampled point on triangle.
         let p_abs_sum = (b[0] * p0).abs() + (b[1] * p1).abs() + ((1.0 - b[0] - b[1]) * p2).abs();
-        it.p_error = gamma(6.0) * Vec3::from(p_abs_sum);
+        let p_error = gamma(6.0) * Vec3::from(p_abs_sum);
 
         *pdf = 1.0 / self.area();
 
-        Box::new(it)
+        BaseInteraction {
+            p,
+            p_error,
+            time: 0.0,
+            wo: Vec3::default(),
+            n,
+        }
     }
 
     fn area(&self) -> Float {

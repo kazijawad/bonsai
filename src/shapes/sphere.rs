@@ -326,7 +326,7 @@ impl Shape for Sphere {
         true
     }
 
-    fn sample(&self, u: &Point2F, pdf: &mut Float) -> Box<dyn Interaction> {
+    fn sample(&self, u: &Point2F, pdf: &mut Float) -> BaseInteraction {
         let mut object = Point3::default() + self.radius * uniform_sample_sphere(u);
 
         let mut n = Normal::from(object).transform(&self.object_to_world);
@@ -344,11 +344,13 @@ impl Shape for Sphere {
 
         *pdf = 1.0 / self.area();
 
-        let mut it = Box::new(BaseInteraction::new(&p, 0.0));
-        it.n = n;
-        it.p_error = p_error;
-
-        it
+        BaseInteraction {
+            p,
+            p_error,
+            time: 0.0,
+            wo: Vec3::default(),
+            n,
+        }
     }
 
     fn sample_from_ref(
@@ -356,26 +358,23 @@ impl Shape for Sphere {
         _it: &dyn Interaction,
         _u: &Point2F,
         _pdf: &mut Float,
-    ) -> Box<dyn Interaction> {
+    ) -> BaseInteraction {
         unimplemented!()
     }
 
-    fn pdf_from_ref(&self, reference: &dyn Interaction, wi: &Vec3) -> Float {
+    fn pdf_from_ref(&self, it: &dyn Interaction, wi: &Vec3) -> Float {
         let center = Point3::default().transform(&self.object_to_world);
 
         // Return uniform PDF if point is inside sphere.
-        let origin = reference.position().offset_ray_origin(
-            &reference.position_error(),
-            &reference.normal(),
-            &(center - reference.position()),
-        );
+        let origin = it
+            .p()
+            .offset_ray_origin(&it.p_error(), &it.n(), &(center - it.p()));
         if origin.distance_squared(&center) <= self.radius * self.radius {
-            return Shape::pdf_from_ref(self, reference, wi);
+            return Shape::pdf_from_ref(self, it, wi);
         }
 
         // Compute general sphere PDF.
-        let sin_theta_2 =
-            self.radius * self.radius / reference.position().distance_squared(&center);
+        let sin_theta_2 = self.radius * self.radius / it.p().distance_squared(&center);
         let cos_theta_max = Float::max(0.0, 1.0 - sin_theta_2).sqrt();
 
         uniform_cone_pdf(cos_theta_max)

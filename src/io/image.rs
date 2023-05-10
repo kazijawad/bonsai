@@ -3,6 +3,7 @@ use image::{imageops::FilterType, io::Reader, ImageBuffer, Rgb32FImage};
 use crate::{
     base::{constants::Float, math::modulo},
     geometries::point2::Point2I,
+    spectra::rgb::RGBSpectrum,
 };
 
 pub const NUM_CHANNELS: usize = 3;
@@ -111,6 +112,20 @@ impl Image {
         }
 
         pyramid
+    }
+
+    pub fn scale(&mut self, intensity: &RGBSpectrum) {
+        debug_assert!(NUM_CHANNELS == 3);
+
+        for y in 0..self.resolution.y {
+            for x in 0..self.resolution.x {
+                let pixel = Point2I::new(x, y);
+                let offset = self.pixel_offset(&pixel);
+                for c in 0..NUM_CHANNELS {
+                    self.pixels[offset + c] *= intensity[c]
+                }
+            }
+        }
     }
 
     pub fn get_channel(&self, p: &Point2I, c: usize, wrap_mode: ImageWrapMode) -> Float {

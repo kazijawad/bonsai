@@ -55,7 +55,7 @@ pub use io::image::{Image, ImageWrapMode};
 pub use lights::{
     diffuse::{DiffuseAreaLight, DiffuseAreaLightOptions},
     directional::{DirectionalLight, DirectionalLightOptions},
-    infinite::InfiniteAreaLight,
+    infinite::{InfiniteAreaLight, InfiniteAreaLightOptions},
     point::{PointLight, PointLightOptions},
     spot::{SpotLight, SpotLightOptions},
 };

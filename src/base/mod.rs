@@ -6,6 +6,7 @@ pub mod efloat;
 pub mod film;
 pub mod filter;
 pub mod fresnel;
+pub mod geometry;
 pub mod interaction;
 pub mod light;
 pub mod material;

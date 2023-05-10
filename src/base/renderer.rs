@@ -142,15 +142,17 @@ impl<'a> Renderer {
 
         // Add contribution of each light source.
         for light in scene.lights.iter() {
-            let (emission, wi, pdf, visibility) = light.sample_point(&si, &sampler.get_2d());
-            if emission.is_black() || pdf == 0.0 {
+            let sample = light.sample_point(&si, &sampler.get_2d());
+            if sample.radiance.is_black() || sample.pdf == 0.0 {
                 continue;
             }
 
             if let Some(bsdf) = si.bsdf.as_ref() {
-                let f = bsdf.f(&wo, &wi, BSDF_ALL);
-                if !f.is_black() && visibility.is_unoccluded(scene) {
-                    result += f * emission * wi.abs_dot_normal(&n) / pdf;
+                let f = bsdf.f(&wo, &sample.wi, BSDF_ALL);
+                if let Some(visibility) = sample.visibility {
+                    if !f.is_black() && visibility.is_unoccluded(scene) {
+                        result += f * sample.radiance * sample.wi.abs_dot_normal(&n) / sample.pdf;
+                    }
                 }
             }
         }

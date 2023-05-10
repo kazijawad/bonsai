@@ -2,7 +2,6 @@ use crate::{
     base::{
         constants::{Float, PI},
         efloat::EFloat,
-        interaction::Interaction,
         math::{gamma, lerp},
         shape::Shape,
         transform::Transform,
@@ -284,7 +283,7 @@ impl Shape for Cylinder {
         true
     }
 
-    fn sample(&self, u: &Point2F, pdf: &mut Float) -> Box<dyn Interaction> {
+    fn sample(&self, u: &Point2F, pdf: &mut Float) -> BaseInteraction {
         let z = lerp(u.x, self.z_min, self.z_max);
         let phi = u.y * self.phi_max;
         let mut object_point = Point3::new(self.radius * phi.cos(), self.radius * phi.sin(), z);
@@ -310,11 +309,13 @@ impl Shape for Cylinder {
 
         *pdf = 1.0 / self.area();
 
-        let mut it = Box::new(BaseInteraction::new(&p, 0.0));
-        it.n = n;
-        it.p_error = p_error;
-
-        it
+        BaseInteraction {
+            p,
+            p_error,
+            time: 0.0,
+            wo: Vec3::default(),
+            n,
+        }
     }
 
     fn area(&self) -> Float {

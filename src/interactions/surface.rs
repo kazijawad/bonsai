@@ -226,46 +226,24 @@ impl<'a> SurfaceInteraction<'a> {
 }
 
 impl<'a> Interaction for SurfaceInteraction<'a> {
-    fn position(&self) -> Point3 {
+    fn p(&self) -> Point3 {
         self.p
     }
 
-    fn position_error(&self) -> Vec3 {
+    fn p_error(&self) -> Vec3 {
         self.p_error
-    }
-
-    fn normal(&self) -> Normal {
-        self.n
     }
 
     fn time(&self) -> Float {
         self.time
     }
 
-    fn spawn_ray(&self, d: &Vec3) -> Ray {
-        let origin = self.p.offset_ray_origin(&self.p_error, &self.n, d);
-        Ray::new(&origin, d, Float::INFINITY, self.time)
+    fn wo(&self) -> Vec3 {
+        self.wo
     }
 
-    fn spawn_ray_to_point(&self, point: Point3) -> Ray {
-        let origin = self
-            .p
-            .offset_ray_origin(&self.p_error, &self.n, &(point - self.p));
-        let direction = point - self.p;
-        Ray::new(&origin, &direction, 1.0 - 0.0001, self.time)
-    }
-
-    fn spawn_ray_to_it(&self, it: &dyn Interaction) -> Ray {
-        let origin = self
-            .p
-            .offset_ray_origin(&self.p_error, &self.n, &(it.position() - self.p));
-        let target = it.position().offset_ray_origin(
-            &it.position_error(),
-            &it.normal(),
-            &(origin - it.position()),
-        );
-        let direction = target - origin;
-        Ray::new(&origin, &direction, 1.0 - 0.0001, self.time)
+    fn n(&self) -> Normal {
+        self.n
     }
 }
 

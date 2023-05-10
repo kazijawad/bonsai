@@ -8,28 +8,24 @@ use crate::{
 pub trait Light: Send + Sync {
     fn power(&self) -> RGBSpectrum;
 
-    fn sample_point(
-        &self,
-        interaction: &dyn Interaction,
-        sample: &Point2F,
-    ) -> (RGBSpectrum, Vec3, Float, VisibilityTester);
-
-    fn pdf(&self, _interaction: &dyn Interaction, _incident_direction: &Vec3) -> Float {
-        0.0
+    fn radiance(&self, _: &Ray) -> RGBSpectrum {
+        RGBSpectrum::default()
     }
 
-    fn radiance(&self, _ray: &Ray) -> RGBSpectrum {
-        RGBSpectrum::default()
+    fn sample_point(&self, it: &dyn Interaction, u: &Point2F) -> LightPointSample;
+
+    fn point_pdf(&self, _: &dyn Interaction, _dir: &Vec3) -> Float {
+        0.0
     }
 
     fn sample_ray(
         &self,
-        origin_sample: &Point2F,
-        direction_sample: &Point2F,
+        u1: &Point2F,
+        u2: &Point2F,
         time: Float,
     ) -> (RGBSpectrum, Ray, Normal, Float, Float);
 
-    fn pdf_ray(&self, ray: &Ray, surface_normal: &Normal) -> (Float, Float);
+    fn ray_pdf(&self, ray: &Ray, n: &Normal) -> (Float, Float);
 
     fn is_infinite(&self) -> bool {
         false
@@ -37,7 +33,14 @@ pub trait Light: Send + Sync {
 }
 
 pub trait AreaLight: Light {
-    fn emission(&self, interaction: &dyn Interaction, direction: &Vec3) -> RGBSpectrum;
+    fn emission(&self, it: &dyn Interaction, dir: &Vec3) -> RGBSpectrum;
+}
+
+pub struct LightPointSample {
+    pub radiance: RGBSpectrum,
+    pub wi: Vec3,
+    pub pdf: Float,
+    pub visibility: Option<VisibilityTester>,
 }
 
 pub struct VisibilityTester {

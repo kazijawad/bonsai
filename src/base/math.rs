@@ -66,3 +66,22 @@ pub fn solve_linear_system_2x2(
     }
     true
 }
+
+pub fn find_interval<F>(size: usize, predicate: F) -> usize
+where
+    F: Fn(usize) -> bool,
+{
+    let mut first = 0;
+    let mut len = size;
+    while len > 0 {
+        let half = len >> 1;
+        let middle = first + half;
+        if predicate(middle) {
+            first = middle + 1;
+            len -= half + 1;
+        } else {
+            len = half;
+        }
+    }
+    (first - 1).clamp(0, size - 2)
+}

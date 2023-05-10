@@ -2,7 +2,7 @@ use crate::{
     base::{
         constants::{Float, PI},
         interaction::Interaction,
-        light::{Light, VisibilityTester},
+        light::{Light, LightPointSample, VisibilityTester},
         sampling::{uniform_sample_sphere, uniform_sphere_pdf},
         transform::Transform,
     },
@@ -36,31 +36,33 @@ impl Light for PointLight {
         4.0 * PI * self.intensity
     }
 
-    fn sample_point(
-        &self,
-        it: &dyn Interaction,
-        _sample: &Point2F,
-    ) -> (RGBSpectrum, Vec3, Float, VisibilityTester) {
-        (
-            self.intensity / self.position.distance_squared(&it.position()),
-            (self.position - it.position()).normalize(),
-            1.0,
-            VisibilityTester::new(
-                BaseInteraction::new(&it.position(), it.time()),
-                BaseInteraction::new(&self.position, it.time()),
-            ),
-        )
+    fn sample_point(&self, it: &dyn Interaction, _: &Point2F) -> LightPointSample {
+        LightPointSample {
+            radiance: self.intensity / self.position.distance_squared(&it.p()),
+            wi: (self.position - it.p()).normalize(),
+            pdf: 1.0,
+            visibility: Some(VisibilityTester::new(
+                BaseInteraction::from(it),
+                BaseInteraction {
+                    p: self.position,
+                    p_error: Vec3::default(),
+                    time: it.time(),
+                    wo: Vec3::default(),
+                    n: Normal::default(),
+                },
+            )),
+        }
     }
 
     fn sample_ray(
         &self,
-        origin_sample: &Point2F,
-        _direction_sample: &Point2F,
+        u1: &Point2F,
+        _: &Point2F,
         time: Float,
     ) -> (RGBSpectrum, Ray, Normal, Float, Float) {
         let ray = Ray::new(
             &self.position,
-            &uniform_sample_sphere(origin_sample),
+            &uniform_sample_sphere(u1),
             Float::INFINITY,
             time,
         );
@@ -73,7 +75,7 @@ impl Light for PointLight {
         )
     }
 
-    fn pdf_ray(&self, _ray: &Ray, _surface_normal: &Normal) -> (Float, Float) {
+    fn ray_pdf(&self, _ray: &Ray, _surface_normal: &Normal) -> (Float, Float) {
         (0.0, uniform_sphere_pdf())
     }
 }

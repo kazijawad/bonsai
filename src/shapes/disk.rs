@@ -1,7 +1,6 @@
 use crate::{
     base::{
         constants::{Float, PI},
-        interaction::Interaction,
         sampling::concentric_sample_disk,
         shape::Shape,
         transform::Transform,
@@ -178,7 +177,7 @@ impl Shape for Disk {
         true
     }
 
-    fn sample(&self, u: &Point2F, pdf: &mut Float) -> Box<dyn Interaction> {
+    fn sample(&self, u: &Point2F, pdf: &mut Float) -> BaseInteraction {
         let disk_point = concentric_sample_disk(u);
         let object_point = Point3::new(
             disk_point.x * self.radius,
@@ -202,11 +201,13 @@ impl Shape for Disk {
 
         *pdf = 1.0 / self.area();
 
-        let mut it = Box::new(BaseInteraction::new(&p, 0.0));
-        it.n = n;
-        it.p_error = p_error;
-
-        it
+        BaseInteraction {
+            p,
+            p_error,
+            time: 0.0,
+            wo: Vec3::default(),
+            n,
+        }
     }
 
     fn area(&self) -> Float {

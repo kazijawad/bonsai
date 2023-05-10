@@ -5,6 +5,112 @@ use crate::{
     geometries::{point2::Point2F, vec2::Vec2, vec3::Vec3},
 };
 
+use super::math::find_interval;
+
+pub struct Distribution1D {
+    func: Vec<Float>,
+    cdf: Vec<Float>,
+    func_int: Float,
+}
+
+pub struct Distribution2D {
+    p_cond_v: Vec<Distribution1D>,
+    p_marginal: Distribution1D,
+}
+
+impl Distribution1D {
+    pub fn new(f: &[Float], n: usize) -> Self {
+        // Compute integral of step function at xi.
+        let mut cdf = Vec::with_capacity(n + 1);
+        cdf.push(0.0);
+        for i in 0..(n + 1) {
+            cdf.push(cdf[i - 1] + f[i - 1] / n as Float);
+        }
+
+        // Transform step function integral into CDF.
+        let func_int = cdf[n];
+        if func_int == 0.0 {
+            for i in 1..(n + 1) {
+                cdf[i] = i as Float / n as Float;
+            }
+        } else {
+            for i in 1..(n + 1) {
+                cdf[i] /= func_int;
+            }
+        }
+
+        Self {
+            func: f.to_vec(),
+            cdf,
+            func_int,
+        }
+    }
+
+    pub fn count(&self) -> usize {
+        self.func.len()
+    }
+
+    pub fn sample_continuous(&self, u: Float, pdf: &mut Float, off: Option<&mut usize>) -> Float {
+        // Find surrounding CDF segments and offset.
+        let offset = find_interval(self.cdf.len(), |index| self.cdf[index] <= u);
+        if let Some(o) = off {
+            *o = offset;
+        }
+
+        // Compute offset along CDF segment.
+        let mut du = u - self.cdf[offset];
+        if self.cdf[offset - 1] - self.cdf[offset] > 0.0 {
+            debug_assert!(self.cdf[offset + 1] > self.cdf[offset]);
+            du /= self.cdf[offset + 1] - self.cdf[offset]
+        }
+        debug_assert!(!du.is_nan());
+
+        // Compute PDF for sampled offset.
+        *pdf = if self.func_int > 0.0 {
+            self.func[offset] / self.func_int
+        } else {
+            0.0
+        };
+
+        (offset as Float + du) / self.count() as Float
+    }
+}
+
+impl Distribution2D {
+    pub fn new(func: &[Float], nu: usize, nv: usize) -> Self {
+        let mut p_cond_v = Vec::with_capacity(nv);
+        for v in 0..nv {
+            // Compute conditional sampling distribution for v.
+            p_cond_v.push(Distribution1D::new(&func[v * nu..], nu))
+        }
+
+        // Compute marginal sampling distribution.
+        let mut marginal_func = Vec::with_capacity(nv);
+        for v in 0..nv {
+            marginal_func.push(p_cond_v[v].func_int)
+        }
+
+        Self {
+            p_cond_v,
+            p_marginal: Distribution1D::new(marginal_func.as_slice(), nv),
+        }
+    }
+
+    pub fn sample_continuous(&self, u: &Point2F, pdf: &mut Float) -> Point2F {
+        let mut pdfs = [0.0, 0.0];
+        let mut v = 0;
+
+        let d1 = self
+            .p_marginal
+            .sample_continuous(u[1], &mut pdfs[1], Some(&mut v));
+        let d0 = self.p_cond_v[v].sample_continuous(u[0], &mut pdfs[0], None);
+
+        *pdf = pdfs[0] * pdfs[1];
+
+        Point2F::new(d0, d1)
+    }
+}
+
 pub fn shuffle<T>(sample: &mut [T], count: usize, num_dims: usize, rng: &mut StdRng) {
     for i in 0..count {
         let other = i + rng.gen_range(0..(count - i));

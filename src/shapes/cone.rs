@@ -2,14 +2,13 @@ use crate::{
     base::{
         constants::{Float, PI},
         efloat::EFloat,
-        interaction::Interaction,
         shape::Shape,
         transform::Transform,
     },
     geometries::{
         bounds3::Bounds3, normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3,
     },
-    interactions::surface::SurfaceInteraction,
+    interactions::{base::BaseInteraction, surface::SurfaceInteraction},
 };
 
 pub struct Cone {
@@ -279,7 +278,7 @@ impl Shape for Cone {
         true
     }
 
-    fn sample(&self, _u: &Point2F, _pdf: &mut Float) -> Box<dyn Interaction> {
+    fn sample(&self, _u: &Point2F, _pdf: &mut Float) -> BaseInteraction {
         unimplemented!();
     }
 

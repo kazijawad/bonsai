@@ -2,7 +2,7 @@ use crate::{
     base::{
         constants::{Float, PI},
         interaction::Interaction,
-        light::{Light, VisibilityTester},
+        light::{Light, LightPointSample, VisibilityTester},
         sampling::concentric_sample_disk,
         scene::Scene,
     },
@@ -49,32 +49,34 @@ impl Light for DirectionalLight {
         self.intensity * PI * self.world_radius * self.world_radius
     }
 
-    fn sample_point(
-        &self,
-        it: &dyn Interaction,
-        _sample: &Point2F,
-    ) -> (RGBSpectrum, Vec3, Float, VisibilityTester) {
-        let outside_point = it.position() + self.direction * (2.0 * self.world_radius);
-        (
-            self.intensity,
-            self.direction,
-            1.0,
-            VisibilityTester::new(
-                BaseInteraction::new(&it.position(), it.time()),
-                BaseInteraction::new(&outside_point, it.time()),
-            ),
-        )
+    fn sample_point(&self, it: &dyn Interaction, _: &Point2F) -> LightPointSample {
+        let p_outside = it.p() + self.direction * (2.0 * self.world_radius);
+        LightPointSample {
+            radiance: self.intensity,
+            wi: self.direction,
+            pdf: 1.0,
+            visibility: Some(VisibilityTester::new(
+                BaseInteraction::from(it),
+                BaseInteraction {
+                    p: p_outside,
+                    p_error: Vec3::default(),
+                    time: it.time(),
+                    wo: Vec3::default(),
+                    n: Normal::default(),
+                },
+            )),
+        }
     }
 
     fn sample_ray(
         &self,
-        origin_sample: &Point2F,
-        _direction_sample: &Point2F,
+        u1: &Point2F,
+        _: &Point2F,
         time: Float,
     ) -> (RGBSpectrum, Ray, Normal, Float, Float) {
         // Choose point on disk oriented toward infinite light direction.
         let (v1, v2) = Vec3::coordinate_system(&self.direction);
-        let concentric_disk = concentric_sample_disk(origin_sample);
+        let concentric_disk = concentric_sample_disk(u1);
         let disk_point = self.world_center
             + self.world_radius * (concentric_disk.x * v1 + concentric_disk.y * v2);
 
@@ -95,7 +97,7 @@ impl Light for DirectionalLight {
         )
     }
 
-    fn pdf_ray(&self, _ray: &Ray, _surface_normal: &Normal) -> (Float, Float) {
+    fn ray_pdf(&self, _ray: &Ray, _surface_normal: &Normal) -> (Float, Float) {
         (1.0 / (PI * self.world_radius * self.world_radius), 0.0)
     }
 }
