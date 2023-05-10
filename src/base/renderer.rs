@@ -40,11 +40,11 @@ impl<'a> Renderer {
             let mut sampler = self.sampler.clone();
             sampler.seed((pixel.y * width + pixel.x) as u64);
 
-            sampler.start_pixel(&pixel.into());
+            sampler.start_pixel(&pixel);
 
             loop {
                 // Initialize camera sample for current sample.
-                let camera_sample = sampler.get_camera_sample(&pixel.into());
+                let camera_sample = sampler.get_camera_sample(&pixel);
 
                 // Generate camera ray for current sample.
                 let mut ray = Ray::default();

@@ -6,14 +6,14 @@ use crate::{
         sampler::Sampler,
         sampling::{latin_hypercube, shuffle, stratified_sample_1d, stratified_sample_2d},
     },
-    geometries::point2::Point2F,
+    geometries::point2::{Point2F, Point2I},
 };
 
 #[derive(Debug, Clone)]
 pub struct StratifiedSampler {
-    samples_per_pixel: usize,
+    pub samples_per_pixel: usize,
 
-    current_pixel: Point2F,
+    current_pixel: Point2I,
     current_pixel_sample_index: usize,
 
     samples_1d_sizes: Vec<usize>,
@@ -49,20 +49,21 @@ impl StratifiedSampler {
     pub fn new(opts: StratifiedSamplerOptions) -> Self {
         let x_pixel_samples = opts.x_pixel_samples;
         let y_pixel_samples = opts.y_pixel_samples;
-        let num_sampled_dimensions = opts.dimensions;
-        let jitter_samples = opts.jitter_samples;
 
         let samples_per_pixel = x_pixel_samples * y_pixel_samples;
 
+        let num_sampled_dimensions = opts.dimensions;
         let samples_1d: Vec<Vec<Float>> =
             vec![vec![0.0; samples_per_pixel]; num_sampled_dimensions];
         let samples_2d: Vec<Vec<Point2F>> =
             vec![vec![Point2F::default(); samples_per_pixel]; num_sampled_dimensions];
 
+        let jitter_samples = opts.jitter_samples;
+
         Self {
             samples_per_pixel,
 
-            current_pixel: Point2F::default(),
+            current_pixel: Point2I::default(),
             current_pixel_sample_index: 0,
 
             samples_1d_sizes: vec![],
@@ -94,7 +95,7 @@ impl Sampler for StratifiedSampler {
         self.rng = StdRng::seed_from_u64(x);
     }
 
-    fn start_pixel(&mut self, pixel: &Point2F) {
+    fn start_pixel(&mut self, p: &Point2I) {
         // Generate single stratified samples for pixel.
         for samples in self.samples_1d.iter_mut() {
             stratified_sample_1d(
@@ -148,7 +149,7 @@ impl Sampler for StratifiedSampler {
             }
         }
 
-        self.current_pixel = pixel.clone();
+        self.current_pixel = p.clone();
         self.current_pixel_sample_index = 0;
         self.offset_1d = 0;
         self.offset_2d = 0;

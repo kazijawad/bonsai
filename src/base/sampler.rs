@@ -2,20 +2,20 @@ use dyn_clone::DynClone;
 
 use crate::{
     base::{camera::CameraSample, constants::Float},
-    geometries::point2::Point2F,
+    geometries::point2::{Point2F, Point2I},
 };
 
 pub trait Sampler: Send + Sync + DynClone {
     fn seed(&mut self, x: u64);
 
-    fn start_pixel(&mut self, pixel: &Point2F);
+    fn start_pixel(&mut self, p: &Point2I);
 
     fn get_1d(&mut self) -> Float;
     fn get_2d(&mut self) -> Point2F;
 
-    fn get_camera_sample(&mut self, pixel: &Point2F) -> CameraSample {
+    fn get_camera_sample(&mut self, pixel: &Point2I) -> CameraSample {
         CameraSample {
-            film: pixel + &self.get_2d(),
+            film: Point2F::from(*pixel) + self.get_2d(),
             lens: self.get_2d(),
             time: self.get_1d(),
         }
