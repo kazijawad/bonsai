@@ -1,10 +1,12 @@
-use std::ops::Index;
+use std::ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Sub, SubAssign};
+
+use rayon::prelude::*;
 
 use crate::{
     base::constants::Float,
     geometries::{
-        point2::{Point2, Point2F},
-        vec2::{Vec2, Vec2F},
+        point2::{Point2, Point2F, Point2I},
+        vec2::Vec2,
     },
     utils::math,
 };
@@ -17,6 +19,94 @@ pub struct Bounds2<T> {
 
 pub type Bounds2I = Bounds2<i32>;
 pub type Bounds2F = Bounds2<Float>;
+
+impl<
+        T: Copy
+            + PartialOrd
+            + Add<Output = T>
+            + AddAssign
+            + Sub<Output = T>
+            + SubAssign
+            + Mul<Output = T>
+            + MulAssign
+            + Div<Output = T>
+            + DivAssign,
+    > Bounds2<T>
+{
+    pub fn overlaps(&self, b: &Self) -> bool {
+        let x = (self.max.x >= b.min.x) && (self.min.x <= b.max.x);
+        let y = (self.max.y >= b.min.y) && (self.min.y <= b.max.y);
+        x && y
+    }
+
+    pub fn inside(&self, p: &Point2<T>) -> bool {
+        p.x >= self.min.x && p.x <= self.max.x && p.y >= self.min.y && p.y <= self.max.y
+    }
+
+    pub fn inside_exclusive(&self, p: &Point2<T>) -> bool {
+        p.x >= self.min.x && p.x < self.max.x && p.y >= self.min.y && p.y < self.max.y
+    }
+
+    pub fn expand(&self, delta: T) -> Self {
+        Self {
+            min: self.min - Vec2::new(delta, delta),
+            max: self.max + Vec2::new(delta, delta),
+        }
+    }
+
+    pub fn diagonal(&self) -> Vec2<T> {
+        self.max - self.min
+    }
+
+    pub fn maximum_extent(&self) -> u32 {
+        let diag = self.diagonal();
+        if diag.x > diag.y {
+            0
+        } else {
+            1
+        }
+    }
+
+    pub fn area(&self) -> T {
+        let distance = self.max - self.min;
+        distance.x * distance.y
+    }
+
+    pub fn offset(&self, p: &Point2<T>) -> Vec2<T> {
+        let mut offset = p - &self.min;
+        if self.max.x > self.min.x {
+            offset.x /= self.max.x - self.min.x;
+        }
+        if self.max.y > self.min.y {
+            offset.y /= self.max.y - self.min.y;
+        }
+        offset
+    }
+}
+
+impl Bounds2I {
+    pub fn new(a: &Point2I, b: &Point2I) -> Self {
+        Self {
+            min: Point2::new(a.x.min(b.x), a.y.min(b.y)),
+            max: Point2::new(a.x.max(b.x), a.y.max(b.y)),
+        }
+    }
+
+    pub fn traverse<F>(&self, f: F)
+    where
+        F: Fn(Point2I) + Send + Sync,
+    {
+        for y in self.min.y..self.max.y {
+            (self.min.x..self.max.x)
+                .collect::<Vec<i32>>()
+                .par_iter()
+                .for_each(|x| {
+                    let point = Point2I::new(*x, y);
+                    f(point);
+                });
+        }
+    }
+}
 
 impl Bounds2F {
     pub fn new(a: &Point2F, b: &Point2F) -> Self {
@@ -50,61 +140,11 @@ impl Bounds2F {
         }
     }
 
-    pub fn overlaps(&self, b: &Self) -> bool {
-        let x = (self.max.x >= b.min.x) && (self.min.x <= b.max.x);
-        let y = (self.max.y >= b.min.y) && (self.min.y <= b.max.y);
-        x && y
-    }
-
-    pub fn inside(&self, p: &Point2F) -> bool {
-        p.x >= self.min.x && p.x <= self.max.x && p.y >= self.min.y && p.y <= self.max.y
-    }
-
-    pub fn inside_exclusive(&self, p: &Point2F) -> bool {
-        p.x >= self.min.x && p.x < self.max.x && p.y >= self.min.y && p.y < self.max.y
-    }
-
-    pub fn expand(&self, delta: Float) -> Self {
-        Self::new(
-            &(self.min - Vec2::new(delta, delta)),
-            &(self.max + Vec2::new(delta, delta)),
-        )
-    }
-
-    pub fn diagonal(&self) -> Vec2F {
-        self.max - self.min
-    }
-
-    pub fn area(&self) -> Float {
-        let distance = self.max - self.min;
-        distance.x * distance.y
-    }
-
-    pub fn maximum_extent(&self) -> u32 {
-        let diag = self.diagonal();
-        if diag.x > diag.y {
-            0
-        } else {
-            1
-        }
-    }
-
     pub fn lerp(&self, t: &Point2F) -> Point2F {
         Point2::new(
             math::lerp(t.x, self.min.x, self.max.x),
             math::lerp(t.y, self.min.y, self.max.y),
         )
-    }
-
-    pub fn offset(&self, p: &Point2F) -> Vec2F {
-        let mut offset = p - &self.min;
-        if self.max.x > self.min.x {
-            offset.x /= self.max.x - self.min.x;
-        }
-        if self.max.y > self.min.y {
-            offset.y /= self.max.y - self.min.y;
-        }
-        offset
     }
 
     pub fn bounding_sphere(&self) -> (Point2F, Float) {

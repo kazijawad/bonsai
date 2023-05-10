@@ -8,7 +8,11 @@ use crate::{
         filter::Filter,
         spectrum::{xyz_to_rgb, Spectrum, RGB, XYZ},
     },
-    geometries::{bounds2::Bounds2F, point2::Point2F, vec2::Vec2F},
+    geometries::{
+        bounds2::{Bounds2F, Bounds2I},
+        point2::{Point2F, Point2I},
+        vec2::Vec2F,
+    },
     spectra::rgb::RGBSpectrum,
 };
 
@@ -27,7 +31,7 @@ pub struct SampledPixel {
 
 pub struct Film {
     pub full_resolution: Point2F,
-    pub bounds: Bounds2F,
+    pub bounds: Bounds2I,
     pub filter: Box<dyn Filter>,
     pub filename: String,
     pixels: Mutex<Vec<Pixel>>,
@@ -48,14 +52,14 @@ pub struct FilmOptions<'a> {
 impl Film {
     pub fn new(opts: FilmOptions) -> Self {
         // Compute film image bounds.
-        let bounds = Bounds2F::new(
-            &Point2F::new(
-                (opts.resolution.x * opts.crop_window.min.x).ceil(),
-                (opts.resolution.y * opts.crop_window.min.y).ceil(),
+        let bounds = Bounds2I::new(
+            &Point2I::new(
+                (opts.resolution.x * opts.crop_window.min.x).ceil() as i32,
+                (opts.resolution.y * opts.crop_window.min.y).ceil() as i32,
             ),
-            &Point2F::new(
-                (opts.resolution.x * opts.crop_window.max.x).ceil(),
-                (opts.resolution.y * opts.crop_window.max.y).ceil(),
+            &Point2I::new(
+                (opts.resolution.x * opts.crop_window.max.x).ceil() as i32,
+                (opts.resolution.y * opts.crop_window.max.y).ceil() as i32,
             ),
         );
 
@@ -101,9 +105,9 @@ impl Film {
         let film_point = film_point - &Vec2F::new(0.5, 0.5);
         let p0 = (film_point - self.filter.radius())
             .ceil()
-            .max(&self.bounds.min);
+            .max(&self.bounds.min.into());
         let p1 = ((film_point + self.filter.radius()).floor() + Point2F::new(1.0, 1.0))
-            .min(&self.bounds.max);
+            .min(&self.bounds.max.into());
 
         // Precompute x and y filter table offsets.
         let mut ix = vec![0; p1.x as usize - p0.x as usize];
@@ -138,14 +142,14 @@ impl Film {
         }
     }
 
-    pub fn merge_samples(&self, sampled_pixel: SampledPixel, x: usize, y: usize) {
+    pub fn merge_samples(&self, pixel: Point2I, sampled_pixel: SampledPixel) {
         let mut xyz: XYZ = [0.0; 3];
         sampled_pixel.contribution_sum.to_xyz(&mut xyz);
 
-        let width = (self.bounds.max.x - self.bounds.min.x) as usize;
+        let width = self.bounds.max.x - self.bounds.min.x;
         let mut pixels = self.pixels.lock().unwrap();
 
-        let mut pixel = &mut pixels[y * width + x];
+        let mut pixel = &mut pixels[(pixel.y * width + pixel.x) as usize];
         for i in 0..3 {
             pixel.xyz[i] += xyz[i];
         }
@@ -166,9 +170,9 @@ impl Film {
             let filter_weight_sum = pixel.filter_weight_sum;
             if filter_weight_sum != 0.0 {
                 let inverse_weight = 1.0 / filter_weight_sum;
-                rgb[0] = Float::max(0.0, rgb[0] * inverse_weight);
-                rgb[1] = Float::max(0.0, rgb[1] * inverse_weight);
-                rgb[2] = Float::max(0.0, rgb[2] * inverse_weight);
+                rgb[0] = (rgb[0] * inverse_weight).max(0.0);
+                rgb[1] = (rgb[1] * inverse_weight).max(0.0);
+                rgb[2] = (rgb[2] * inverse_weight).max(0.0);
             }
 
             // Scale pixel value.
@@ -190,10 +194,7 @@ impl Film {
         )
         .expect("Failed to write image buffer");
 
-        match buf.save(&self.filename) {
-            Ok(_) => return,
-            Err(err) => panic!("Failed to save file: {:?}", err),
-        }
+        buf.save(&self.filename).expect("Failed to save file");
     }
 }
 

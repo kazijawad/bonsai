@@ -81,6 +81,15 @@ impl<T> From<Vec2<T>> for Point2<T> {
     }
 }
 
+impl From<Point2I> for Point2F {
+    fn from(p: Point2I) -> Self {
+        Self {
+            x: p.x as Float,
+            y: p.y as Float,
+        }
+    }
+}
+
 impl<T: Add<Output = T>> Add for Point2<T> {
     type Output = Self;
 

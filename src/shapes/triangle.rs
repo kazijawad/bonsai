@@ -303,11 +303,11 @@ impl Shape for Triangle {
 
         // Override surface normals in interaction for triangle.
         let new_normal = Normal::from(dp02.cross(&dp12).normalize());
-        si.base.n = new_normal;
+        si.n = new_normal;
         si.shading.n = new_normal;
         if self.reverse_orientation ^ self.transform_swaps_handedness {
-            let new_normal = -si.base.n;
-            si.base.n = new_normal;
+            let new_normal = -si.n;
+            si.n = new_normal;
             si.shading.n = new_normal;
         }
 
@@ -320,10 +320,10 @@ impl Shape for Triangle {
                 if new_normal.length_squared() > 0.0 {
                     new_normal.normalize()
                 } else {
-                    si.base.n
+                    si.n
                 }
             } else {
-                si.base.n
+                si.n
             };
 
             // Compute shading tangent for triangle.

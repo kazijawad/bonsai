@@ -4,7 +4,6 @@ use crate::{
         primitive::Primitive, transform::Transform,
     },
     geometries::{normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3},
-    interactions::base::BaseInteraction,
     spectra::rgb::RGBSpectrum,
     utils::math::solve_linear_system_2x2,
 };
@@ -18,7 +17,11 @@ pub struct Shading {
 }
 
 pub struct SurfaceInteraction<'a> {
-    pub base: BaseInteraction,
+    pub p: Point3,
+    pub p_error: Vec3,
+    pub time: Float,
+    pub wo: Vec3,
+    pub n: Normal,
     pub uv: Point2F,
     pub dpdu: Vec3,
     pub dpdv: Vec3,
@@ -55,13 +58,11 @@ impl<'a> SurfaceInteraction<'a> {
         }
 
         Self {
-            base: BaseInteraction {
-                p,
-                p_error,
-                time,
-                wo: wo.normalize(),
-                n,
-            },
+            p,
+            p_error,
+            time,
+            wo: wo.normalize(),
+            n,
             uv,
             dpdu,
             dpdv,
@@ -97,9 +98,9 @@ impl<'a> SurfaceInteraction<'a> {
         // Compute shading normal.
         self.shading.n = Normal::from(dpdus.cross(dpdvs)).normalize();
         if orientation_is_authoritative {
-            self.base.n = self.base.n.face_forward(&self.shading.n);
+            self.n = self.n.face_forward(&self.shading.n);
         } else {
-            self.shading.n = self.shading.n.face_forward(&self.base.n);
+            self.shading.n = self.shading.n.face_forward(&self.n);
         }
 
         // Initialize shading partial derivatives.
@@ -133,33 +134,29 @@ impl<'a> SurfaceInteraction<'a> {
 
         if ray.has_differentials {
             // Compute auxiliary intersection points with plane.
-            let d = self.base.n.dot_point(&self.base.p);
+            let d = self.n.dot_point(&self.p);
 
-            let tx = -(self.base.n.dot_point(&ray.rx_origin) - d)
-                / self.base.n.dot_vec(&ray.rx_direction);
+            let tx = -(self.n.dot_point(&ray.rx_origin) - d) / self.n.dot_vec(&ray.rx_direction);
             if tx.is_infinite() || tx.is_nan() {
                 fail();
                 return;
             }
             let px = ray.rx_origin + tx * ray.rx_direction;
 
-            let ty = -(self.base.n.dot_point(&ray.ry_origin) - d)
-                / self.base.n.dot_vec(&ray.ry_direction);
+            let ty = -(self.n.dot_point(&ray.ry_origin) - d) / self.n.dot_vec(&ray.ry_direction);
             if ty.is_infinite() || ty.is_nan() {
                 fail();
                 return;
             }
             let py = ray.ry_origin + ty * ray.ry_direction;
 
-            self.dpdx = px - self.base.p;
-            self.dpdy = py - self.base.p;
+            self.dpdx = px - self.p;
+            self.dpdy = py - self.p;
 
             // Choose two dimensions to use for ray offset computation.
-            let dim = if self.base.n.x.abs() > self.base.n.y.abs()
-                && self.base.n.x.abs() > self.base.n.z.abs()
-            {
+            let dim = if self.n.x.abs() > self.n.y.abs() && self.n.x.abs() > self.n.z.abs() {
                 [1, 2]
-            } else if self.base.n.y.abs() > self.base.n.z.abs() {
+            } else if self.n.y.abs() > self.n.z.abs() {
                 [0, 2]
             } else {
                 [0, 1]
@@ -170,14 +167,8 @@ impl<'a> SurfaceInteraction<'a> {
                 [self.dpdu[dim[0]], self.dpdv[dim[0]]],
                 [self.dpdu[dim[1]], self.dpdv[dim[1]]],
             ];
-            let bx = [
-                px[dim[0]] - self.base.p[dim[0]],
-                px[dim[1]] - self.base.p[dim[1]],
-            ];
-            let by = [
-                py[dim[0]] - self.base.p[dim[0]],
-                py[dim[1]] - self.base.p[dim[1]],
-            ];
+            let bx = [px[dim[0]] - self.p[dim[0]], px[dim[1]] - self.p[dim[1]]];
+            let by = [py[dim[0]] - self.p[dim[0]], py[dim[1]] - self.p[dim[1]]];
 
             if !solve_linear_system_2x2(a, bx, &mut self.dudx, &mut self.dvdx) {
                 self.dudx = 0.0;
@@ -203,14 +194,13 @@ impl<'a> SurfaceInteraction<'a> {
 
     pub fn transform(&mut self, t: &Transform) {
         let mut p_error = Vec3::default();
-        self.base.p = self
-            .base
+        self.p = self
             .p
-            .transform_with_point_error(t, &self.base.p_error, &mut p_error);
-        self.base.p_error = p_error;
+            .transform_with_point_error(t, &self.p_error, &mut p_error);
+        self.p_error = p_error;
 
-        self.base.wo = self.base.wo.transform(t, false).0;
-        self.base.n = self.base.n.transform(t).normalize();
+        self.wo = self.wo.transform(t, false).0;
+        self.n = self.n.transform(t).normalize();
 
         self.dpdu = self.dpdu.transform(t, false).0;
         self.dpdv = self.dpdv.transform(t, false).0;
@@ -223,7 +213,7 @@ impl<'a> SurfaceInteraction<'a> {
                 .n
                 .transform(t)
                 .normalize()
-                .face_forward(&self.base.n),
+                .face_forward(&self.n),
             dpdu: self.shading.dpdu.transform(t, false).0,
             dpdv: self.shading.dpdv.transform(t, false).0,
             dndu: self.shading.dndu.transform(t),
@@ -237,64 +227,56 @@ impl<'a> SurfaceInteraction<'a> {
 
 impl<'a> Interaction for SurfaceInteraction<'a> {
     fn position(&self) -> Point3 {
-        self.base.p
+        self.p
     }
 
     fn position_error(&self) -> Vec3 {
-        self.base.p_error
+        self.p_error
     }
 
     fn normal(&self) -> Normal {
-        self.base.n
+        self.n
     }
 
     fn time(&self) -> Float {
-        self.base.time
+        self.time
     }
 
-    fn spawn_ray(&self, direction: &Vec3) -> Ray {
-        let origin = self
-            .base
-            .p
-            .offset_ray_origin(&self.base.p_error, &self.base.n, direction);
-        Ray::new(&origin, direction, Float::INFINITY, self.base.time)
+    fn spawn_ray(&self, d: &Vec3) -> Ray {
+        let origin = self.p.offset_ray_origin(&self.p_error, &self.n, d);
+        Ray::new(&origin, d, Float::INFINITY, self.time)
     }
 
     fn spawn_ray_to_point(&self, point: Point3) -> Ray {
-        let origin =
-            self.base
-                .p
-                .offset_ray_origin(&self.base.p_error, &self.base.n, &(point - self.base.p));
-        let direction = point - self.base.p;
-        Ray::new(&origin, &direction, 1.0 - 0.0001, self.base.time)
+        let origin = self
+            .p
+            .offset_ray_origin(&self.p_error, &self.n, &(point - self.p));
+        let direction = point - self.p;
+        Ray::new(&origin, &direction, 1.0 - 0.0001, self.time)
     }
 
     fn spawn_ray_to_it(&self, it: &dyn Interaction) -> Ray {
-        let origin = self.base.p.offset_ray_origin(
-            &self.base.p_error,
-            &self.base.n,
-            &(it.position() - self.base.p),
-        );
+        let origin = self
+            .p
+            .offset_ray_origin(&self.p_error, &self.n, &(it.position() - self.p));
         let target = it.position().offset_ray_origin(
             &it.position_error(),
             &it.normal(),
             &(origin - it.position()),
         );
         let direction = target - origin;
-        Ray::new(&origin, &direction, 1.0 - 0.0001, self.base.time)
+        Ray::new(&origin, &direction, 1.0 - 0.0001, self.time)
     }
 }
 
 impl<'a> Default for SurfaceInteraction<'a> {
     fn default() -> Self {
         Self {
-            base: BaseInteraction {
-                p: Point3::default(),
-                p_error: Vec3::default(),
-                time: 0.0,
-                wo: Vec3::default(),
-                n: Normal::default(),
-            },
+            p: Point3::default(),
+            p_error: Vec3::default(),
+            time: 0.0,
+            wo: Vec3::default(),
+            n: Normal::default(),
             uv: Point2F::default(),
             dpdu: Vec3::default(),
             dpdv: Vec3::default(),

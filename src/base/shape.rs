@@ -58,8 +58,8 @@ pub trait Shape: Send + Sync {
         }
 
         // Convert light sample weight to solid angle measure.
-        let mut pdf = it.position().distance_squared(&si.base.p)
-            / (si.base.n.abs_dot(&Normal::from(-wi)) * self.area());
+        let mut pdf = it.position().distance_squared(&si.p)
+            / (si.n.abs_dot(&Normal::from(-wi)) * self.area());
         if pdf.is_infinite() {
             pdf = 0.0;
         }
