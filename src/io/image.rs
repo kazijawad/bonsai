@@ -14,6 +14,7 @@ pub enum ImageWrapMode {
     Clamp,
 }
 
+#[derive(Debug)]
 pub struct Image {
     pub resolution: Point2I,
     pixels: Vec<Float>,
@@ -22,13 +23,13 @@ pub struct Image {
 impl Image {
     pub fn read(path: &str) -> Self {
         let image = Reader::open(path).expect("Failed to open image");
-        let image = image.decode().expect("Failed to decode image");
+        let mut image = image.decode().expect("Failed to decode image");
 
         // Resample image to power-of-two resolution.
         let width = image.width();
         let height = image.height();
         if !width.is_power_of_two() || !height.is_power_of_two() {
-            image.resize(
+            image = image.resize(
                 width.next_power_of_two(),
                 height.next_power_of_two(),
                 FilterType::Lanczos3,

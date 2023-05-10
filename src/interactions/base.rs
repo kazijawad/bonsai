@@ -3,7 +3,7 @@ use crate::{
     geometries::{normal::Normal, point3::Point3, ray::Ray, vec3::Vec3},
 };
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct BaseInteraction {
     pub p: Point3,
     pub p_error: Vec3,

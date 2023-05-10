@@ -7,6 +7,7 @@ use crate::{
     spectra::rgb::RGBSpectrum,
 };
 
+#[derive(Debug)]
 pub struct Shading {
     pub n: Normal,
     pub dpdu: Vec3,
