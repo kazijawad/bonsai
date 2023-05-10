@@ -1,10 +1,10 @@
 use crate::{
-    base::{constants::Float, interaction::Interaction},
-    geometries::{
-        bounds3::Bounds3, normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3,
+    base::{
+        constants::{Float, PRIMES},
+        interaction::Interaction,
     },
+    geometries::{bounds3::Bounds3, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3},
     interactions::{base::BaseInteraction, surface::SurfaceInteraction},
-    utils::discrepancy::radical_inverse,
 };
 
 pub trait Shape: Send + Sync {
@@ -35,7 +35,7 @@ pub trait Shape: Send + Sync {
             *pdf = reference
                 .position()
                 .distance_squared(&interaction.position())
-                / interaction.normal().abs_dot(&Normal::from(-wi));
+                / interaction.normal().abs_dot_vec(&-wi);
             if pdf.is_infinite() {
                 *pdf = 0.0;
             }
@@ -58,8 +58,8 @@ pub trait Shape: Send + Sync {
         }
 
         // Convert light sample weight to solid angle measure.
-        let mut pdf = it.position().distance_squared(&si.p)
-            / (si.n.abs_dot(&Normal::from(-wi)) * self.area());
+        let mut pdf =
+            it.position().distance_squared(&si.p) / (si.n.abs_dot_vec(&-wi) * self.area());
         if pdf.is_infinite() {
             pdf = 0.0;
         }
@@ -89,4 +89,26 @@ pub trait Shape: Send + Sync {
 
         solid_angle / num_samples as Float
     }
+}
+
+fn radical_inverse(base_index: usize, mut a: u64) -> Float {
+    let base = PRIMES[base_index];
+    // We have to stop once reversed_digits is >= limit otherwise the
+    // next digit of |a| may cause reversed_digits to overflow.
+    let limit: u64 = !0 / base - base;
+    let inverse_base = 1.0 / base as Float;
+    let mut inverse_base_m = 1.0;
+    let mut reversed_digits: u64 = 0;
+    while a != 0 && reversed_digits < limit {
+        // Extract least significant digit.
+        let next = a / base;
+        let digit = a - next * base;
+        reversed_digits = reversed_digits * base + digit;
+        inverse_base_m *= inverse_base;
+        a = next;
+    }
+    Float::min(
+        reversed_digits as Float * inverse_base_m,
+        1.0 - Float::EPSILON,
+    )
 }

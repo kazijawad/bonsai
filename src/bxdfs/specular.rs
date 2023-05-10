@@ -1,13 +1,15 @@
 use crate::{
     base::{
-        bxdf::{BxDF, BxDFType, BSDF_REFLECTION, BSDF_SPECULAR, BSDF_TRANSMISSION},
+        bxdf::{
+            abs_cos_theta, cos_theta, refract, BxDF, BxDFType, BSDF_REFLECTION, BSDF_SPECULAR,
+            BSDF_TRANSMISSION,
+        },
         constants::Float,
         fresnel::{Fresnel, FresnelDielectric},
         material::TransportMode,
     },
     geometries::{normal::Normal, point2::Point2F, vec3::Vec3},
     spectra::rgb::RGBSpectrum,
-    utils::bxdf::{abs_cos_theta, cos_theta, refract},
 };
 
 pub struct SpecularReflection {

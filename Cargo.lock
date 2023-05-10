@@ -34,7 +34,6 @@ dependencies = [
  "dyn-clone",
  "image",
  "itertools",
- "num-traits",
  "rand",
  "rayon",
 ]

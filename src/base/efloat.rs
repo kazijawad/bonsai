@@ -3,7 +3,10 @@ use std::{
     ops::{Add, Div, Mul, Neg, Sub},
 };
 
-use crate::{base::constants::Float, utils::math};
+use crate::base::{
+    constants::Float,
+    math::{next_down, next_up},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct EFloat {
@@ -18,16 +21,8 @@ impl EFloat {
         // from the middle. This will be over-conservative in
         // cases where +- error are exactly representable in
         // floating-point.
-        let low = if err == 0.0 {
-            v
-        } else {
-            math::next_down(v - err)
-        };
-        let high = if err == 0.0 {
-            v
-        } else {
-            math::next_up(v + err)
-        };
+        let low = if err == 0.0 { v } else { next_down(v - err) };
+        let high = if err == 0.0 { v } else { next_up(v + err) };
         Self { v, low, high }
     }
 
@@ -69,13 +64,13 @@ impl EFloat {
     }
 
     pub fn absolute_error(&self) -> f32 {
-        math::next_up((self.high - self.v).abs().max((self.v - self.low).abs()))
+        next_up((self.high - self.v).abs().max((self.v - self.low).abs()))
     }
 
     pub fn sqrt(&self) -> Self {
         let v = self.v.sqrt();
-        let low = math::next_down(self.low.sqrt());
-        let high = math::next_up(self.high.sqrt());
+        let low = next_down(self.low.sqrt());
+        let high = next_up(self.high.sqrt());
 
         let f = Self { v, low, high };
         f.check();
@@ -145,8 +140,8 @@ impl Add for EFloat {
 
         // Interval arithemetic addition, with the result rounded away from
         // the value in order to be conservative.
-        let low = math::next_down(self.lower_bound() + rhs.lower_bound());
-        let high = math::next_up(self.upper_bound() + rhs.upper_bound());
+        let low = next_down(self.lower_bound() + rhs.lower_bound());
+        let high = next_up(self.upper_bound() + rhs.upper_bound());
 
         let f = Self::Output { v, low, high };
         f.check();
@@ -169,8 +164,8 @@ impl Sub for EFloat {
     fn sub(self, rhs: Self) -> Self::Output {
         let v = self.v - rhs.v;
 
-        let low = math::next_down(self.lower_bound() - rhs.lower_bound());
-        let high = math::next_up(self.upper_bound() - rhs.upper_bound());
+        let low = next_down(self.lower_bound() - rhs.lower_bound());
+        let high = next_up(self.upper_bound() - rhs.upper_bound());
 
         let f = Self::Output { v, low, high };
         f.check();
@@ -208,13 +203,13 @@ impl Mul for EFloat {
             self.upper_bound() * rhs.upper_bound(),
         ];
 
-        let low = math::next_down(
+        let low = next_down(
             products[0]
                 .min(products[1])
                 .min(products[2])
                 .min(products[3]),
         );
-        let high = math::next_up(
+        let high = next_up(
             products[0]
                 .max(products[1])
                 .max(products[2])
@@ -254,7 +249,7 @@ impl Div for EFloat {
         let low = if rhs.low < 0.0 && rhs.high > 0.0 {
             f32::NEG_INFINITY
         } else {
-            math::next_down(
+            next_down(
                 quotients[0]
                     .min(quotients[1])
                     .min(quotients[2])
@@ -265,7 +260,7 @@ impl Div for EFloat {
         let high = if rhs.low < 0.0 && rhs.high > 0.0 {
             f32::INFINITY
         } else {
-            math::next_down(
+            next_down(
                 quotients[0]
                     .max(quotients[1])
                     .max(quotients[2])

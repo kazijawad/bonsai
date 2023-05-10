@@ -1,5 +1,6 @@
 use crate::{
     base::{
+        bxdf::cos_theta,
         constants::{Float, PI},
         interaction::Interaction,
         light::{Light, VisibilityTester},
@@ -11,7 +12,6 @@ use crate::{
     },
     interactions::base::BaseInteraction,
     spectra::rgb::RGBSpectrum,
-    utils::bxdf::cos_theta,
 };
 
 pub struct SpotLight {

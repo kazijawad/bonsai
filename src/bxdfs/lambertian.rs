@@ -1,12 +1,14 @@
 use crate::{
     base::{
-        bxdf::{BxDF, BxDFType, BSDF_DIFFUSE, BSDF_REFLECTION, BSDF_TRANSMISSION},
+        bxdf::{
+            abs_cos_theta, same_hemisphere, BxDF, BxDFType, BSDF_DIFFUSE, BSDF_REFLECTION,
+            BSDF_TRANSMISSION,
+        },
         constants::{Float, PI},
         sampling::cosine_sample_hemisphere,
     },
     geometries::{point2::Point2F, vec3::Vec3},
     spectra::rgb::RGBSpectrum,
-    utils::bxdf::{abs_cos_theta, same_hemisphere},
 };
 
 pub struct LambertianReflection {

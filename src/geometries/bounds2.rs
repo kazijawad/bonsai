@@ -3,12 +3,11 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Sub, SubAs
 use rayon::prelude::*;
 
 use crate::{
-    base::constants::Float,
+    base::{constants::Float, math::lerp},
     geometries::{
         point2::{Point2, Point2F, Point2I},
         vec2::Vec2,
     },
-    utils::math,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -142,8 +141,8 @@ impl Bounds2F {
 
     pub fn lerp(&self, t: &Point2F) -> Point2F {
         Point2::new(
-            math::lerp(t.x, self.min.x, self.max.x),
-            math::lerp(t.y, self.min.y, self.max.y),
+            lerp(t.x, self.min.x, self.max.x),
+            lerp(t.y, self.min.y, self.max.y),
         )
     }
 

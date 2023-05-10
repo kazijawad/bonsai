@@ -4,6 +4,7 @@ use crate::{
     base::{
         constants::{Float, PI},
         interaction::Interaction,
+        math::gamma,
         sampling::uniform_sample_triangle,
         shape::Shape,
         transform::Transform,
@@ -12,7 +13,6 @@ use crate::{
         bounds3::Bounds3, normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3,
     },
     interactions::{base::BaseInteraction, surface::SurfaceInteraction},
-    utils::math::gamma,
 };
 
 pub struct TriangleMesh {

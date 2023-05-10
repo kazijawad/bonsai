@@ -1,12 +1,12 @@
-use std::ops;
+use std::ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign};
 
 use crate::{
     base::{
         constants::{Float, PI},
+        math::gamma,
         transform::{AnimatedTransform, Transform},
     },
     geometries::{normal::Normal, point3::Point3},
-    utils::math::gamma,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -208,17 +208,7 @@ impl From<Normal> for Vec3 {
     }
 }
 
-impl From<[Float; 3]> for Vec3 {
-    fn from(v: [Float; 3]) -> Self {
-        Self {
-            x: v[0],
-            y: v[1],
-            z: v[2],
-        }
-    }
-}
-
-impl ops::Add for Vec3 {
+impl Add for Vec3 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -230,7 +220,7 @@ impl ops::Add for Vec3 {
     }
 }
 
-impl ops::Add for &Vec3 {
+impl Add for &Vec3 {
     type Output = Vec3;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -242,7 +232,7 @@ impl ops::Add for &Vec3 {
     }
 }
 
-impl ops::AddAssign for Vec3 {
+impl AddAssign for Vec3 {
     fn add_assign(&mut self, rhs: Self) {
         self.x += rhs.x;
         self.y += rhs.y;
@@ -250,7 +240,7 @@ impl ops::AddAssign for Vec3 {
     }
 }
 
-impl ops::Sub for Vec3 {
+impl Sub for Vec3 {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -262,7 +252,7 @@ impl ops::Sub for Vec3 {
     }
 }
 
-impl ops::Sub for &Vec3 {
+impl Sub for &Vec3 {
     type Output = Vec3;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -274,7 +264,7 @@ impl ops::Sub for &Vec3 {
     }
 }
 
-impl ops::SubAssign for Vec3 {
+impl SubAssign for Vec3 {
     fn sub_assign(&mut self, rhs: Self) {
         self.x -= rhs.x;
         self.y -= rhs.y;
@@ -282,7 +272,7 @@ impl ops::SubAssign for Vec3 {
     }
 }
 
-impl ops::Mul<Float> for Vec3 {
+impl Mul<Float> for Vec3 {
     type Output = Self;
 
     fn mul(self, rhs: Float) -> Self::Output {
@@ -294,7 +284,7 @@ impl ops::Mul<Float> for Vec3 {
     }
 }
 
-impl ops::Mul<Float> for &Vec3 {
+impl Mul<Float> for &Vec3 {
     type Output = Vec3;
 
     fn mul(self, rhs: Float) -> Self::Output {
@@ -306,7 +296,7 @@ impl ops::Mul<Float> for &Vec3 {
     }
 }
 
-impl ops::Mul<Vec3> for Float {
+impl Mul<Vec3> for Float {
     type Output = Vec3;
 
     fn mul(self, rhs: Vec3) -> Self::Output {
@@ -314,7 +304,7 @@ impl ops::Mul<Vec3> for Float {
     }
 }
 
-impl ops::Mul<&Vec3> for Float {
+impl Mul<&Vec3> for Float {
     type Output = Vec3;
 
     fn mul(self, rhs: &Vec3) -> Self::Output {
@@ -322,7 +312,7 @@ impl ops::Mul<&Vec3> for Float {
     }
 }
 
-impl ops::MulAssign<Float> for Vec3 {
+impl MulAssign<Float> for Vec3 {
     fn mul_assign(&mut self, rhs: Float) {
         self.x *= rhs;
         self.y *= rhs;
@@ -330,7 +320,7 @@ impl ops::MulAssign<Float> for Vec3 {
     }
 }
 
-impl ops::Div<Float> for Vec3 {
+impl Div<Float> for Vec3 {
     type Output = Self;
 
     fn div(self, rhs: Float) -> Self::Output {
@@ -344,7 +334,7 @@ impl ops::Div<Float> for Vec3 {
     }
 }
 
-impl ops::Div<Float> for &Vec3 {
+impl Div<Float> for &Vec3 {
     type Output = Vec3;
 
     fn div(self, rhs: Float) -> Self::Output {
@@ -358,7 +348,7 @@ impl ops::Div<Float> for &Vec3 {
     }
 }
 
-impl ops::DivAssign<Float> for Vec3 {
+impl DivAssign<Float> for Vec3 {
     fn div_assign(&mut self, rhs: Float) {
         debug_assert!(rhs != 0.0);
         let inverse = 1.0 / rhs;
@@ -368,7 +358,7 @@ impl ops::DivAssign<Float> for Vec3 {
     }
 }
 
-impl ops::Neg for Vec3 {
+impl Neg for Vec3 {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -380,7 +370,7 @@ impl ops::Neg for Vec3 {
     }
 }
 
-impl ops::Neg for &Vec3 {
+impl Neg for &Vec3 {
     type Output = Vec3;
 
     fn neg(self) -> Self::Output {
@@ -392,7 +382,7 @@ impl ops::Neg for &Vec3 {
     }
 }
 
-impl ops::Index<usize> for Vec3 {
+impl Index<usize> for Vec3 {
     type Output = Float;
 
     fn index(&self, index: usize) -> &Self::Output {

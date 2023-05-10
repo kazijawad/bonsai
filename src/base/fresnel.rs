@@ -1,7 +1,9 @@
 use crate::{
-    base::constants::Float,
+    base::{
+        bxdf::{fresnel_conductor, fresnel_dielectric},
+        constants::Float,
+    },
     spectra::rgb::RGBSpectrum,
-    utils::bxdf::{fresnel_conductor, fresnel_dielectric},
 };
 
 pub trait Fresnel: Send + Sync {

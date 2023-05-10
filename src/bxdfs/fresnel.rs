@@ -1,6 +1,9 @@
 use crate::{
     base::{
-        bxdf::{BxDF, BxDFType, BSDF_GLOSSY, BSDF_REFLECTION, BSDF_SPECULAR, BSDF_TRANSMISSION},
+        bxdf::{
+            abs_cos_theta, cos_theta, fresnel_dielectric, reflect, refract, same_hemisphere, BxDF,
+            BxDFType, BSDF_GLOSSY, BSDF_REFLECTION, BSDF_SPECULAR, BSDF_TRANSMISSION,
+        },
         constants::{Float, PI},
         material::TransportMode,
         microfacet::MicrofacetDistribution,
@@ -8,9 +11,6 @@ use crate::{
     },
     geometries::{normal::Normal, point2::Point2F, vec3::Vec3},
     spectra::rgb::RGBSpectrum,
-    utils::bxdf::{
-        abs_cos_theta, cos_theta, fresnel_dielectric, reflect, refract, same_hemisphere,
-    },
 };
 
 pub struct FresnelSpecular {

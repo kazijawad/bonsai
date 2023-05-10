@@ -1,10 +1,12 @@
 use crate::{
-    base::constants::{Float, PI},
-    geometries::{point2::Point2F, vec3::Vec3},
-    utils::bxdf::{
-        abs_cos_theta, cos2_phi, cos2_theta, cos_phi, cos_theta, sin2_phi, sin_phi, tan2_theta,
-        tan_theta,
+    base::{
+        bxdf::{
+            abs_cos_theta, cos2_phi, cos2_theta, cos_phi, cos_theta, sin2_phi, sin_phi, tan2_theta,
+            tan_theta,
+        },
+        constants::{Float, PI},
     },
+    geometries::{point2::Point2F, vec3::Vec3},
 };
 
 pub trait MicrofacetDistribution: Send + Sync {

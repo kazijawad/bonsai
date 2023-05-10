@@ -1,4 +1,7 @@
-use std::{mem, ops};
+use std::{
+    mem,
+    ops::{Add, Mul, Sub},
+};
 
 use crate::base::constants::{Float, PI};
 
@@ -123,17 +126,13 @@ impl Interval {
     }
 }
 
-// TYPE CONVERSION
-
 impl From<Float> for Interval {
     fn from(x: Float) -> Self {
         Self { low: x, high: x }
     }
 }
 
-// ADDITION
-
-impl ops::Add for Interval {
+impl Add for Interval {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -144,7 +143,7 @@ impl ops::Add for Interval {
     }
 }
 
-impl ops::Add for &Interval {
+impl Add for &Interval {
     type Output = Interval;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -155,9 +154,7 @@ impl ops::Add for &Interval {
     }
 }
 
-// SUBTRACTION
-
-impl ops::Sub for Interval {
+impl Sub for Interval {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -168,7 +165,7 @@ impl ops::Sub for Interval {
     }
 }
 
-impl ops::Sub for &Interval {
+impl Sub for &Interval {
     type Output = Interval;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -179,9 +176,7 @@ impl ops::Sub for &Interval {
     }
 }
 
-// MULTIPLICATION
-
-impl ops::Mul for Interval {
+impl Mul for Interval {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
@@ -198,7 +193,7 @@ impl ops::Mul for Interval {
     }
 }
 
-impl ops::Mul for &Interval {
+impl Mul for &Interval {
     type Output = Interval;
 
     fn mul(self, rhs: Self) -> Self::Output {

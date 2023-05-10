@@ -3,11 +3,11 @@ use crate::{
         camera::{Camera, CameraSample},
         constants::Float,
         film::Film,
+        math::lerp,
         sampling::concentric_sample_disk,
         transform::{AnimatedTransform, Transform},
     },
     geometries::{bounds2::Bounds2F, point3::Point3, ray::Ray, vec3::Vec3},
-    utils::math::lerp,
 };
 
 pub struct PerspectiveCamera {

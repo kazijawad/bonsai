@@ -1,11 +1,13 @@
 use crate::{
     base::{
-        bxdf::{BxDF, BxDFType, BSDF_DIFFUSE, BSDF_REFLECTION},
+        bxdf::{
+            abs_cos_theta, cos_phi, sin_phi, sin_theta, BxDF, BxDFType, BSDF_DIFFUSE,
+            BSDF_REFLECTION,
+        },
         constants::{Float, PI},
     },
     geometries::vec3::Vec3,
     spectra::rgb::RGBSpectrum,
-    utils::bxdf::{abs_cos_theta, cos_phi, sin_phi, sin_theta},
 };
 
 pub struct OrenNayer {

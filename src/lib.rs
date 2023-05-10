@@ -13,7 +13,6 @@ mod samplers;
 mod shapes;
 mod spectra;
 mod textures;
-mod utils;
 
 pub use accelerators::bvh::BVH;
 pub use base::{

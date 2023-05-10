@@ -1,12 +1,11 @@
 use std::{cmp::Ordering, ops::Mul};
 
 use crate::{
-    base::constants::Float,
+    base::{constants::Float, math::lerp},
     geometries::{
         bounds3::Bounds3, interval::Interval, mat4::Mat4, point3::Point3, quaternion::Quaternion,
         vec3::Vec3,
     },
-    utils::math::lerp,
 };
 
 #[derive(Debug, Clone, PartialEq)]

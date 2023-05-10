@@ -9,7 +9,7 @@ use crate::{
     geometries::point2::Point2F,
 };
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct StratifiedSampler {
     samples_per_pixel: usize,
 

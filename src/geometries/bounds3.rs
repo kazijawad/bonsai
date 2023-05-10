@@ -1,9 +1,11 @@
 use std::{mem, ops::Index};
 
 use crate::{
-    base::constants::Float,
+    base::{
+        constants::Float,
+        math::{gamma, lerp},
+    },
     geometries::{point3::Point3, ray::Ray, vec3::Vec3},
-    utils::math::{gamma, lerp},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]

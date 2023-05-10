@@ -1,11 +1,10 @@
 use crate::{
     base::{
         bsdf::BSDF, constants::Float, interaction::Interaction, material::TransportMode,
-        primitive::Primitive, transform::Transform,
+        math::solve_linear_system_2x2, primitive::Primitive, transform::Transform,
     },
     geometries::{normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3},
     spectra::rgb::RGBSpectrum,
-    utils::math::solve_linear_system_2x2,
 };
 
 pub struct Shading {

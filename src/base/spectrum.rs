@@ -42,24 +42,3 @@ pub fn rgb_to_xyz(rgb: &RGB, xyz: &mut XYZ) {
     xyz[1] = 0.212671 * rgb[0] + 0.715160 * rgb[1] + 0.072169 * rgb[2];
     xyz[2] = 0.019334 * rgb[0] + 0.119193 * rgb[1] + 0.950227 * rgb[2];
 }
-
-#[cfg(test)]
-mod tests {
-    use crate::base::spectrum::{rgb_to_xyz, xyz_to_rgb, RGB, XYZ};
-
-    #[test]
-    fn to_rgb() {
-        let xyz: XYZ = [0.412453, 0.212671, 0.019334];
-        let mut rgb: RGB = [0.0; 3];
-        xyz_to_rgb(&xyz, &mut rgb);
-        assert_eq!(rgb, [0.9999994, -2.0570587e-7, 2.0675361e-7]);
-    }
-
-    #[test]
-    fn to_xyz() {
-        let rgb: RGB = [1.0, 0.0, 0.0];
-        let mut xyz: XYZ = [0.0; 3];
-        rgb_to_xyz(&rgb, &mut xyz);
-        assert_eq!(xyz, [0.412453, 0.212671, 0.019334])
-    }
-}

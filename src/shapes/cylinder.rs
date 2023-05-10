@@ -1,7 +1,9 @@
 use crate::{
     base::{
         constants::{Float, PI},
+        efloat::EFloat,
         interaction::Interaction,
+        math::{gamma, lerp},
         shape::Shape,
         transform::Transform,
     },
@@ -9,10 +11,6 @@ use crate::{
         bounds3::Bounds3, normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3,
     },
     interactions::{base::BaseInteraction, surface::SurfaceInteraction},
-    utils::{
-        efloat::EFloat,
-        math::{gamma, lerp},
-    },
 };
 
 pub struct Cylinder {

@@ -49,7 +49,7 @@ impl BSDF {
     }
 
     pub fn world_to_local(&self, v: &Vec3) -> Vec3 {
-        Vec3::new(v.dot(&self.ss), v.dot(&self.ts), v.dot(&self.ns.into()))
+        Vec3::new(v.dot(&self.ss), v.dot(&self.ts), v.dot_normal(&self.ns))
     }
 
     pub fn local_to_world(&self, v: &Vec3) -> Vec3 {
@@ -177,8 +177,7 @@ impl BSDF {
 
         // Compute value of BSDF for sampled direction.
         if bxdf.bxdf_type() & BSDF_SPECULAR == 0 {
-            let reflect =
-                wi_world.dot(&Vec3::from(self.ng)) * wo_world.dot(&Vec3::from(self.ng)) > 0.0;
+            let reflect = wi_world.dot_normal(&self.ng) * wo_world.dot_normal(&self.ng) > 0.0;
             f = RGBSpectrum::default();
             for b in self.bxdfs.iter() {
                 if b.matches_flags(bxdf_type)

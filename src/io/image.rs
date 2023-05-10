@@ -1,6 +1,9 @@
 use image::{imageops::FilterType, io::Reader};
 
-use crate::{base::constants::Float, geometries::point2::Point2I, utils::math::modulo};
+use crate::{
+    base::{constants::Float, math::modulo},
+    geometries::point2::Point2I,
+};
 
 const NUM_CHANNELS: usize = 3;
 

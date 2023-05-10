@@ -1,4 +1,4 @@
-use std::ops;
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 use crate::{
     base::{constants::Float, transform::Transform},
@@ -41,8 +41,6 @@ impl Default for Quaternion {
         }
     }
 }
-
-// TYPE CONVERSION
 
 impl From<Transform> for Quaternion {
     fn from(t: Transform) -> Self {
@@ -146,9 +144,7 @@ impl From<Mat4> for Quaternion {
     }
 }
 
-// ADDITION
-
-impl ops::Add for Quaternion {
+impl Add for Quaternion {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -159,7 +155,7 @@ impl ops::Add for Quaternion {
     }
 }
 
-impl ops::Add for &Quaternion {
+impl Add for &Quaternion {
     type Output = Quaternion;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -170,16 +166,14 @@ impl ops::Add for &Quaternion {
     }
 }
 
-impl ops::AddAssign for Quaternion {
+impl AddAssign for Quaternion {
     fn add_assign(&mut self, rhs: Self) {
         self.v += rhs.v;
         self.w += rhs.w;
     }
 }
 
-// SUBTRACTION
-
-impl ops::Sub for Quaternion {
+impl Sub for Quaternion {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -190,7 +184,7 @@ impl ops::Sub for Quaternion {
     }
 }
 
-impl ops::Sub for &Quaternion {
+impl Sub for &Quaternion {
     type Output = Quaternion;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -201,16 +195,14 @@ impl ops::Sub for &Quaternion {
     }
 }
 
-impl ops::SubAssign for Quaternion {
+impl SubAssign for Quaternion {
     fn sub_assign(&mut self, rhs: Self) {
         self.v -= rhs.v;
         self.w -= rhs.w;
     }
 }
 
-// MULTIPLICATION
-
-impl ops::Mul<Float> for Quaternion {
+impl Mul<Float> for Quaternion {
     type Output = Self;
 
     fn mul(self, rhs: Float) -> Self::Output {
@@ -221,7 +213,7 @@ impl ops::Mul<Float> for Quaternion {
     }
 }
 
-impl ops::Mul<Float> for &Quaternion {
+impl Mul<Float> for &Quaternion {
     type Output = Quaternion;
 
     fn mul(self, rhs: Float) -> Self::Output {
@@ -232,7 +224,7 @@ impl ops::Mul<Float> for &Quaternion {
     }
 }
 
-impl ops::Mul<Quaternion> for Float {
+impl Mul<Quaternion> for Float {
     type Output = Quaternion;
 
     fn mul(self, rhs: Quaternion) -> Self::Output {
@@ -240,7 +232,7 @@ impl ops::Mul<Quaternion> for Float {
     }
 }
 
-impl ops::Mul<&Quaternion> for Float {
+impl Mul<&Quaternion> for Float {
     type Output = Quaternion;
 
     fn mul(self, rhs: &Quaternion) -> Self::Output {
@@ -248,16 +240,14 @@ impl ops::Mul<&Quaternion> for Float {
     }
 }
 
-impl ops::MulAssign<Float> for Quaternion {
+impl MulAssign<Float> for Quaternion {
     fn mul_assign(&mut self, rhs: Float) {
         self.v *= rhs;
         self.w *= rhs;
     }
 }
 
-// DIVISION
-
-impl ops::Div<Float> for Quaternion {
+impl Div<Float> for Quaternion {
     type Output = Self;
 
     fn div(self, rhs: Float) -> Self::Output {
@@ -270,7 +260,7 @@ impl ops::Div<Float> for Quaternion {
     }
 }
 
-impl ops::Div<Float> for &Quaternion {
+impl Div<Float> for &Quaternion {
     type Output = Quaternion;
 
     fn div(self, rhs: Float) -> Self::Output {
@@ -283,7 +273,7 @@ impl ops::Div<Float> for &Quaternion {
     }
 }
 
-impl ops::DivAssign<Float> for Quaternion {
+impl DivAssign<Float> for Quaternion {
     fn div_assign(&mut self, rhs: Float) {
         debug_assert!(rhs != 0.0);
         let inverse = 1.0 / rhs;
@@ -292,9 +282,7 @@ impl ops::DivAssign<Float> for Quaternion {
     }
 }
 
-// NEGATION
-
-impl ops::Neg for Quaternion {
+impl Neg for Quaternion {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -305,7 +293,7 @@ impl ops::Neg for Quaternion {
     }
 }
 
-impl ops::Neg for &Quaternion {
+impl Neg for &Quaternion {
     type Output = Quaternion;
 
     fn neg(self) -> Self::Output {

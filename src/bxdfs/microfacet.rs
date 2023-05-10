@@ -1,6 +1,9 @@
 use crate::{
     base::{
-        bxdf::{BxDF, BxDFType, BSDF_GLOSSY, BSDF_REFLECTION, BSDF_TRANSMISSION},
+        bxdf::{
+            abs_cos_theta, cos_theta, reflect, refract, same_hemisphere, BxDF, BxDFType,
+            BSDF_GLOSSY, BSDF_REFLECTION, BSDF_TRANSMISSION,
+        },
         constants::Float,
         fresnel::{Fresnel, FresnelDielectric},
         material::TransportMode,
@@ -8,7 +11,6 @@ use crate::{
     },
     geometries::{normal::Normal, point2::Point2F, vec3::Vec3},
     spectra::rgb::RGBSpectrum,
-    utils::bxdf::{abs_cos_theta, cos_theta, reflect, refract, same_hemisphere},
 };
 
 pub struct MicrofacetReflection {
