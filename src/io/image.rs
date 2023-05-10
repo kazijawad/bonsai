@@ -1,11 +1,11 @@
-use image::{imageops::FilterType, io::Reader};
+use image::{imageops::FilterType, io::Reader, ImageBuffer, Rgb32FImage};
 
 use crate::{
     base::{constants::Float, math::modulo},
     geometries::point2::Point2I,
 };
 
-const NUM_CHANNELS: usize = 3;
+pub const NUM_CHANNELS: usize = 3;
 
 #[derive(Debug, Clone, Copy)]
 pub enum ImageWrapMode {
@@ -17,7 +17,7 @@ pub enum ImageWrapMode {
 #[derive(Debug)]
 pub struct Image {
     pub resolution: Point2I,
-    pixels: Vec<Float>,
+    pub pixels: Vec<Float>,
 }
 
 impl Image {
@@ -44,6 +44,14 @@ impl Image {
         }
     }
 
+    pub fn write(resolution: Point2I, pixels: Vec<Float>, path: &str) {
+        let buf: Rgb32FImage =
+            ImageBuffer::from_raw(resolution.x as u32, resolution.y as u32, pixels)
+                .expect("Failed to write image buffer");
+
+        buf.save(path).expect("Failed to save file")
+    }
+
     pub fn generate_pyramid(image: Image) -> Vec<Image> {
         // Initialize levels of pyramid from image.
         let num_levels = 1 + image.resolution[0].max(image.resolution[1]).ilog2() as usize;
@@ -57,8 +65,10 @@ impl Image {
             let width = (last_image.resolution[0] / 2).max(1);
             let height = (last_image.resolution[1] / 2).max(1);
 
-            let resolution = Point2I::new(width, height);
-            let mut pixels = vec![0.0; (width * height) as usize * NUM_CHANNELS];
+            let mut next_image = Image {
+                resolution: Point2I::new(width, height),
+                pixels: vec![0.0; (width * height) as usize * NUM_CHANNELS],
+            };
 
             // Compute offsets from pixels to the four pixels used for downsampling.
             let mut src_deltas = [
@@ -78,13 +88,12 @@ impl Image {
 
             // Downsample image to create next level and update pyramid.
             for y in 0..height {
-                let mut src_offset =
-                    Self::pixel_offset(&last_image.resolution, &Point2I::new(0, 2 * y));
-                let mut next_offset = Self::pixel_offset(&resolution, &Point2I::new(0, y));
+                let mut src_offset = last_image.pixel_offset(&Point2I::new(0, 2 * y));
+                let mut next_offset = next_image.pixel_offset(&Point2I::new(0, y));
 
                 for _ in 0..width {
                     for _ in 0..NUM_CHANNELS {
-                        pixels[next_offset] = (last_image.pixels[src_offset]
+                        next_image.pixels[next_offset] = (last_image.pixels[src_offset]
                             + last_image.pixels[src_offset + src_deltas[1]]
                             + last_image.pixels[src_offset + src_deltas[2]]
                             + last_image.pixels[src_offset + src_deltas[3]])
@@ -98,7 +107,7 @@ impl Image {
                 }
             }
 
-            pyramid.push(Image { resolution, pixels });
+            pyramid.push(next_image);
         }
 
         pyramid
@@ -110,7 +119,11 @@ impl Image {
         if !self.remap_pixel(&mut p, wrap_mode) {
             return 0.0;
         }
-        self.pixels[Self::pixel_offset(&self.resolution, &p) + c]
+        self.pixels[self.pixel_offset(&p) + c]
+    }
+
+    pub fn pixel_offset(&self, p: &Point2I) -> usize {
+        NUM_CHANNELS * (p.y * self.resolution.x + p.x) as usize
     }
 
     fn remap_pixel(&self, p: &mut Point2I, wrap_mode: ImageWrapMode) -> bool {
@@ -129,9 +142,5 @@ impl Image {
         }
 
         true
-    }
-
-    fn pixel_offset(resolution: &Point2I, p: &Point2I) -> usize {
-        NUM_CHANNELS * (p.y * resolution.x + p.x) as usize
     }
 }

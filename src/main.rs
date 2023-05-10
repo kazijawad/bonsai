@@ -6,6 +6,7 @@ fn main() {
         mapping: Box::new(UVMapping2D::default()),
         wrap_mode: ImageWrapMode::Repeat,
     });
+    image_texture.mipmap.export("dist/mipmap.exr");
 
     let image_material = MatteMaterial {
         kd: &image_texture,
