@@ -6,7 +6,6 @@ fn main() {
         mapping: Box::new(UVMapping2D::default()),
         wrap_mode: ImageWrapMode::Repeat,
     });
-    image_texture.mipmap.export("dist/mipmap.exr");
 
     let image_material = MatteMaterial {
         kd: &image_texture,
@@ -35,7 +34,14 @@ fn main() {
         intensity: RGBSpectrum::new(1.0),
     });
 
-    let scene = Scene::new(&aggregate, vec![&point_light]);
+    let infinite_area_light = InfiniteAreaLight::new(InfiniteAreaLightOptions {
+        scene: &aggregate,
+        transform: Transform::default(),
+        intensity: RGBSpectrum::new(1.0),
+        filename: "assets/environment.exr",
+    });
+
+    let scene = Scene::new(&aggregate, vec![&point_light, &infinite_area_light]);
 
     let film = Film::new(FilmOptions {
         resolution: Point2F::new(1024.0, 1024.0),

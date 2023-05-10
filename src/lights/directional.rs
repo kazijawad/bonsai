@@ -3,8 +3,8 @@ use crate::{
         constants::{Float, PI},
         interaction::Interaction,
         light::{Light, LightPointSample, VisibilityTester},
+        primitive::Primitive,
         sampling::concentric_sample_disk,
-        scene::Scene,
     },
     geometries::{normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3},
     interactions::base::BaseInteraction,
@@ -19,7 +19,7 @@ pub struct DirectionalLight {
 }
 
 pub struct DirectionalLightOptions<'a> {
-    pub scene: &'a Scene<'a>,
+    pub scene: &'a (dyn Primitive<'a> + 'a),
     pub from: Point3,
     pub to: Point3,
     pub intensity: RGBSpectrum,

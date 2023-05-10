@@ -1,5 +1,5 @@
 use crate::{
-    base::constants::Float,
+    base::{constants::Float, spectrum::Spectrum},
     geometries::{
         point2::{Point2F, Point2I},
         vec2::Vec2F,
@@ -7,8 +7,6 @@ use crate::{
     io::image::{Image, ImageWrapMode, NUM_CHANNELS},
     spectra::rgb::RGBSpectrum,
 };
-
-use super::spectrum::Spectrum;
 
 pub struct MIPMap {
     pyramid: Vec<Image>,

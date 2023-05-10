@@ -1,11 +1,12 @@
 use rand::prelude::*;
 
 use crate::{
-    base::constants::{Float, PI},
+    base::{
+        constants::{Float, PI},
+        math::find_interval,
+    },
     geometries::{point2::Point2F, vec2::Vec2, vec3::Vec3},
 };
-
-use super::math::find_interval;
 
 pub struct Distribution1D {
     func: Vec<Float>,
@@ -19,12 +20,12 @@ pub struct Distribution2D {
 }
 
 impl Distribution1D {
-    pub fn new(f: &[Float], n: usize) -> Self {
+    pub fn new(func: Vec<Float>, n: usize) -> Self {
         // Compute integral of step function at xi.
         let mut cdf = Vec::with_capacity(n + 1);
         cdf.push(0.0);
-        for i in 0..(n + 1) {
-            cdf.push(cdf[i - 1] + f[i - 1] / n as Float);
+        for i in 1..(n + 1) {
+            cdf.push(cdf[i - 1] + func[i - 1] / n as Float);
         }
 
         // Transform step function integral into CDF.
@@ -40,7 +41,7 @@ impl Distribution1D {
         }
 
         Self {
-            func: f.to_vec(),
+            func,
             cdf,
             func_int,
         }
@@ -59,7 +60,7 @@ impl Distribution1D {
 
         // Compute offset along CDF segment.
         let mut du = u - self.cdf[offset];
-        if self.cdf[offset - 1] - self.cdf[offset] > 0.0 {
+        if self.cdf[offset + 1] - self.cdf[offset] > 0.0 {
             debug_assert!(self.cdf[offset + 1] > self.cdf[offset]);
             du /= self.cdf[offset + 1] - self.cdf[offset]
         }
@@ -77,11 +78,11 @@ impl Distribution1D {
 }
 
 impl Distribution2D {
-    pub fn new(func: &[Float], nu: usize, nv: usize) -> Self {
+    pub fn new(func: Vec<Float>, nu: usize, nv: usize) -> Self {
         let mut p_cond_v = Vec::with_capacity(nv);
         for v in 0..nv {
             // Compute conditional sampling distribution for v.
-            p_cond_v.push(Distribution1D::new(&func[v * nu..], nu))
+            p_cond_v.push(Distribution1D::new(func[v * nu..].to_vec(), nu))
         }
 
         // Compute marginal sampling distribution.
@@ -92,7 +93,7 @@ impl Distribution2D {
 
         Self {
             p_cond_v,
-            p_marginal: Distribution1D::new(marginal_func.as_slice(), nv),
+            p_marginal: Distribution1D::new(marginal_func, nv),
         }
     }
 

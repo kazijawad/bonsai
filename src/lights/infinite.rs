@@ -5,8 +5,8 @@ use crate::{
         interaction::Interaction,
         light::{Light, LightPointSample, VisibilityTester},
         mipmap::MIPMap,
+        primitive::Primitive,
         sampling::Distribution2D,
-        scene::Scene,
         spectrum::Spectrum,
         transform::Transform,
     },
@@ -17,16 +17,16 @@ use crate::{
 };
 
 pub struct InfiniteAreaLight {
+    pub mipmap: MIPMap,
     light_to_world: Transform,
     world_to_light: Transform,
-    mipmap: MIPMap,
     world_center: Point3,
     world_radius: Float,
     distribution: Distribution2D,
 }
 
 pub struct InfiniteAreaLightOptions<'a> {
-    pub scene: &'a Scene<'a>,
+    pub scene: &'a (dyn Primitive<'a> + 'a),
     pub transform: Transform,
     pub intensity: RGBSpectrum,
     pub filename: &'a str,
@@ -65,12 +65,12 @@ impl InfiniteAreaLight {
             .bounding_sphere(&mut world_center, &mut world_radius);
 
         Self {
+            mipmap,
             light_to_world,
             world_to_light,
-            mipmap,
             world_center,
             world_radius,
-            distribution: Distribution2D::new(func.as_slice(), width, height),
+            distribution: Distribution2D::new(func, width, height),
         }
     }
 }
