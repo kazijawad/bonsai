@@ -2,7 +2,7 @@ use crate::{
     base::{
         bxdf::{
             abs_cos_theta, cos_theta, fresnel_dielectric, reflect, refract, same_hemisphere, BxDF,
-            BxDFType, BSDF_GLOSSY, BSDF_REFLECTION, BSDF_SPECULAR, BSDF_TRANSMISSION,
+            BxDFSample, BxDFType, BSDF_GLOSSY, BSDF_REFLECTION, BSDF_SPECULAR, BSDF_TRANSMISSION,
         },
         constants::{Float, PI},
         material::TransportMode,
@@ -73,15 +73,20 @@ impl BxDF for FresnelSpecular {
         RGBSpectrum::default()
     }
 
-    fn sample(&self, wo: &Vec3, u: &Point2F) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
+    fn sample(&self, wo: &Vec3, u: &Point2F) -> BxDFSample {
         let f = fresnel_dielectric(cos_theta(wo), self.eta_a, self.eta_b);
         if u[0] < f {
             // Compute specular reflection.
             let wi = Vec3::new(-wo.x, -wo.y, wo.z);
-            let radiance = RGBSpectrum::new(f) * self.r / abs_cos_theta(&wi);
             let pdf = f;
+            let f = RGBSpectrum::new(f) * self.r / abs_cos_theta(&wi);
             let sampled_type = Some(BSDF_SPECULAR | BSDF_REFLECTION);
-            (wi, radiance, pdf, sampled_type)
+            BxDFSample {
+                wi,
+                f,
+                pdf,
+                sampled_type: Some(BSDF_SPECULAR | BSDF_REFLECTION),
+            }
         } else {
             // Compute specular transmission.
             // Figure out which eta is incident and which is transmitted.
@@ -100,15 +105,19 @@ impl BxDF for FresnelSpecular {
                 if let TransportMode::Radiance = self.mode {
                     ft *= (eta_i * eta_i) / (eta_t * eta_t);
                 }
-                let radiance = ft / abs_cos_theta(&wi);
-                (
+                BxDFSample {
                     wi,
-                    radiance,
-                    1.0 - f,
-                    Some(BSDF_SPECULAR | BSDF_TRANSMISSION),
-                )
+                    f: ft / abs_cos_theta(&wi),
+                    pdf: 1.0 - f,
+                    sampled_type: Some(BSDF_SPECULAR | BSDF_TRANSMISSION),
+                }
             } else {
-                (Vec3::default(), RGBSpectrum::default(), 0.0, None)
+                BxDFSample {
+                    wi: Vec3::default(),
+                    f: RGBSpectrum::default(),
+                    pdf: 0.0,
+                    sampled_type: None,
+                }
             }
         }
     }
@@ -146,7 +155,7 @@ impl BxDF for FresnelBlend {
         diffuse + specular
     }
 
-    fn sample(&self, wo: &Vec3, u: &Point2F) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
+    fn sample(&self, wo: &Vec3, u: &Point2F) -> BxDFSample {
         let mut u = u.clone();
 
         let mut wi;
@@ -165,14 +174,24 @@ impl BxDF for FresnelBlend {
             let wh = self.distribution.sample(wo, &u);
             wi = reflect(wo, &wh);
             if !same_hemisphere(wo, &wi) {
-                return (wi, RGBSpectrum::default(), 0.0, None);
+                return BxDFSample {
+                    wi,
+                    f: RGBSpectrum::default(),
+                    pdf: 0.0,
+                    sampled_type: None,
+                };
             }
         }
 
-        let radiance = self.f(wo, &wi);
+        let f = self.f(wo, &wi);
         let pdf = self.pdf(wo, &wi);
 
-        (wi, radiance, pdf, None)
+        BxDFSample {
+            wi,
+            f,
+            pdf,
+            sampled_type: None,
+        }
     }
 
     fn pdf(&self, wo: &Vec3, wi: &Vec3) -> Float {

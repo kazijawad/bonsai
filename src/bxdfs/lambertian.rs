@@ -1,8 +1,8 @@
 use crate::{
     base::{
         bxdf::{
-            abs_cos_theta, same_hemisphere, BxDF, BxDFType, BSDF_DIFFUSE, BSDF_REFLECTION,
-            BSDF_TRANSMISSION,
+            abs_cos_theta, same_hemisphere, BxDF, BxDFSample, BxDFType, BSDF_DIFFUSE,
+            BSDF_REFLECTION, BSDF_TRANSMISSION,
         },
         constants::{Float, PI},
         sampling::cosine_sample_hemisphere,
@@ -62,14 +62,17 @@ impl BxDF for LambertianTransmission {
         self.t * (1.0 / PI)
     }
 
-    fn sample(&self, wo: &Vec3, u: &Point2F) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
+    fn sample(&self, wo: &Vec3, u: &Point2F) -> BxDFSample {
         let mut wi = cosine_sample_hemisphere(u);
         if wo.z > 0.0 {
             wi.z *= -1.0;
         }
-        let radiance = self.f(wo, &wi);
-        let pdf = self.pdf(wo, &wi);
-        (wi, radiance, pdf, None)
+        BxDFSample {
+            wi,
+            f: self.f(wo, &wi),
+            pdf: self.pdf(wo, &wi),
+            sampled_type: None,
+        }
     }
 
     fn rho_hd(&self, _wo: &Vec3, _num_samples: usize, _samples: &[Point2F]) -> RGBSpectrum {

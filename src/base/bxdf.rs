@@ -20,26 +20,36 @@ pub const BSDF_SPECULAR: BxDFType = 1 << 4;
 pub const BSDF_ALL: BxDFType =
     BSDF_DIFFUSE | BSDF_GLOSSY | BSDF_SPECULAR | BSDF_REFLECTION | BSDF_TRANSMISSION;
 
+pub struct BxDFSample {
+    pub wi: Vec3,
+    pub f: RGBSpectrum,
+    pub pdf: Float,
+    pub sampled_type: Option<BxDFType>,
+}
+
 pub trait BxDF: Send + Sync {
     fn f(&self, wo: &Vec3, wi: &Vec3) -> RGBSpectrum;
 
-    fn sample(&self, wo: &Vec3, u: &Point2F) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
+    fn sample(&self, wo: &Vec3, u: &Point2F) -> BxDFSample {
         // Cosine-sample the hemisphere, flipping the direction if necessary.
         let mut wi = cosine_sample_hemisphere(u);
         if wo.z < 0.0 {
             wi.z *= -1.0;
         }
-        let radiance = self.f(wo, &wi);
-        let pdf = self.pdf(wo, &wi);
-        (wi, radiance, pdf, None)
+        BxDFSample {
+            wi,
+            f: self.f(wo, &wi),
+            pdf: self.pdf(wo, &wi),
+            sampled_type: None,
+        }
     }
 
     fn rho_hd(&self, wo: &Vec3, num_samples: usize, u: &[Point2F]) -> RGBSpectrum {
         let mut reflectance = RGBSpectrum::default();
         for i in 0..num_samples {
-            let (wi, factor, pdf, _) = self.sample(wo, &u[i]);
-            if pdf > 0.0 {
-                reflectance += factor * abs_cos_theta(&wi) / pdf;
+            let sample = self.sample(wo, &u[i]);
+            if sample.pdf > 0.0 {
+                reflectance += sample.f * abs_cos_theta(&sample.wi) / sample.pdf;
             }
         }
         reflectance / (num_samples as Float)
@@ -50,9 +60,10 @@ pub trait BxDF: Send + Sync {
         for i in 0..num_samples {
             let wo = uniform_sample_hemisphere(&u1[i]);
             let pdf_o = uniform_hemisphere_pdf();
-            let (wi, factor, pdf_i, _) = self.sample(&wo, &u2[i]);
-            if pdf_i > 0.0 {
-                reflectance += factor * abs_cos_theta(&wi) * abs_cos_theta(&wo) / (pdf_o * pdf_i);
+            let sample = self.sample(&wo, &u2[i]);
+            if sample.pdf > 0.0 {
+                reflectance += sample.f * abs_cos_theta(&sample.wi) * abs_cos_theta(&wo)
+                    / (pdf_o * sample.pdf);
             }
         }
         reflectance / (PI * num_samples as Float)

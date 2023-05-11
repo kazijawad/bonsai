@@ -1,8 +1,8 @@
 use crate::{
     base::{
         bxdf::{
-            abs_cos_theta, cos_theta, refract, BxDF, BxDFType, BSDF_REFLECTION, BSDF_SPECULAR,
-            BSDF_TRANSMISSION,
+            abs_cos_theta, cos_theta, refract, BxDF, BxDFSample, BxDFType, BSDF_REFLECTION,
+            BSDF_SPECULAR, BSDF_TRANSMISSION,
         },
         constants::Float,
         fresnel::{Fresnel, FresnelDielectric},
@@ -55,11 +55,14 @@ impl BxDF for SpecularReflection {
         RGBSpectrum::default()
     }
 
-    fn sample(&self, wo: &Vec3, _u: &Point2F) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
+    fn sample(&self, wo: &Vec3, _u: &Point2F) -> BxDFSample {
         let wi = Vec3::new(-wo.x, -wo.y, wo.z);
-        let radiance = self.fresnel.evaluate(cos_theta(&wi)) * self.r / abs_cos_theta(&wi);
-        let pdf = 1.0;
-        (wi, radiance, pdf, None)
+        BxDFSample {
+            wi,
+            f: self.fresnel.evaluate(cos_theta(&wi)) * self.r / abs_cos_theta(&wi),
+            pdf: 1.0,
+            sampled_type: None,
+        }
     }
 
     fn pdf(&self, _wo: &Vec3, _wi: &Vec3) -> Float {
@@ -76,7 +79,7 @@ impl BxDF for SpecularTransmission {
         RGBSpectrum::default()
     }
 
-    fn sample(&self, wo: &Vec3, _u: &Point2F) -> (Vec3, RGBSpectrum, Float, Option<BxDFType>) {
+    fn sample(&self, wo: &Vec3, _u: &Point2F) -> BxDFSample {
         // Determine which eta is incident or transmitted.
         let entering = cos_theta(wo) > 0.0;
         let eta_i = if entering { self.eta_a } else { self.eta_b };
@@ -88,18 +91,27 @@ impl BxDF for SpecularTransmission {
             &Normal::new(0.0, 0.0, 1.0).face_forward(&Normal::from(*wo)),
             eta_i / eta_t,
         ) {
-            let mut factor =
-                self.t * (RGBSpectrum::new(1.0) - self.fresnel.evaluate(cos_theta(&wi)));
+            let mut f = self.t * (RGBSpectrum::new(1.0) - self.fresnel.evaluate(cos_theta(&wi)));
 
             // Account for non-symmetry with transmission to different medium.
             if let TransportMode::Radiance = self.mode {
-                factor *= (eta_i * eta_i) / (eta_t * eta_t);
+                f *= (eta_i * eta_i) / (eta_t * eta_t);
             }
-            factor /= abs_cos_theta(&wi);
+            f /= abs_cos_theta(&wi);
 
-            (wi, factor, 1.0, None)
+            BxDFSample {
+                wi,
+                f,
+                pdf: 1.0,
+                sampled_type: None,
+            }
         } else {
-            (Vec3::default(), RGBSpectrum::default(), 0.0, None)
+            BxDFSample {
+                wi: Vec3::default(),
+                f: RGBSpectrum::default(),
+                pdf: 0.0,
+                sampled_type: None,
+            }
         }
     }
 

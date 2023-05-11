@@ -81,6 +81,6 @@ fn main() {
         jitter_samples: true,
     }));
 
-    let mut integrator = WhittedIntegrator::new(camera, sampler, 5);
+    let integrator = WhittedIntegrator::new(camera, sampler, 5);
     integrator.render(&scene);
 }

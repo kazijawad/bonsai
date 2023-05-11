@@ -19,6 +19,13 @@ pub struct BSDF {
     bxdfs: Vec<Box<dyn BxDF>>,
 }
 
+pub struct BSDFSample {
+    pub wi: Vec3,
+    pub f: RGBSpectrum,
+    pub pdf: Float,
+    pub sampled_type: BxDFType,
+}
+
 impl BSDF {
     pub fn new(si: &SurfaceInteraction, eta: Float) -> Self {
         let ns = si.shading.n;
@@ -114,15 +121,15 @@ impl BSDF {
         ret
     }
 
-    pub fn sample(
-        &self,
-        wo_world: &Vec3,
-        u: &Point2F,
-        bxdf_type: BxDFType,
-    ) -> (Vec3, RGBSpectrum, Float, BxDFType) {
+    pub fn sample(&self, wo_world: &Vec3, u: &Point2F, bxdf_type: BxDFType) -> BSDFSample {
         let matching_components = self.num_components(bxdf_type);
         if matching_components == 0 {
-            return (Vec3::default(), RGBSpectrum::default(), 0.0, 0);
+            return BSDFSample {
+                wi: Vec3::default(),
+                f: RGBSpectrum::default(),
+                pdf: 0.0,
+                sampled_type: 0,
+            };
         }
 
         let component = ((u.x * matching_components as Float).floor() as u32)
@@ -148,48 +155,63 @@ impl BSDF {
         // Sample chosen BxDF.
         let wo = self.world_to_local(&wo_world);
         if wo.z == 0.0 {
-            return (Vec3::default(), RGBSpectrum::default(), 0.0, 0);
+            return BSDFSample {
+                wi: Vec3::default(),
+                f: RGBSpectrum::default(),
+                pdf: 0.0,
+                sampled_type: 0,
+            };
         }
 
-        let (wi, mut f, mut pdf, bxdf_sampled_type) = bxdf.sample(&wo, &u_remapped);
-        let sampled_type = if let Some(bxdf_type) = bxdf_sampled_type {
+        let mut sample = bxdf.sample(&wo, &u_remapped);
+        let sampled_type = if let Some(bxdf_type) = sample.sampled_type {
             bxdf_type
         } else {
             bxdf.bxdf_type()
         };
 
-        if pdf == 0.0 {
-            return (Vec3::default(), RGBSpectrum::default(), 0.0, 0);
+        if sample.pdf == 0.0 {
+            return BSDFSample {
+                wi: Vec3::default(),
+                f: RGBSpectrum::default(),
+                pdf: 0.0,
+                sampled_type: 0,
+            };
         }
-        let wi_world = self.local_to_world(&wi);
+        let wi_world = self.local_to_world(&sample.wi);
 
         // Compute overall PDF with all matching BxDFs.
         if bxdf.bxdf_type() & BSDF_SPECULAR == 0 && matching_components > 1 {
             for b in self.bxdfs.iter() {
                 if !ptr::eq(b, bxdf) && b.matches_flags(bxdf_type) {
-                    pdf += b.pdf(&wo, &wi);
+                    sample.pdf += b.pdf(&wo, &sample.wi);
                 }
             }
         }
         if matching_components > 1 {
-            pdf /= matching_components as Float;
+            sample.pdf /= matching_components as Float;
         }
 
         // Compute value of BSDF for sampled direction.
         if bxdf.bxdf_type() & BSDF_SPECULAR == 0 {
             let reflect = wi_world.dot_normal(&self.ng) * wo_world.dot_normal(&self.ng) > 0.0;
-            f = RGBSpectrum::default();
+            sample.f = RGBSpectrum::default();
             for b in self.bxdfs.iter() {
                 if b.matches_flags(bxdf_type)
                     && ((reflect && b.bxdf_type() & BSDF_REFLECTION != 0)
                         || (!reflect && b.bxdf_type() & BSDF_TRANSMISSION != 0))
                 {
-                    f += b.f(&wo, &wi);
+                    sample.f += b.f(&wo, &sample.wi);
                 }
             }
         }
 
-        (wi_world, f, pdf, sampled_type)
+        BSDFSample {
+            wi: wi_world,
+            f: sample.f,
+            pdf: sample.pdf,
+            sampled_type,
+        }
     }
 
     pub fn pdf(self, wo_world: &Vec3, wi_world: &Vec3, flags: BxDFType) -> Float {
