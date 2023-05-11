@@ -4,6 +4,7 @@ mod bxdfs;
 mod cameras;
 mod filters;
 mod geometries;
+mod integrators;
 mod interactions;
 mod io;
 mod lights;
@@ -20,11 +21,11 @@ pub use base::{
     constants::Float,
     film::{Film, FilmOptions},
     filter::Filter,
+    integrator::{Integrator, SamplerIntegrator},
     light::{AreaLight, Light},
     material::Material,
     mipmap::MIPMap,
     primitive::Primitive,
-    renderer::Renderer,
     sampler::Sampler,
     scene::Scene,
     texture::{
@@ -51,6 +52,7 @@ pub use geometries::{
     vec2::{Vec2, Vec2F, Vec2I},
     vec3::Vec3,
 };
+pub use integrators::whitted::WhittedIntegrator;
 pub use io::image::{Image, ImageWrapMode};
 pub use lights::{
     diffuse::{DiffuseAreaLight, DiffuseAreaLightOptions},

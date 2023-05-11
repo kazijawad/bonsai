@@ -1,18 +1,17 @@
 use std::sync::Mutex;
 
-use image::{ImageBuffer, Rgb32FImage};
-
 use crate::{
     base::{
         constants::Float,
         filter::Filter,
-        spectrum::{xyz_to_rgb, Spectrum, RGB, XYZ},
+        spectrum::{xyz_to_rgb, Spectrum},
     },
     geometries::{
         bounds2::{Bounds2F, Bounds2I},
         point2::{Point2F, Point2I},
         vec2::Vec2F,
     },
+    io::image::Image,
     spectra::rgb::RGBSpectrum,
 };
 
@@ -21,22 +20,33 @@ const FILTER_TABLE_WIDTH: usize = 16;
 #[derive(Debug, Clone)]
 pub struct Pixel {
     xyz: [Float; 3],
+    splat_xyz: [Float; 3],
     filter_weight_sum: Float,
 }
 
-pub struct SampledPixel {
+#[derive(Debug, Clone)]
+pub struct FilmTilePixel {
     contribution_sum: RGBSpectrum,
     filter_weight_sum: Float,
 }
 
 pub struct Film {
     pub full_resolution: Point2F,
-    pub bounds: Bounds2I,
-    pub filter: Box<dyn Filter>,
-    pub filename: String,
+    pub cropped_pixel_bounds: Bounds2I,
+    filter: Box<dyn Filter>,
+    filename: String,
     pixels: Mutex<Vec<Pixel>>,
-    filter_table: [Float; FILTER_TABLE_WIDTH * FILTER_TABLE_WIDTH],
+    filter_table: Vec<Float>,
     scale: Float,
+    max_sample_luminance: Float,
+}
+
+pub struct FilmTile {
+    pixel_bounds: Bounds2I,
+    filter_radius: Vec2F,
+    inv_filter_radius: Vec2F,
+    filter_table: Vec<Float>,
+    pixels: Vec<FilmTilePixel>,
     max_sample_luminance: Float,
 }
 
@@ -67,22 +77,20 @@ impl Film {
         let pixels = Mutex::new(vec![Pixel::default(); bounds.area() as usize]);
 
         // Precompute filter weight table.
-        let mut offset = 0;
-        let mut filter_table = [0.0; FILTER_TABLE_WIDTH * FILTER_TABLE_WIDTH];
+        let mut filter_table = Vec::with_capacity(FILTER_TABLE_WIDTH * FILTER_TABLE_WIDTH);
         for y in 0..FILTER_TABLE_WIDTH {
             for x in 0..FILTER_TABLE_WIDTH {
                 let px = (x as Float + 0.5) * opts.filter.radius().x / FILTER_TABLE_WIDTH as Float;
                 let py = (y as Float + 0.5) * opts.filter.radius().y / FILTER_TABLE_WIDTH as Float;
-                filter_table[offset] = opts.filter.evaluate(&Point2F::new(px, py));
-                offset += 1;
+                filter_table.push(opts.filter.evaluate(&Point2F::new(px, py)));
             }
         }
 
         Self {
             full_resolution: opts.resolution,
+            cropped_pixel_bounds: bounds,
             filter: opts.filter,
             filename: String::from(opts.filename),
-            bounds,
             pixels,
             filter_table,
             scale: opts.scale,
@@ -90,83 +98,65 @@ impl Film {
         }
     }
 
-    pub fn add_sample(
-        &self,
-        sampled_pixel: &mut SampledPixel,
-        film_point: &Point2F,
-        mut radiance: RGBSpectrum,
-        sample_weight: Float,
-    ) {
-        if radiance.y() > self.max_sample_luminance {
-            radiance *= self.max_sample_luminance / radiance.y();
-        }
-
-        // Compute sample's raster bounds.
-        let film_point = film_point - &Vec2F::new(0.5, 0.5);
-        let p0 = (film_point - self.filter.radius())
-            .ceil()
-            .max(&self.bounds.min.into());
-        let p1 = ((film_point + self.filter.radius()).floor() + Point2F::new(1.0, 1.0))
-            .min(&self.bounds.max.into());
-
-        // Precompute x and y filter table offsets.
-        let mut ix = vec![0; p1.x as usize - p0.x as usize];
-        for x in (p0.x as usize)..(p1.x as usize) {
-            let v = ((x as Float - film_point.x)
-                * self.filter.inverse_radius().x
-                * FILTER_TABLE_WIDTH as Float)
-                .abs();
-            ix[x - p0.x as usize] = (v.floor() as i32).min(FILTER_TABLE_WIDTH as i32 - 1);
-        }
-        let mut iy = vec![0; p1.y as usize - p0.y as usize];
-        for y in (p0.y as usize)..(p1.y as usize) {
-            let v = ((y as Float - film_point.y)
-                * self.filter.inverse_radius().y
-                * FILTER_TABLE_WIDTH as Float)
-                .abs();
-            iy[y - p0.y as usize] = (v.floor() as i32).min(FILTER_TABLE_WIDTH as i32 - 1);
-        }
-
-        // Loop over filter support and add sample to pixel arrays.
-        for y in (p0.y as usize)..(p1.y as usize) {
-            for x in (p0.x as usize)..(p1.x as usize) {
-                // Evaluate filter value at pixel.
-                let offset =
-                    iy[y - p0.y as usize] * FILTER_TABLE_WIDTH as i32 + ix[x - p0.x as usize];
-                let filter_weight = self.filter_table[offset as usize];
-
-                // Update pixel values with filtered sample contribution.
-                sampled_pixel.contribution_sum += radiance * sample_weight * filter_weight;
-                sampled_pixel.filter_weight_sum += filter_weight;
-            }
-        }
+    pub fn sample_bounds(&self) -> Bounds2I {
+        let bounds = Bounds2F::new(
+            &(Point2F::from(self.cropped_pixel_bounds.min) + Vec2F::new(0.5, 0.5)
+                - self.filter.radius())
+            .floor(),
+            &(Point2F::from(self.cropped_pixel_bounds.max) - Vec2F::new(0.5, 0.5)
+                + self.filter.radius())
+            .ceil(),
+        );
+        Bounds2I::from(bounds)
     }
 
-    pub fn merge_samples(&self, pixel: Point2I, sampled_pixel: SampledPixel) {
-        let mut xyz: XYZ = [0.0; 3];
-        sampled_pixel.contribution_sum.to_xyz(&mut xyz);
+    pub fn get_film_tile(&self, sample_bounds: &Bounds2I) -> FilmTile {
+        let half_pixel = Vec2F::new(0.5, 0.5);
+        let bounds = Bounds2F::from(*sample_bounds);
 
-        let width = self.bounds.max.x - self.bounds.min.x;
+        let p0 = Point2I::from((bounds.min - half_pixel - self.filter.radius()).ceil());
+        let p1 = Point2I::from((bounds.max - half_pixel + self.filter.radius()).floor());
+
+        let tile_bounds = Bounds2I::new(&p0, &p1).intersect(&self.cropped_pixel_bounds);
+
+        FilmTile::new(
+            tile_bounds,
+            self.filter.radius(),
+            self.filter_table.clone(),
+            self.max_sample_luminance,
+        )
+    }
+
+    pub fn merge_film_tile(&self, mut tile: FilmTile) {
         let mut pixels = self.pixels.lock().unwrap();
 
-        let mut pixel = &mut pixels[(pixel.y * width + pixel.x) as usize];
-        for i in 0..3 {
-            pixel.xyz[i] += xyz[i];
-        }
-        pixel.filter_weight_sum += sampled_pixel.filter_weight_sum;
+        let pixel_bounds = tile.pixel_bounds;
+        pixel_bounds.traverse(|pixel| {
+            let tile_pixel = tile.get_pixel(&pixel);
+            let merge_pixel = &mut pixels[self.get_pixel_offset(&pixel)];
+
+            let mut xyz: [Float; 3] = [0.0; 3];
+            tile_pixel.contribution_sum.to_xyz(&mut xyz);
+
+            for i in 0..3 {
+                merge_pixel.xyz[i] += xyz[i];
+            }
+            merge_pixel.filter_weight_sum += tile_pixel.filter_weight_sum;
+        });
     }
 
-    pub fn write_image(&self) {
+    pub fn write_image(&self, splat_scale: Float) {
         let pixels = self.pixels.lock().unwrap();
-        let mut image = Vec::with_capacity(self.bounds.area() as usize * 3);
 
-        for pixel in pixels.iter() {
-            let mut rgb: RGB = [0.0; 3];
-
+        let mut image = vec![0.0; self.cropped_pixel_bounds.area() as usize * 3];
+        let mut offset = 0;
+        self.cropped_pixel_bounds.traverse(|p| {
             // Convert pixel XYZ color to RGB.
+            let pixel = &pixels[self.get_pixel_offset(&p)];
+            let mut rgb = [0.0; 3];
             xyz_to_rgb(&pixel.xyz, &mut rgb);
 
-            // Normalize pixel with weighted sum.
+            // Normalize pixel with weight sum.
             let filter_weight_sum = pixel.filter_weight_sum;
             if filter_weight_sum != 0.0 {
                 let inverse_weight = 1.0 / filter_weight_sum;
@@ -175,26 +165,125 @@ impl Film {
                 rgb[2] = (rgb[2] * inverse_weight).max(0.0);
             }
 
+            // Add splat value at pixel.
+            let mut splat_rgb = [0.0; 3];
+            xyz_to_rgb(&pixel.splat_xyz, &mut splat_rgb);
+            rgb[0] += splat_scale * splat_rgb[0];
+            rgb[1] += splat_scale * splat_rgb[1];
+            rgb[2] += splat_scale * splat_rgb[2];
+
             // Scale pixel value.
             rgb[0] *= self.scale;
             rgb[1] *= self.scale;
             rgb[2] *= self.scale;
 
-            // Copy over values to image vector.
-            image.push(rgb[0]);
-            image.push(rgb[1]);
-            image.push(rgb[2]);
-        }
+            image[3 * offset] = rgb[0];
+            image[3 * offset + 1] = rgb[1];
+            image[3 * offset + 2] = rgb[2];
+
+            offset += 1;
+        });
 
         // Write image.
-        let buf: Rgb32FImage = ImageBuffer::from_raw(
-            (self.bounds.max.x - self.bounds.min.x) as u32,
-            (self.bounds.max.y - self.bounds.min.y) as u32,
-            image,
-        )
-        .expect("Failed to write image buffer");
+        let resolution = Point2I::new(
+            self.cropped_pixel_bounds.max.x - self.cropped_pixel_bounds.min.x,
+            self.cropped_pixel_bounds.max.y - self.cropped_pixel_bounds.min.y,
+        );
 
-        buf.save(&self.filename).expect("Failed to save file");
+        Image::write(resolution, image, &self.filename);
+    }
+
+    fn get_pixel_offset(&self, p: &Point2I) -> usize {
+        debug_assert!(self.cropped_pixel_bounds.inside_exclusive(p));
+
+        let width = self.cropped_pixel_bounds.max.x - self.cropped_pixel_bounds.min.x;
+        let offset = (p.x - self.cropped_pixel_bounds.min.x)
+            + (p.y - self.cropped_pixel_bounds.min.y) * width;
+
+        offset as usize
+    }
+}
+
+impl FilmTile {
+    pub fn new(
+        pixel_bounds: Bounds2I,
+        filter_radius: Vec2F,
+        filter_table: Vec<Float>,
+        max_sample_luminance: Float,
+    ) -> Self {
+        Self {
+            pixel_bounds,
+            filter_radius,
+            inv_filter_radius: Vec2F::new(1.0 / filter_radius.x, 1.0 / filter_radius.y),
+            filter_table,
+            pixels: vec![FilmTilePixel::default(); pixel_bounds.area().max(0) as usize],
+            max_sample_luminance,
+        }
+    }
+
+    pub fn add_sample(
+        &mut self,
+        film_point: Point2F,
+        mut radiance: RGBSpectrum,
+        sample_weight: Float,
+    ) {
+        if radiance.y() > self.max_sample_luminance {
+            radiance *= self.max_sample_luminance / radiance.y();
+        }
+
+        // Compute sample's raster bounds.
+        let film_point = film_point - Vec2F::new(0.5, 0.5);
+
+        let p0 = Point2I::from((film_point - self.filter_radius).ceil());
+        let p0 = p0.max(&self.pixel_bounds.min);
+
+        let p1 = Point2I::from((film_point + self.filter_radius).floor()) + Point2I::new(1, 1);
+        let p1 = p1.min(&self.pixel_bounds.max);
+
+        // Precompute x and y filter table offsets.
+        let mut ifx = vec![0; (p1.x - p0.x) as usize];
+        for x in p0.x..p1.x {
+            let fx = ((x as Float - film_point.x)
+                * self.inv_filter_radius.x
+                * FILTER_TABLE_WIDTH as Float)
+                .abs();
+            ifx[(x - p0.x) as usize] = (fx.floor() as i32).min(FILTER_TABLE_WIDTH as i32 - 1);
+        }
+
+        let mut ify = vec![0; (p1.y - p0.y) as usize];
+        for y in p0.y..p1.y {
+            let fy = ((y as Float - film_point.y)
+                * self.inv_filter_radius.y
+                * FILTER_TABLE_WIDTH as Float)
+                .abs();
+            ify[(y - p0.y) as usize] = (fy.floor() as i32).min(FILTER_TABLE_WIDTH as i32 - 1);
+        }
+
+        // Loop over filter support and add sample to pixel arrays.
+        for y in p0.y..p1.y {
+            for x in p0.x..p1.x {
+                // Evaluate filter value at (x,y) pixel.
+                let offset =
+                    ify[(y - p0.y) as usize] * FILTER_TABLE_WIDTH as i32 + ifx[(x - p0.x) as usize];
+                let filter_weight = self.filter_table[offset as usize];
+
+                // Update pixel values with filtered sample contribution.
+                let pixel = self.get_pixel(&Point2I::new(x, y));
+                pixel.contribution_sum += radiance * sample_weight * filter_weight;
+                pixel.filter_weight_sum += filter_weight;
+            }
+        }
+    }
+
+    fn get_pixel(&mut self, p: &Point2I) -> &mut FilmTilePixel {
+        debug_assert!(self.pixel_bounds.inside_exclusive(p));
+
+        let width = self.pixel_bounds.max.x - self.pixel_bounds.min.x;
+        let offset = (p.x - self.pixel_bounds.min.x) + (p.y - self.pixel_bounds.min.y) * width;
+
+        self.pixels
+            .get_mut(offset as usize)
+            .expect("Failed to get pixel")
     }
 }
 
@@ -202,12 +291,13 @@ impl Default for Pixel {
     fn default() -> Self {
         Self {
             xyz: [0.0; 3],
+            splat_xyz: [0.0; 3],
             filter_weight_sum: 0.0,
         }
     }
 }
 
-impl Default for SampledPixel {
+impl Default for FilmTilePixel {
     fn default() -> Self {
         Self {
             contribution_sum: RGBSpectrum::default(),

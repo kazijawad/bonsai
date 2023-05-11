@@ -1,7 +1,5 @@
 use std::ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Sub, SubAssign};
 
-use rayon::prelude::*;
-
 use crate::{
     base::{constants::Float, math::lerp},
     geometries::{
@@ -91,18 +89,25 @@ impl Bounds2I {
         }
     }
 
-    pub fn traverse<F>(&self, f: F)
+    pub fn intersect(&self, b: &Self) -> Self {
+        // Important: Assign min/max without new
+        // because new applies min/max on each
+        // parameter.
+        Self {
+            min: self.min.max(&b.min),
+            max: self.max.min(&b.max),
+        }
+    }
+
+    pub fn traverse<F>(&self, mut f: F)
     where
-        F: Fn(Point2I) + Send + Sync,
+        F: FnMut(Point2I),
     {
         for y in self.min.y..self.max.y {
-            (self.min.x..self.max.x)
-                .collect::<Vec<i32>>()
-                .par_iter()
-                .for_each(|x| {
-                    let point = Point2I::new(*x, y);
-                    f(point);
-                });
+            for x in self.min.x..self.max.x {
+                let point = Point2I::new(x, y);
+                f(point);
+            }
         }
     }
 }
@@ -180,6 +185,24 @@ impl Default for Bounds2F {
         Self {
             min: Point2::new(Float::MAX, Float::MAX),
             max: Point2::new(Float::MIN, Float::MIN),
+        }
+    }
+}
+
+impl From<Bounds2F> for Bounds2I {
+    fn from(b: Bounds2F) -> Self {
+        Self {
+            min: Point2I::from(b.min),
+            max: Point2I::from(b.max),
+        }
+    }
+}
+
+impl From<Bounds2I> for Bounds2F {
+    fn from(b: Bounds2I) -> Self {
+        Self {
+            min: Point2F::from(b.min),
+            max: Point2F::from(b.max),
         }
     }
 }

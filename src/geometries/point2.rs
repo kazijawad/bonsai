@@ -23,6 +23,14 @@ impl Point2I {
     pub fn lerp(t: i32, a: &Self, b: &Self) -> Self {
         (1 - t) * a + t * b
     }
+
+    pub fn min(&self, p: &Self) -> Self {
+        Self::new(self.x.min(p.x), self.y.min(p.y))
+    }
+
+    pub fn max(&self, p: &Self) -> Self {
+        Self::new(self.x.max(p.x), self.y.max(p.y))
+    }
 }
 
 impl Point2F {
@@ -86,6 +94,15 @@ impl From<Point2I> for Point2F {
         Self {
             x: p.x as Float,
             y: p.y as Float,
+        }
+    }
+}
+
+impl From<Point2F> for Point2I {
+    fn from(p: Point2F) -> Self {
+        Self {
+            x: p.x as i32,
+            y: p.y as i32,
         }
     }
 }

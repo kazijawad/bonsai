@@ -9,9 +9,10 @@ use crate::{
     geometries::point2::{Point2F, Point2I},
 };
 
-#[derive(Debug, Clone)]
 pub struct StratifiedSampler {
     pub samples_per_pixel: usize,
+
+    dimensions: usize,
 
     current_pixel: Point2I,
     current_pixel_sample_index: usize,
@@ -52,16 +53,17 @@ impl StratifiedSampler {
 
         let samples_per_pixel = x_pixel_samples * y_pixel_samples;
 
-        let num_sampled_dimensions = opts.dimensions;
-        let samples_1d: Vec<Vec<Float>> =
-            vec![vec![0.0; samples_per_pixel]; num_sampled_dimensions];
+        let dimensions = opts.dimensions;
+        let samples_1d: Vec<Vec<Float>> = vec![vec![0.0; samples_per_pixel]; dimensions];
         let samples_2d: Vec<Vec<Point2F>> =
-            vec![vec![Point2F::default(); samples_per_pixel]; num_sampled_dimensions];
+            vec![vec![Point2F::default(); samples_per_pixel]; dimensions];
 
         let jitter_samples = opts.jitter_samples;
 
         Self {
             samples_per_pixel,
+
+            dimensions,
 
             current_pixel: Point2I::default(),
             current_pixel_sample_index: 0,
@@ -91,8 +93,17 @@ impl StratifiedSampler {
 }
 
 impl Sampler for StratifiedSampler {
-    fn seed(&mut self, x: u64) {
-        self.rng = StdRng::seed_from_u64(x);
+    fn clone(&self, seed: i32) -> Box<dyn Sampler> {
+        let mut new_sampler = Self::new(StratifiedSamplerOptions {
+            x_pixel_samples: self.x_pixel_samples,
+            y_pixel_samples: self.y_pixel_samples,
+            dimensions: self.dimensions,
+            jitter_samples: self.jitter_samples,
+        });
+
+        new_sampler.rng = StdRng::seed_from_u64(seed as u64);
+
+        Box::new(new_sampler)
     }
 
     fn start_pixel(&mut self, p: &Point2I) {
