@@ -7,7 +7,6 @@ use crate::{
     spectra::rgb::RGBSpectrum,
 };
 
-#[derive(Debug)]
 pub struct Shading {
     pub n: Normal,
     pub dpdu: Vec3,
@@ -117,9 +116,9 @@ impl<'a> SurfaceInteraction<'a> {
         allow_multiple_lobes: bool,
     ) {
         self.compute_differentials(ray);
-        if let Some(prim) = self.primitive {
-            prim.compute_scattering_functions(self, mode, allow_multiple_lobes);
-        }
+        self.primitive
+            .expect("Failed to find primitive on SurfaceInteraction")
+            .compute_scattering_functions(self, mode, allow_multiple_lobes);
     }
 
     pub fn compute_differentials(&mut self, ray: &Ray) {
