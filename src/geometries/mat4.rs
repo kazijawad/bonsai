@@ -69,24 +69,24 @@ impl Mat4 {
     }
 
     pub fn inverse(&self) -> Self {
-        let mut m_inverse = self.m.clone();
+        let mut m_inv = self.m.clone();
 
-        let mut index_c: [i32; 4] = [0; 4];
-        let mut index_r: [i32; 4] = [0; 4];
-        let mut pivot: [i32; 4] = [0; 4];
+        let mut ic = [0; 4];
+        let mut ir = [0; 4];
+        let mut pivot = [0; 4];
 
         for i in 0..4 {
             let mut row = 0;
             let mut col = 0;
-            let mut big: Float = 0.0;
+            let mut big = 0.0;
 
             // Choose pivot.
             for j in 0..4 {
                 if pivot[j] != 1 {
                     for k in 0..4 {
                         if pivot[k] == 0 {
-                            if m_inverse[j][k].abs() >= big {
-                                big = m_inverse[j][k].abs() as Float;
+                            if m_inv[j][k].abs() >= big {
+                                big = m_inv[j][k].abs();
                                 row = j;
                                 col = k;
                             }
@@ -100,48 +100,46 @@ impl Mat4 {
             pivot[col] += 1;
             if row != col {
                 for k in 0..4 {
-                    let temp = m_inverse[row][k];
-                    m_inverse[row][k] = m_inverse[col][k];
-                    m_inverse[col][k] = temp;
+                    let temp = m_inv[row][k];
+                    m_inv[row][k] = m_inv[col][k];
+                    m_inv[col][k] = temp;
                 }
             }
 
-            index_r[i] = row as i32;
-            index_c[i] = col as i32;
-            if m_inverse[col][col] == 0.0 {
+            ir[i] = row;
+            ic[i] = col;
+            if m_inv[col][col] == 0.0 {
                 eprintln!("Mat4::inverse produced a singular matrix");
             }
 
-            let pivot_inverse = 1.0 / m_inverse[col][col];
-            m_inverse[col][col] = 1.0;
+            let pivot_inv = 1.0 / m_inv[col][col];
+            m_inv[col][col] = 1.0;
             for j in 0..4 {
-                m_inverse[col][j] *= pivot_inverse;
+                m_inv[col][j] *= pivot_inv;
             }
 
             for j in 0..4 {
                 if j != col {
-                    let save: Float = m_inverse[j][col];
-                    m_inverse[j][col] = 0.0;
+                    let save = m_inv[j][col];
+                    m_inv[j][col] = 0.0;
                     for k in 0..4 {
-                        m_inverse[j][k] -= m_inverse[col][k] * save;
+                        m_inv[j][k] -= m_inv[col][k] * save;
                     }
                 }
             }
         }
 
         for j in (0..=3).rev() {
-            if index_r[j] != index_c[j] {
+            if ir[j] != ic[j] {
                 for k in 0..4 {
-                    let r = index_r[j] as usize;
-                    let c = index_c[j] as usize;
-                    let temp = m_inverse[k][r];
-                    m_inverse[k][r] = m_inverse[k][c];
-                    m_inverse[k][c] = temp;
+                    let temp = m_inv[k][ir[j]];
+                    m_inv[k][ir[j]] = m_inv[k][ic[j]];
+                    m_inv[k][ic[j]] = temp;
                 }
             }
         }
 
-        Self::from(m_inverse)
+        Self::from(m_inv)
     }
 }
 

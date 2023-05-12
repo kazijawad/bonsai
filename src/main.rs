@@ -69,7 +69,7 @@ fn main() {
         lens_radius: 0.0,
         focal_distance: 1e6,
         fov: 45.0,
-        near: 0.1,
+        near: 0.01,
         far: 1000.0,
         film,
     }));
