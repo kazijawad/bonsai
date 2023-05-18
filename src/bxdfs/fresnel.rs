@@ -80,7 +80,6 @@ impl BxDF for FresnelSpecular {
             let wi = Vec3::new(-wo.x, -wo.y, wo.z);
             let pdf = f;
             let f = RGBSpectrum::new(f) * self.r / abs_cos_theta(&wi);
-            let sampled_type = Some(BSDF_SPECULAR | BSDF_REFLECTION);
             BxDFSample {
                 wi,
                 f,

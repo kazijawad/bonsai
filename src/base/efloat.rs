@@ -21,37 +21,35 @@ impl EFloat {
         // from the middle. This will be over-conservative in
         // cases where +- error are exactly representable in
         // floating-point.
-        let low = if err == 0.0 {
-            v
+        if err == 0.0 {
+            Self { v, low: v, high: v }
         } else {
-            next_float_down(v - err)
-        };
-        let high = if err == 0.0 {
-            v
-        } else {
-            next_float_up(v + err)
-        };
-        Self { v, low, high }
+            Self {
+                v,
+                low: next_float_down(v - err),
+                high: next_float_up(v + err),
+            }
+        }
     }
 
     pub fn quadratic(a: Self, b: Self, c: Self, t0: &mut Self, t1: &mut Self) -> bool {
         // Find quadratic discriminant.
-        let discriminant = (b.v as f64) * (b.v as f64) - 4.0 * (a.v as f64) * (c.v as f64);
-        if discriminant < 0.0 {
+        let discrim = (b.v as f64) * (b.v as f64) - 4.0 * (a.v as f64) * (c.v as f64);
+        if discrim < 0.0 {
             return false;
         }
-        let root_discriminant = discriminant.sqrt();
+        let root_discrim = discrim.sqrt();
 
-        let float_root_discriminant = EFloat::new(
-            root_discriminant as f32,
-            (f64::EPSILON * 0.5 * root_discriminant) as f32,
+        let root_discrim_f = EFloat::new(
+            root_discrim as f32,
+            (f64::EPSILON * 0.5 * root_discrim) as f32,
         );
 
         // Compute quadratic t values.
         let q = if Float::from(b) < 0.0 {
-            -0.5 * (b - float_root_discriminant)
+            -0.5 * (b - root_discrim_f)
         } else {
-            -0.5 * (b + float_root_discriminant)
+            -0.5 * (b + root_discrim_f)
         };
 
         *t0 = q / a;
@@ -178,8 +176,8 @@ impl Sub for EFloat {
     fn sub(self, rhs: Self) -> Self::Output {
         let v = self.v - rhs.v;
 
-        let low = next_float_down(self.lower_bound() - rhs.lower_bound());
-        let high = next_float_up(self.upper_bound() - rhs.upper_bound());
+        let low = next_float_down(self.lower_bound() - rhs.upper_bound());
+        let high = next_float_up(self.upper_bound() - rhs.lower_bound());
 
         let f = Self::Output { v, low, high };
         f.check();
