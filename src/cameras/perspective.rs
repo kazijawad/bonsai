@@ -104,36 +104,6 @@ impl Camera for PerspectiveCamera {
             let lens = self.lens_radius * concentric_sample_disk(&sample.lens);
 
             // Compute point on plane of focus.
-            let focus = ray.at(self.focal_distance / ray.direction.z);
-
-            // Update ray for effect of lens.
-            ray.origin = Point3::new(lens.x, lens.y, 0.0);
-            ray.direction = (focus - ray.origin).normalize();
-        }
-
-        ray.time = lerp(sample.time, self.shutter_open, self.shutter_close);
-        *ray = ray.animated_transform_differential(&self.camera_to_world);
-
-        1.0
-    }
-
-    fn generate_ray_differential(&self, sample: &CameraSample, ray: &mut Ray) -> Float {
-        // Compute raster and camera sample positions.
-        let film = Point3::new(sample.film.x, sample.film.y, 0.0);
-        let camera = film.transform(&self.raster_to_camera);
-        *ray = Ray::new(
-            &Point3::default(),
-            &Vec3::from(camera).normalize(),
-            Float::INFINITY,
-            0.0,
-        );
-
-        // Modify ray for depth of field.
-        if self.lens_radius > 0.0 {
-            // Sample point on lens.
-            let lens = self.lens_radius * concentric_sample_disk(&sample.lens);
-
-            // Compute point on plane of focus.
             let focus_point = ray.at(self.focal_distance / ray.direction.z);
 
             // Update ray for effect of lens.

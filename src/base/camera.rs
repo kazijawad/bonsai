@@ -13,7 +13,5 @@ pub struct CameraSample {
 pub trait Camera: Send + Sync {
     fn generate_ray(&self, sample: &CameraSample, ray: &mut Ray) -> Float;
 
-    fn generate_ray_differential(&self, sample: &CameraSample, ray: &mut Ray) -> Float;
-
     fn film(&self) -> &Film;
 }

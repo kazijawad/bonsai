@@ -80,7 +80,7 @@ impl Integrator for WhittedIntegrator {
                             // Generate camera ray for current sample.
                             let mut ray = Ray::default();
                             let ray_weight = self.camera
-                                .generate_ray_differential(&camera_sample, &mut ray);
+                                .generate_ray(&camera_sample, &mut ray);
                             ray.scale_differentials(
                                 1.0 / (sampler.samples_per_pixel() as Float).sqrt(),
                             );

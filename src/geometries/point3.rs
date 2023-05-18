@@ -5,7 +5,7 @@ use std::ops::{
 use crate::{
     base::{
         constants::Float,
-        math::{gamma, next_down, next_up},
+        math::{gamma, next_float_down, next_float_up},
         transform::{AnimatedTransform, Transform},
     },
     geometries::{normal::Normal, vec3::Vec3},
@@ -37,9 +37,9 @@ impl Point3 {
         let mut p = self + &offset;
         for i in 0..3 {
             if offset[i] > 0.0 {
-                p[i] = next_up(p[i]);
+                p[i] = next_float_up(p[i]);
             } else if offset[i] < 0.0 {
-                p[i] = next_down(p[i]);
+                p[i] = next_float_down(p[i]);
             }
         }
         p

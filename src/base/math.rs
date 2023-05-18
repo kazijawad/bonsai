@@ -5,10 +5,10 @@ pub fn gamma(n: Float) -> Float {
 }
 
 pub fn lerp(t: Float, a: Float, b: Float) -> Float {
-    1.0 - t * a + t * b
+    (1.0 - t) * a + t * b
 }
 
-pub fn next_down(mut v: Float) -> Float {
+pub fn next_float_down(mut v: Float) -> Float {
     if v.is_infinite() && v < 0.0 {
         return v;
     }
@@ -24,7 +24,7 @@ pub fn next_down(mut v: Float) -> Float {
     Float::from_bits(ui)
 }
 
-pub fn next_up(mut v: Float) -> Float {
+pub fn next_float_up(mut v: Float) -> Float {
     if v.is_infinite() && v > 0.0 {
         return v;
     }
