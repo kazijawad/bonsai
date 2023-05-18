@@ -126,6 +126,12 @@ impl Default for EFloat {
     }
 }
 
+impl From<Float> for EFloat {
+    fn from(v: Float) -> Self {
+        Self::new(v, 0.0)
+    }
+}
+
 impl From<EFloat> for Float {
     fn from(x: EFloat) -> Self {
         x.v

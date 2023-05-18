@@ -65,7 +65,7 @@ impl TextureMapping2D for UVMapping2D {
     fn map(&self, si: &SurfaceInteraction, dstdx: &mut Vec2F, dstdy: &mut Vec2F) -> Point2F {
         *dstdx = Vec2F::new(self.su * si.dudx, self.sv * si.dvdx);
         *dstdy = Vec2F::new(self.su * si.dudy, self.sv * si.dvdy);
-        Point2F::new(self.su * si.uv.x + self.du, self.sv * si.uv.y + self.dv)
+        Point2F::new(self.su * si.uv[0] + self.du, self.sv * si.uv[1] + self.dv)
     }
 }
 
@@ -134,8 +134,8 @@ impl TextureMapping2D for PlanarMapping2D {
 
 impl TextureMapping3D for IdentityMapping3D {
     fn map(&self, si: &SurfaceInteraction, dpdx: &mut Vec3, dpdy: &mut Vec3) -> Point3 {
-        (*dpdx, _) = si.dpdx.transform(&self.world_to_texture, false);
-        (*dpdy, _) = si.dpdy.transform(&self.world_to_texture, false);
+        *dpdx = si.dpdx.transform(&self.world_to_texture);
+        *dpdy = si.dpdy.transform(&self.world_to_texture);
         si.p.transform(&self.world_to_texture)
     }
 }

@@ -10,6 +10,9 @@ use crate::{
     spectra::rgb::RGBSpectrum,
 };
 
+// A heuristic to preallocate the bxdfs parameters.
+const MAX_BXDFS: usize = 8;
+
 pub struct BSDF {
     pub eta: Float,
     ns: Normal,
@@ -37,7 +40,7 @@ impl BSDF {
             ng: si.n,
             ss,
             ts: Vec3::from(ns).cross(&ss),
-            bxdfs: vec![],
+            bxdfs: Vec::with_capacity(MAX_BXDFS),
         }
     }
 
@@ -122,8 +125,8 @@ impl BSDF {
     }
 
     pub fn sample(&self, wo_world: &Vec3, u: &Point2F, bxdf_type: BxDFType) -> BSDFSample {
-        let matching_components = self.num_components(bxdf_type);
-        if matching_components == 0 {
+        let matches = self.num_components(bxdf_type);
+        if matches == 0 {
             return BSDFSample {
                 wi: Vec3::default(),
                 f: RGBSpectrum::default(),
@@ -132,8 +135,7 @@ impl BSDF {
             };
         }
 
-        let component = ((u.x * matching_components as Float).floor() as u32)
-            .min(matching_components as u32 - 1);
+        let component = ((u[0] * matches as Float).floor() as u32).min(matches as u32 - 1);
 
         let mut count = component;
         let mut bxdf = None;
@@ -148,7 +150,7 @@ impl BSDF {
 
         // Remap BxDF sample to [0, 1].
         let u_remapped = Point2F::new(
-            (u[0] * matching_components as Float - component as Float).min(1.0 - Float::EPSILON),
+            (u[0] * matches as Float - component as Float).min(1.0 - Float::EPSILON),
             u[1],
         );
 
@@ -181,15 +183,15 @@ impl BSDF {
         let wi_world = self.local_to_world(&sample.wi);
 
         // Compute overall PDF with all matching BxDFs.
-        if bxdf.bxdf_type() & BSDF_SPECULAR == 0 && matching_components > 1 {
+        if bxdf.bxdf_type() & BSDF_SPECULAR == 0 && matches > 1 {
             for b in self.bxdfs.iter() {
                 if !ptr::eq(b, bxdf) && b.matches_flags(bxdf_type) {
                     sample.pdf += b.pdf(&wo, &sample.wi);
                 }
             }
         }
-        if matching_components > 1 {
-            sample.pdf /= matching_components as Float;
+        if matches > 1 {
+            sample.pdf /= matches as Float;
         }
 
         // Compute value of BSDF for sampled direction.

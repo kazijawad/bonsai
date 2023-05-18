@@ -95,8 +95,7 @@ impl Shape for Sphere {
 
         let a = dx * dx + dy * dy + dz * dz;
         let b = 2.0 * (dx * ox + dy * oy + dz * oz);
-        let c = ox * ox + oy * oy + oz * oz
-            - EFloat::new(self.radius, 0.0) * EFloat::new(self.radius, 0.0);
+        let c = ox * ox + oy * oy + oz * oz - EFloat::from(self.radius) * EFloat::from(self.radius);
 
         // Solve quadratic equation for t values.
         let mut t0 = EFloat::default();
@@ -190,26 +189,24 @@ impl Shape for Sphere {
             * Vec3::new(-sin_phi, cos_phi, 0.0);
         let d2pdvv = -(self.theta_max - self.theta_min)
             * (self.theta_max - self.theta_min)
-            * Vec3::new(p_hit.x, p_hit.y, p_hit.z);
+            * Vec3::from(p_hit);
 
         // Compute coefficients for fundamental forms.
-        let first_e = dpdu.dot(&dpdu);
-        let first_f = dpdu.dot(&dpdv);
-        let first_g = dpdv.dot(&dpdv);
-        let first_n = dpdu.cross(&dpdv).normalize();
-        let second_e = first_n.dot(&d2pduu);
-        let second_f = first_n.dot(&d2pduv);
-        let second_g = first_n.dot(&d2pdvv);
+        let e1 = dpdu.dot(&dpdu);
+        let f1 = dpdu.dot(&dpdv);
+        let g1 = dpdv.dot(&dpdv);
+        let n = dpdu.cross(&dpdv).normalize();
+        let e2 = n.dot(&d2pduu);
+        let f2 = n.dot(&d2pduv);
+        let g2 = n.dot(&d2pdvv);
 
         // Compute derivatives from fundamental form coefficients.
-        let inverted_second_egf = 1.0 / (first_e * first_g - first_f * first_f);
+        let inv_egf = 1.0 / (e1 * g1 - f1 * f1);
         let dndu = Normal::from(
-            (second_f * first_f - second_e * first_g) * inverted_second_egf * dpdu
-                + (second_e * first_f - second_f * first_e) * inverted_second_egf * dpdv,
+            (f2 * f1 - e2 * g1) * inv_egf * dpdu + (e2 * f1 - f2 * e1) * inv_egf * dpdv,
         );
         let dndv = Normal::from(
-            (second_g * first_f - second_f * first_g) * inverted_second_egf * dpdu
-                + (second_f * first_f - second_g * first_e) * inverted_second_egf * dpdv,
+            (g2 * f1 - f2 * g1) * inv_egf * dpdu + (f2 * f1 - g2 * e1) * inv_egf * dpdv,
         );
 
         // Compute error bounds for sphere intersection.

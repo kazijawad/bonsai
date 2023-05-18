@@ -255,18 +255,9 @@ impl Transform {
     }
 
     pub fn has_scale(&self) -> bool {
-        let la2 = Vec3::new(1.0, 0.0, 0.0)
-            .transform(self, false)
-            .0
-            .length_squared();
-        let lb2 = Vec3::new(0.0, 1.0, 0.0)
-            .transform(self, false)
-            .0
-            .length_squared();
-        let lc2 = Vec3::new(0.0, 0.0, 1.0)
-            .transform(self, false)
-            .0
-            .length_squared();
+        let la2 = Vec3::new(1.0, 0.0, 0.0).transform(self).length_squared();
+        let lb2 = Vec3::new(0.0, 1.0, 0.0).transform(self).length_squared();
+        let lc2 = Vec3::new(0.0, 0.0, 1.0).transform(self).length_squared();
         let not_one = |x: Float| -> bool { x < 0.999 || x > 1.001 };
         not_one(la2) || not_one(lb2) || not_one(lc2)
     }

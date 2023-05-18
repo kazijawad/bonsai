@@ -60,7 +60,7 @@ impl SpotLight {
     }
 
     fn falloff(&self, w: &Vec3) -> Float {
-        let w_light = w.transform(&self.world_to_light, false).0.normalize();
+        let w_light = w.transform(&self.world_to_light).normalize();
 
         let cos_theta = w_light.z;
         if cos_theta < self.cos_total_width {
@@ -110,7 +110,7 @@ impl Light for SpotLight {
         let w = uniform_sample_cone(u1, self.cos_total_width);
         let ray = Ray::new(
             &self.position,
-            &w.transform(&self.light_to_world, false).0,
+            &w.transform(&self.light_to_world),
             Float::INFINITY,
             time,
         );
@@ -126,9 +126,7 @@ impl Light for SpotLight {
     fn ray_pdf(&self, ray: &Ray, _: &Normal) -> (Float, Float) {
         (
             0.0,
-            if cos_theta(&ray.direction.transform(&self.world_to_light, false).0)
-                >= self.cos_total_width
-            {
+            if cos_theta(&ray.direction.transform(&self.world_to_light)) >= self.cos_total_width {
                 uniform_cone_pdf(self.cos_total_width)
             } else {
                 0.0

@@ -36,11 +36,10 @@ impl MIPMap {
     }
 
     pub fn filter(&self, st: &mut Point2F, dst0: &mut Vec2F, dst1: &mut Vec2F) -> RGBSpectrum {
-        let width = dst0[0]
-            .abs()
-            .max(dst0[1].abs())
-            .max(dst1[0].abs())
-            .max(dst1[1].abs());
+        let width = Float::max(
+            Float::max(dst0[0].abs(), dst0[1].abs()),
+            Float::max(dst1[0].abs(), dst1[1].abs()),
+        );
         self.trilinear_filter(st, width)
     }
 

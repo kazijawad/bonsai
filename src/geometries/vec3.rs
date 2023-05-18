@@ -32,39 +32,47 @@ impl Vec3 {
         (v2, v3)
     }
 
-    pub fn transform(&self, t: &Transform, include_error: bool) -> (Self, Option<Self>) {
+    pub fn transform(&self, t: &Transform) -> Self {
         let x = self.x;
         let y = self.y;
         let z = self.z;
-        let transformed = Vec3::new(
+        Self::new(
             t.m.m[0][0] * x + t.m.m[0][1] * y + t.m.m[0][2] * z,
             t.m.m[1][0] * x + t.m.m[1][1] * y + t.m.m[1][2] * z,
             t.m.m[2][0] * x + t.m.m[2][1] * y + t.m.m[2][2] * z,
+        )
+    }
+
+    pub fn transform_with_error(&self, t: &Transform, e: &mut Self) -> Self {
+        let x = self.x;
+        let y = self.y;
+        let z = self.z;
+
+        *e = Vec3::new(
+            gamma(3.0)
+                * ((t.m.m[0][0] * x).abs() + (t.m.m[0][1] * y).abs() + (t.m.m[0][2] * z).abs()),
+            gamma(3.0)
+                * ((t.m.m[1][0] * x).abs() + (t.m.m[1][1] * y).abs() + (t.m.m[1][2] * z).abs()),
+            gamma(3.0)
+                * ((t.m.m[2][0] * x).abs() + (t.m.m[2][1] * y).abs() + (t.m.m[2][2] * z).abs()),
         );
-        if include_error {
-            let error = Vec3::new(
-                gamma(3.0)
-                    * ((t.m.m[0][0] * x).abs() + (t.m.m[0][1] * y).abs() + (t.m.m[0][2] * z).abs()),
-                gamma(3.0)
-                    * ((t.m.m[1][0] * x).abs() + (t.m.m[1][1] * y).abs() + (t.m.m[1][2] * z).abs()),
-                gamma(3.0)
-                    * ((t.m.m[2][0] * x).abs() + (t.m.m[2][1] * y).abs() + (t.m.m[2][2] * z).abs()),
-            );
-            (transformed, Some(error))
-        } else {
-            (transformed, None)
-        }
+
+        Self::new(
+            t.m.m[0][0] * x + t.m.m[0][1] * y + t.m.m[0][2] * z,
+            t.m.m[1][0] * x + t.m.m[1][1] * y + t.m.m[1][2] * z,
+            t.m.m[2][0] * x + t.m.m[2][1] * y + t.m.m[2][2] * z,
+        )
     }
 
     pub fn animated_transform(self, at: &AnimatedTransform, time: Float) -> Self {
         if !at.is_animated || time <= at.start_time {
-            self.transform(&at.start_transform, false).0
+            self.transform(&at.start_transform)
         } else if time >= at.end_time {
-            self.transform(&at.end_transform, false).0
+            self.transform(&at.end_transform)
         } else {
             let mut t = Transform::default();
             at.interpolate(time, &mut t);
-            self.transform(&t, false).0
+            self.transform(&t)
         }
     }
 

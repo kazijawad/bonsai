@@ -83,11 +83,7 @@ impl Light for InfiniteAreaLight {
     }
 
     fn radiance(&self, ray: &Ray) -> RGBSpectrum {
-        let w = ray
-            .direction
-            .transform(&self.world_to_light, false)
-            .0
-            .normalize();
+        let w = ray.direction.transform(&self.world_to_light).normalize();
         let st = Point2F::new(
             spherical_phi(&w) * (1.0 / (2.0 * PI)),
             spherical_theta(&w) * (1.0 / PI),
@@ -120,8 +116,7 @@ impl Light for InfiniteAreaLight {
         let cos_phi = phi.cos();
 
         let wi = Vec3::new(sin_theta * cos_phi, sin_theta * sin_phi, cos_theta)
-            .transform(&self.light_to_world, false)
-            .0;
+            .transform(&self.light_to_world);
 
         // Compute PDF for sampled infinite light direction.
         let mut pdf = map_pdf / (2.0 * PI * PI * sin_theta);

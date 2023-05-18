@@ -58,7 +58,7 @@ impl TriangleMesh {
             Some(
                 tangent
                     .iter()
-                    .map(|v| v.transform(&opts.object_to_world, false).0)
+                    .map(|v| v.transform(&opts.object_to_world))
                     .collect(),
             )
         } else {

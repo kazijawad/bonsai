@@ -34,14 +34,7 @@ fn main() {
         intensity: RGBSpectrum::new(1.0),
     });
 
-    let infinite_area_light = InfiniteAreaLight::new(InfiniteAreaLightOptions {
-        scene: &aggregate,
-        transform: Transform::default(),
-        intensity: RGBSpectrum::new(1.0),
-        filename: "assets/environment.exr",
-    });
-
-    let scene = Scene::new(&aggregate, vec![&point_light, &infinite_area_light]);
+    let scene = Scene::new(&aggregate, vec![&point_light]);
 
     let film = Film::new(FilmOptions {
         resolution: Point2F::new(1024.0, 1024.0),

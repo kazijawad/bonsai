@@ -198,11 +198,11 @@ impl<'a> SurfaceInteraction<'a> {
             .transform_with_point_error(t, &self.p_error, &mut p_error);
         self.p_error = p_error;
 
-        self.wo = self.wo.transform(t, false).0;
+        self.wo = self.wo.transform(t);
         self.n = self.n.transform(t).normalize();
 
-        self.dpdu = self.dpdu.transform(t, false).0;
-        self.dpdv = self.dpdv.transform(t, false).0;
+        self.dpdu = self.dpdu.transform(t);
+        self.dpdv = self.dpdv.transform(t);
         self.dndu = self.dndu.transform(t);
         self.dndv = self.dndv.transform(t);
 
@@ -213,14 +213,14 @@ impl<'a> SurfaceInteraction<'a> {
                 .transform(t)
                 .normalize()
                 .face_forward(&self.n),
-            dpdu: self.shading.dpdu.transform(t, false).0,
-            dpdv: self.shading.dpdv.transform(t, false).0,
+            dpdu: self.shading.dpdu.transform(t),
+            dpdv: self.shading.dpdv.transform(t),
             dndu: self.shading.dndu.transform(t),
             dndv: self.shading.dndv.transform(t),
         };
 
-        self.dpdx = self.dpdx.transform(t, false).0;
-        self.dpdy = self.dpdy.transform(t, false).0;
+        self.dpdx = self.dpdx.transform(t);
+        self.dpdy = self.dpdy.transform(t);
     }
 }
 
