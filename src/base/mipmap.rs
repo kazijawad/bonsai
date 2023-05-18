@@ -46,20 +46,19 @@ impl MIPMap {
 
     pub fn trilinear_filter(&self, st: &Point2F, width: Float) -> RGBSpectrum {
         // Compute MIPMap level for trilinear filtering.
-        let level = self.levels() as Float - 1.0 + width.max(1e-8).log2();
+        let level = (self.levels() - 1) as Float + width.max(1e-8).log2();
 
         // Perform trilinear interpolation at appropriate MIPMap level.
         if level < 0.0 {
             self.triangle(0, st)
-        } else if level >= self.levels() as Float - 1.0 {
+        } else if level >= (self.levels() - 1) as Float {
             self.texel(self.levels() - 1, &Point2I::new(0, 0))
         } else {
-            let level_i = level.floor() as usize;
-            let delta = level - level.floor();
+            let ilevel = level.floor() as usize;
             RGBSpectrum::lerp(
-                delta,
-                &self.triangle(level_i, st),
-                &self.triangle(level_i + 1, st),
+                level - level.floor(),
+                &self.triangle(ilevel, st),
+                &self.triangle(ilevel + 1, st),
             )
         }
     }
@@ -94,8 +93,8 @@ impl MIPMap {
         let level = level.clamp(0, self.levels() - 1);
 
         let image = &self.pyramid[level];
-        let s = st[0] as Float * image.resolution.x as Float - 0.5;
-        let t = st[0] as Float * image.resolution.y as Float - 0.5;
+        let s = st[0] * image.resolution.x as Float - 0.5;
+        let t = st[1] * image.resolution.y as Float - 0.5;
 
         let ds = s - s.floor();
         let dt = t - t.floor();
