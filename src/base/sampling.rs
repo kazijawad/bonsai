@@ -127,10 +127,10 @@ pub fn stratified_sample_1d(
     rng: &mut StdRng,
     jitter: bool,
 ) {
-    let inverse_num_samples = 1.0 / num_samples as Float;
+    let inv_num_samples = 1.0 / num_samples as Float;
     for i in 0..num_samples {
         let delta = if jitter { rng.gen_range(0.0..1.0) } else { 0.5 };
-        samples[i] = ((i as Float + delta) * inverse_num_samples).min(1.0 - Float::EPSILON);
+        samples[i] = ((i as Float + delta) * inv_num_samples).min(1.0 - Float::EPSILON);
     }
 }
 

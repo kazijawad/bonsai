@@ -70,7 +70,7 @@ fn main() {
     let sampler = Box::new(StratifiedSampler::new(StratifiedSamplerOptions {
         x_pixel_samples: 4,
         y_pixel_samples: 4,
-        dimensions: 4,
+        sampled_dimensions: 4,
         jitter_samples: true,
     }));
 

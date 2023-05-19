@@ -54,7 +54,7 @@ impl Integrator for WhittedIntegrator {
 
                     // Get sampler instance for tile.
                     let seed = tile.y * num_tiles.x + tile.x;
-                    let mut sampler = self.sampler.clone(seed);
+                    let mut sampler = self.sampler.seed(seed);
 
                     // Compute sample bounds for tile.
                     let x0 = sample_bounds.min.x + tile.x * TILE_SIZE;
