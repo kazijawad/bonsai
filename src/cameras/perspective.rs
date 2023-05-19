@@ -7,7 +7,12 @@ use crate::{
         sampling::concentric_sample_disk,
         transform::{AnimatedTransform, Transform},
     },
-    geometries::{bounds2::Bounds2F, point3::Point3, ray::Ray, vec3::Vec3},
+    geometries::{
+        bounds2::Bounds2F,
+        point3::Point3,
+        ray::{Ray, RayDifferentials},
+        vec3::Vec3,
+    },
 };
 
 pub struct PerspectiveCamera {
@@ -118,23 +123,31 @@ impl Camera for PerspectiveCamera {
 
             let dx = Vec3::from(camera + self.dx_camera).normalize();
             let focus = Point3::default() + ((self.focal_distance / dx.z) * dx);
-            ray.rx_origin = Point3::new(lens.x, lens.y, 0.0);
-            ray.rx_direction = (focus - ray.rx_origin).normalize();
+            let rx_origin = Point3::new(lens.x, lens.y, 0.0);
+            let rx_direction = (focus - rx_origin).normalize();
 
             let dy = Vec3::from(camera + self.dy_camera).normalize();
             let focus = Point3::default() + ((self.focal_distance / dy.z) * dy);
-            ray.ry_origin = Point3::new(lens.x, lens.y, 0.0);
-            ray.ry_direction = (focus - ray.ry_origin).normalize();
+            let ry_origin = Point3::new(lens.x, lens.y, 0.0);
+            let ry_direction = (focus - ry_origin).normalize();
+
+            ray.differentials = Some(RayDifferentials {
+                rx_origin,
+                ry_origin,
+                rx_direction,
+                ry_direction,
+            })
         } else {
-            ray.rx_origin = ray.origin;
-            ray.ry_origin = ray.origin;
-            ray.rx_direction = (Vec3::from(camera) + self.dx_camera).normalize();
-            ray.ry_direction = (Vec3::from(camera) + self.dy_camera).normalize();
+            ray.differentials = Some(RayDifferentials {
+                rx_origin: ray.origin,
+                ry_origin: ray.origin,
+                rx_direction: (Vec3::from(camera) + self.dx_camera).normalize(),
+                ry_direction: (Vec3::from(camera) + self.dy_camera).normalize(),
+            });
         }
 
         ray.time = lerp(sample.time, self.shutter_open, self.shutter_close);
-        *ray = ray.animated_transform_differential(&self.camera_to_world);
-        ray.has_differentials = true;
+        *ray = ray.animated_transform(&self.camera_to_world);
 
         1.0
     }

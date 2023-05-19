@@ -6,7 +6,10 @@ use crate::{
         scene::Scene,
         spectrum::Spectrum,
     },
-    geometries::{ray::Ray, vec3::Vec3},
+    geometries::{
+        ray::{Ray, RayDifferentials},
+        vec3::Vec3,
+    },
     interactions::surface::SurfaceInteraction,
     spectra::rgb::RGBSpectrum,
 };
@@ -46,24 +49,30 @@ pub trait SamplerIntegrator: Send + Sync + Integrator {
         if sample.pdf > 0.0 && !sample.f.is_black() && sample.wi.abs_dot_normal(ns) != 0.0 {
             // Compute ray differential for specular reflection.
             let mut ray_diff = si.spawn_ray(&sample.wi);
-            if ray.has_differentials {
-                ray_diff.has_differentials = true;
-                ray_diff.rx_origin = si.p + si.dpdx;
-                ray_diff.ry_origin = si.p + si.dpdy;
+            if let Some(diff) = ray.differentials.as_ref() {
+                let rx_origin = si.p + si.dpdx;
+                let ry_origin = si.p + si.dpdy;
 
                 // Compute differential reflected directions.
                 let dndx = si.shading.dndu * si.dudx + si.shading.dndv * si.dvdx;
                 let dndy = si.shading.dndu * si.dudy + si.shading.dndv * si.dvdy;
 
-                let dwodx = -ray.rx_direction - wo;
-                let dwody = -ray.ry_direction - wo;
+                let dwodx = -diff.rx_direction - wo;
+                let dwody = -diff.ry_direction - wo;
 
                 let ddndx = dwodx.dot_normal(ns) + wo.dot_normal(&dndx);
                 let ddndy = dwody.dot_normal(ns) + wo.dot_normal(&dndy);
-                ray_diff.rx_direction =
+                let rx_direction =
                     sample.wi - dwodx + 2.0 * Vec3::from(wo.dot_normal(ns) * dndx + ddndx * ns);
-                ray_diff.ry_direction =
+                let ry_direction =
                     sample.wi - dwody + 2.0 * Vec3::from(wo.dot_normal(ns) * dndy + ddndy * ns);
+
+                ray_diff.differentials = Some(RayDifferentials {
+                    rx_origin,
+                    ry_origin,
+                    rx_direction,
+                    ry_direction,
+                })
             }
 
             sample.f
@@ -98,11 +107,9 @@ pub trait SamplerIntegrator: Send + Sync + Integrator {
         if sample.pdf > 0.0 && !sample.f.is_black() && sample.wi.abs_dot_normal(&ns) != 0.0 {
             // Compute ray differential for specular reflection.
             let mut ray_diff = si.spawn_ray(&sample.wi);
-            if ray.has_differentials {
-                ray_diff.has_differentials = true;
-
-                ray_diff.rx_origin = p + si.dpdx;
-                ray_diff.ry_origin = p + si.dpdy;
+            if let Some(diff) = ray.differentials.as_ref() {
+                let rx_origin = p + si.dpdx;
+                let ry_origin = p + si.dpdy;
 
                 let mut dndx = si.shading.dndu * si.dudx + si.shading.dndv * si.dvdx;
                 let mut dndy = si.shading.dndu * si.dudy + si.shading.dndv * si.dvdy;
@@ -115,8 +122,8 @@ pub trait SamplerIntegrator: Send + Sync + Integrator {
                     dndy = -dndy;
                 }
 
-                let dwodx = -ray.rx_direction - wo;
-                let dwody = -ray.ry_direction - wo;
+                let dwodx = -diff.rx_direction - wo;
+                let dwody = -diff.ry_direction - wo;
 
                 let ddndx = dwodx.dot_normal(&ns) + wo.dot_normal(&dndx);
                 let ddndy = dwody.dot_normal(&ns) + wo.dot_normal(&dndy);
@@ -129,10 +136,15 @@ pub trait SamplerIntegrator: Send + Sync + Integrator {
                     - (eta * eta * wo.dot_normal(&ns)) / sample.wi.abs_dot_normal(&ns))
                     * ddndy;
 
-                ray_diff.rx_direction =
-                    sample.wi - eta * dwodx + Vec3::from(mu * dndx + dmudx * ns);
-                ray_diff.ry_direction =
-                    sample.wi - eta * dwody + Vec3::from(mu * dndy + dmudy * ns);
+                let rx_direction = sample.wi - eta * dwodx + Vec3::from(mu * dndx + dmudx * ns);
+                let ry_direction = sample.wi - eta * dwody + Vec3::from(mu * dndy + dmudy * ns);
+
+                ray_diff.differentials = Some(RayDifferentials {
+                    rx_origin,
+                    ry_origin,
+                    rx_direction,
+                    ry_direction,
+                })
             }
 
             result = sample.f

@@ -12,7 +12,11 @@ pub struct Ray {
     pub direction: Vec3,
     pub t_max: Float,
     pub time: Float,
-    pub has_differentials: bool,
+    pub differentials: Option<RayDifferentials>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct RayDifferentials {
     pub rx_origin: Point3,
     pub ry_origin: Point3,
     pub rx_direction: Vec3,
@@ -26,11 +30,7 @@ impl Ray {
             direction: direction.clone(),
             t_max,
             time,
-            has_differentials: false,
-            rx_origin: Point3::default(),
-            ry_origin: Point3::default(),
-            rx_direction: Vec3::default(),
-            ry_direction: Vec3::default(),
+            differentials: None,
         }
     }
 
@@ -39,10 +39,12 @@ impl Ray {
     }
 
     pub fn scale_differentials(&mut self, scale: Float) {
-        self.rx_origin = self.origin + (self.rx_origin - self.origin) * scale;
-        self.ry_origin = self.origin + (self.ry_origin - self.origin) * scale;
-        self.rx_direction = self.direction + (self.rx_direction - self.direction) * scale;
-        self.ry_direction = self.direction + (self.ry_direction - self.direction) * scale;
+        if let Some(diff) = self.differentials.as_mut() {
+            diff.rx_origin = self.origin + (diff.rx_origin - self.origin) * scale;
+            diff.ry_origin = self.origin + (diff.ry_origin - self.origin) * scale;
+            diff.rx_direction = self.direction + (diff.rx_direction - self.direction) * scale;
+            diff.ry_direction = self.direction + (diff.ry_direction - self.direction) * scale;
+        }
     }
 
     pub fn transform(&self, t: &Transform) -> Self {
@@ -60,7 +62,17 @@ impl Ray {
             t_max -= dt;
         }
 
-        Self::new(&origin, &direction, t_max, self.time)
+        let mut ray = Self::new(&origin, &direction, t_max, self.time);
+        if let Some(diff) = self.differentials.as_ref() {
+            ray.differentials = Some(RayDifferentials {
+                rx_origin: diff.rx_origin.transform(t),
+                ry_origin: diff.ry_origin.transform(t),
+                rx_direction: diff.rx_direction.transform(t),
+                ry_direction: diff.ry_direction.transform(t),
+            });
+        }
+
+        ray
     }
 
     pub fn transform_with_error(
@@ -80,16 +92,16 @@ impl Ray {
             origin += direction * dt;
         }
 
-        Self::new(&origin, &direction, t_max, self.time)
-    }
+        let mut ray = Self::new(&origin, &direction, t_max, self.time);
+        if let Some(diff) = self.differentials.as_ref() {
+            ray.differentials = Some(RayDifferentials {
+                rx_origin: diff.rx_origin.transform(t),
+                ry_origin: diff.ry_origin.transform(t),
+                rx_direction: diff.rx_direction.transform(t),
+                ry_direction: diff.ry_direction.transform(t),
+            });
+        }
 
-    pub fn transform_differential(&self, t: &Transform) -> Self {
-        let mut ray = self.transform(t);
-        ray.has_differentials = self.has_differentials;
-        ray.rx_origin = self.rx_origin.transform(t);
-        ray.ry_origin = self.ry_origin.transform(t);
-        ray.rx_direction = self.rx_direction.transform(t);
-        ray.ry_direction = self.ry_direction.transform(t);
         ray
     }
 
@@ -105,18 +117,6 @@ impl Ray {
         }
     }
 
-    pub fn animated_transform_differential(&self, at: &AnimatedTransform) -> Self {
-        if !at.is_animated || self.time <= at.start_time {
-            self.transform_differential(&at.start_transform)
-        } else if self.time >= at.end_time {
-            self.transform_differential(&at.end_transform)
-        } else {
-            let mut t = Transform::default();
-            at.interpolate(self.time, &mut t);
-            self.transform_differential(&t)
-        }
-    }
-
     pub fn is_nan(&self) -> bool {
         self.origin.is_nan() || self.direction.is_nan() || self.t_max.is_nan()
     }
@@ -129,11 +129,7 @@ impl Default for Ray {
             direction: Vec3::default(),
             t_max: Float::INFINITY,
             time: 0.0,
-            has_differentials: false,
-            rx_origin: Point3::default(),
-            ry_origin: Point3::default(),
-            rx_direction: Vec3::default(),
-            ry_direction: Vec3::default(),
+            differentials: None,
         }
     }
 }

@@ -131,24 +131,26 @@ impl<'a> SurfaceInteraction<'a> {
             self.dpdy = Vec3::default();
         };
 
-        if !ray.has_differentials {
+        if ray.differentials.is_none() {
             return fail();
         }
+
+        let diff = ray.differentials.as_ref().unwrap();
 
         // Compute auxiliary intersection points with plane.
         let d = self.n.dot_point(&self.p);
 
-        let tx = -(self.n.dot_point(&ray.rx_origin) - d) / self.n.dot_vec(&ray.rx_direction);
+        let tx = -(self.n.dot_point(&diff.rx_origin) - d) / self.n.dot_vec(&diff.rx_direction);
         if tx.is_infinite() || tx.is_nan() {
             return fail();
         }
-        let px = ray.rx_origin + tx * ray.rx_direction;
+        let px = diff.rx_origin + tx * diff.rx_direction;
 
-        let ty = -(self.n.dot_point(&ray.ry_origin) - d) / self.n.dot_vec(&ray.ry_direction);
+        let ty = -(self.n.dot_point(&diff.ry_origin) - d) / self.n.dot_vec(&diff.ry_direction);
         if ty.is_infinite() || ty.is_nan() {
             return fail();
         }
-        let py = ray.ry_origin + ty * ray.ry_direction;
+        let py = diff.ry_origin + ty * diff.ry_direction;
 
         self.dpdx = px - self.p;
         self.dpdy = py - self.p;
