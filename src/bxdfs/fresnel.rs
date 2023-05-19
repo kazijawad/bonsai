@@ -4,7 +4,7 @@ use crate::{
             abs_cos_theta, cos_theta, fresnel_dielectric, reflect, refract, same_hemisphere, BxDF,
             BxDFSample, BxDFType, BSDF_GLOSSY, BSDF_REFLECTION, BSDF_SPECULAR, BSDF_TRANSMISSION,
         },
-        constants::{Float, PI},
+        constants::{Float, ONE_MINUS_EPSILON, PI},
         material::TransportMode,
         microfacet::MicrofacetDistribution,
         sampling::cosine_sample_hemisphere,
@@ -159,7 +159,7 @@ impl BxDF for FresnelBlend {
 
         let mut wi;
         if u[0] < 0.5 {
-            u[0] = (2.0 * u[0]).min(1.0 - Float::EPSILON);
+            u[0] = (2.0 * u[0]).min(ONE_MINUS_EPSILON);
 
             // Cosine-sample the hemisphere, flipping the direction if necessary.
             wi = cosine_sample_hemisphere(&u);
@@ -167,7 +167,7 @@ impl BxDF for FresnelBlend {
                 wi.z *= -1.0;
             }
         } else {
-            u[0] = (2.0 * (u[0] - 0.5)).min(1.0 - Float::EPSILON);
+            u[0] = (2.0 * (u[0] - 0.5)).min(ONE_MINUS_EPSILON);
 
             // Sample microfacet orientation wh and reflected direction wi.
             let wh = self.distribution.sample(wo, &u);

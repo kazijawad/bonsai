@@ -1,6 +1,6 @@
 use crate::{
     base::{
-        constants::{Float, PRIMES},
+        constants::{Float, ONE_MINUS_EPSILON, PRIMES},
         interaction::Interaction,
     },
     geometries::{
@@ -108,8 +108,5 @@ fn radical_inverse(base_index: usize, mut a: u64) -> Float {
         inverse_base_m *= inverse_base;
         a = next;
     }
-    Float::min(
-        reversed_digits as Float * inverse_base_m,
-        1.0 - Float::EPSILON,
-    )
+    Float::min(reversed_digits as Float * inverse_base_m, ONE_MINUS_EPSILON)
 }

@@ -8,6 +8,7 @@ cfg_if::cfg_if! {
     }
 }
 
+pub const ONE_MINUS_EPSILON: Float = 1.0 - Float::EPSILON;
 pub const MACHINE_EPSILON: Float = Float::EPSILON * 0.5;
 
 pub const PRIMES: [u64; 1000] = [

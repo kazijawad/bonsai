@@ -1,6 +1,6 @@
 use crate::{
     base::{
-        constants::{Float, PI},
+        constants::{Float, ONE_MINUS_EPSILON, PI},
         interaction::Interaction,
         light::{AreaLight, Light, LightPointSample, VisibilityTester},
         sampling::{cosine_hemisphere_pdf, cosine_sample_hemisphere},
@@ -91,10 +91,10 @@ impl<'a> Light for DiffuseAreaLight<'a> {
             // Choose a side to sample and then remap the sample to [0,1] before
             // applying cosine-weighted hemisphere sampling for the chosen side.
             if sample.x < 0.5 {
-                sample.x = (sample.x * 2.0).min(1.0 - Float::EPSILON);
+                sample.x = (sample.x * 2.0).min(ONE_MINUS_EPSILON);
                 direction = cosine_sample_hemisphere(&sample);
             } else {
-                sample.x = ((sample.x - 0.5) * 2.0).min(1.0 - Float::EPSILON);
+                sample.x = ((sample.x - 0.5) * 2.0).min(ONE_MINUS_EPSILON);
                 direction = cosine_sample_hemisphere(&sample);
                 direction.z *= -1.0;
             }

@@ -3,7 +3,7 @@ use std::ptr;
 use crate::{
     base::{
         bxdf::{BxDF, BxDFType, BSDF_REFLECTION, BSDF_SPECULAR, BSDF_TRANSMISSION},
-        constants::Float,
+        constants::{Float, ONE_MINUS_EPSILON},
     },
     geometries::{normal::Normal, point2::Point2F, vec3::Vec3},
     interactions::surface::SurfaceInteraction,
@@ -150,7 +150,7 @@ impl BSDF {
 
         // Remap BxDF sample to [0, 1].
         let u_remapped = Point2F::new(
-            (u[0] * matches as Float - component as Float).min(1.0 - Float::EPSILON),
+            (u[0] * matches as Float - component as Float).min(ONE_MINUS_EPSILON),
             u[1],
         );
 
