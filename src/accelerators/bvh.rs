@@ -4,6 +4,7 @@ use itertools::partition;
 
 use crate::{
     base::{
+        constants::Float,
         light::AreaLight,
         material::{Material, TransportMode},
         primitive::Primitive,
@@ -179,8 +180,8 @@ impl<'a> BVH<'a> {
                         }
 
                         cost[i as usize] = 1.0
-                            + (count0 as f32 * b0.surface_area()
-                                + count1 as f32 * b1.surface_area())
+                            + (count0 as Float * b0.surface_area()
+                                + count1 as Float * b1.surface_area())
                                 / bounds.surface_area();
                     }
 
@@ -196,7 +197,7 @@ impl<'a> BVH<'a> {
                     }
 
                     // Either create leaf or split primitives at selected SAH bucket.
-                    let leaf_cost = num_prims as f32;
+                    let leaf_cost = num_prims as Float;
                     if num_prims as u32 > self.max_primitives_in_node || min_cost < leaf_cost {
                         let pmid = partition(prim_info.iter_mut(), |&pi| {
                             let mut b =

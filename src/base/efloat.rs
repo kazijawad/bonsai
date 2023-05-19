@@ -4,19 +4,19 @@ use std::{
 };
 
 use crate::base::{
-    constants::Float,
+    constants::{Float, MACHINE_EPSILON},
     math::{next_float_down, next_float_up},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct EFloat {
-    v: f32,
-    low: f32,
-    high: f32,
+    v: Float,
+    low: Float,
+    high: Float,
 }
 
 impl EFloat {
-    pub fn new(v: f32, err: f32) -> Self {
+    pub fn new(v: Float, err: Float) -> Self {
         // Compute conservative bounds by rounding the endpoints away
         // from the middle. This will be over-conservative in
         // cases where +- error are exactly representable in
@@ -38,12 +38,9 @@ impl EFloat {
         if discrim < 0.0 {
             return false;
         }
-        let root_discrim = discrim.sqrt();
 
-        let root_discrim_f = EFloat::new(
-            root_discrim as f32,
-            (f64::EPSILON * 0.5 * root_discrim) as f32,
-        );
+        let root_discrim = discrim.sqrt() as Float;
+        let root_discrim_f = EFloat::new(root_discrim, MACHINE_EPSILON * root_discrim);
 
         // Compute quadratic t values.
         let q = if Float::from(b) < 0.0 {
@@ -61,15 +58,15 @@ impl EFloat {
         true
     }
 
-    pub fn lower_bound(&self) -> f32 {
+    pub fn lower_bound(&self) -> Float {
         self.low
     }
 
-    pub fn upper_bound(&self) -> f32 {
+    pub fn upper_bound(&self) -> Float {
         self.high
     }
 
-    pub fn absolute_error(&self) -> f32 {
+    pub fn absolute_error(&self) -> Float {
         next_float_up((self.high - self.v).abs().max((self.v - self.low).abs()))
     }
 
@@ -162,7 +159,7 @@ impl Add for EFloat {
     }
 }
 
-impl Add<EFloat> for f32 {
+impl Add<EFloat> for Float {
     type Output = EFloat;
 
     fn add(self, rhs: EFloat) -> Self::Output {
@@ -186,7 +183,7 @@ impl Sub for EFloat {
     }
 }
 
-impl Sub<EFloat> for f32 {
+impl Sub<EFloat> for Float {
     type Output = EFloat;
 
     fn sub(self, rhs: EFloat) -> Self::Output {
@@ -194,10 +191,10 @@ impl Sub<EFloat> for f32 {
     }
 }
 
-impl Sub<f32> for EFloat {
+impl Sub<Float> for EFloat {
     type Output = Self;
 
-    fn sub(self, rhs: f32) -> Self::Output {
+    fn sub(self, rhs: Float) -> Self::Output {
         self - EFloat::new(rhs, 0.0)
     }
 }
@@ -235,7 +232,7 @@ impl Mul for EFloat {
     }
 }
 
-impl Mul<EFloat> for f32 {
+impl Mul<EFloat> for Float {
     type Output = EFloat;
 
     fn mul(self, rhs: EFloat) -> Self::Output {
@@ -259,7 +256,7 @@ impl Div for EFloat {
         // The interval we're dividing by straddles zero, so
         // return an interval of everything.
         let low = if rhs.low < 0.0 && rhs.high > 0.0 {
-            f32::NEG_INFINITY
+            Float::NEG_INFINITY
         } else {
             next_float_down(
                 quotients[0]
@@ -270,7 +267,7 @@ impl Div for EFloat {
         };
 
         let high = if rhs.low < 0.0 && rhs.high > 0.0 {
-            f32::INFINITY
+            Float::INFINITY
         } else {
             next_float_up(
                 quotients[0]
@@ -287,7 +284,7 @@ impl Div for EFloat {
     }
 }
 
-impl Div<EFloat> for f32 {
+impl Div<EFloat> for Float {
     type Output = EFloat;
 
     fn div(self, rhs: EFloat) -> Self::Output {

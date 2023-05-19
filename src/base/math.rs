@@ -1,7 +1,7 @@
-use crate::base::constants::Float;
+use crate::base::constants::{Float, MACHINE_EPSILON};
 
 pub fn gamma(n: Float) -> Float {
-    n * (Float::EPSILON * 0.5) / (1.0 - n * (Float::EPSILON * 0.5))
+    (n * MACHINE_EPSILON) / (1.0 - n * MACHINE_EPSILON)
 }
 
 pub fn lerp(t: Float, a: Float, b: Float) -> Float {
