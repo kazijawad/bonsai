@@ -46,52 +46,57 @@ impl Point3 {
     }
 
     pub fn transform(&self, t: &Transform) -> Self {
+        let x = self.x;
+        let y = self.y;
+        let z = self.z;
+
         // Compute transformed coordinates from point.
-        let x = t.m.m[0][0] * self.x + t.m.m[0][1] * self.y + t.m.m[0][2] * self.z + t.m.m[0][3];
-        let y = t.m.m[1][0] * self.x + t.m.m[1][1] * self.y + t.m.m[1][2] * self.z + t.m.m[1][3];
-        let z = t.m.m[2][0] * self.x + t.m.m[2][1] * self.y + t.m.m[2][2] * self.z + t.m.m[2][3];
-        let w = t.m.m[3][0] * self.x + t.m.m[3][1] * self.y + t.m.m[3][2] * self.z + t.m.m[3][3];
+        let xp = t.m.m[0][0] * x + t.m.m[0][1] * y + t.m.m[0][2] * z + t.m.m[0][3];
+        let yp = t.m.m[1][0] * x + t.m.m[1][1] * y + t.m.m[1][2] * z + t.m.m[1][3];
+        let zp = t.m.m[2][0] * x + t.m.m[2][1] * y + t.m.m[2][2] * z + t.m.m[2][3];
+        let wp = t.m.m[3][0] * x + t.m.m[3][1] * y + t.m.m[3][2] * z + t.m.m[3][3];
 
         // Perform nonhomogeneous conversion.
-        debug_assert_ne!(w, 0.0);
-        if w == 1.0 {
-            Self::new(x, y, z)
+        debug_assert_ne!(wp, 0.0);
+        if wp == 1.0 {
+            Self::new(xp, yp, zp)
         } else {
-            Self::new(x, y, z) / w
+            Self::new(xp, yp, zp) / wp
         }
     }
 
     pub fn transform_with_error(&self, t: &Transform, error: &mut Vec3) -> Self {
+        let x = self.x;
+        let y = self.y;
+        let z = self.z;
+
         // Compute transformed coordinates from point.
-        let x = t.m.m[0][0] * self.x + t.m.m[0][1] * self.y + t.m.m[0][2] * self.z + t.m.m[0][3];
-        let y = t.m.m[1][0] * self.x + t.m.m[1][1] * self.y + t.m.m[1][2] * self.z + t.m.m[1][3];
-        let z = t.m.m[2][0] * self.x + t.m.m[2][1] * self.y + t.m.m[2][2] * self.z + t.m.m[2][3];
-        let w = t.m.m[3][0] * self.x + t.m.m[3][1] * self.y + t.m.m[3][2] * self.z + t.m.m[3][3];
+        let xp = (t.m.m[0][0] * x + t.m.m[0][1] * y) + (t.m.m[0][2] * z + t.m.m[0][3]);
+        let yp = (t.m.m[1][0] * x + t.m.m[1][1] * y) + (t.m.m[1][2] * z + t.m.m[1][3]);
+        let zp = (t.m.m[2][0] * x + t.m.m[2][1] * y) + (t.m.m[2][2] * z + t.m.m[2][3]);
+        let wp = (t.m.m[3][0] * x + t.m.m[3][1] * y) + (t.m.m[3][2] * z + t.m.m[3][3]);
 
         // Compute absolute error for transformed point.
-        let x_abs_sum = ((t.m.m[0][0] * self.x).abs()
-            + (t.m.m[0][1] * self.y).abs()
-            + (t.m.m[0][2] * self.z).abs()
-            + (t.m.m[0][3]))
-            .abs();
-        let y_abs_sum = ((t.m.m[1][0] * self.x).abs()
-            + (t.m.m[1][1] * self.y).abs()
-            + (t.m.m[1][2] * self.z).abs()
-            + (t.m.m[1][3]))
-            .abs();
-        let z_abs_sum = ((t.m.m[2][0] * self.x).abs()
-            + (t.m.m[2][1] * self.y).abs()
-            + (t.m.m[2][2] * self.z).abs()
-            + (t.m.m[2][3]))
-            .abs();
+        let x_abs_sum = (t.m.m[0][0] * x).abs()
+            + (t.m.m[0][1] * y).abs()
+            + (t.m.m[0][2] * z).abs()
+            + (t.m.m[0][3]).abs();
+        let y_abs_sum = (t.m.m[1][0] * x).abs()
+            + (t.m.m[1][1] * y).abs()
+            + (t.m.m[1][2] * z).abs()
+            + (t.m.m[1][3]).abs();
+        let z_abs_sum = (t.m.m[2][0] * x).abs()
+            + (t.m.m[2][1] * y).abs()
+            + (t.m.m[2][2] * z).abs()
+            + (t.m.m[2][3]).abs();
         *error = gamma(3.0) * Vec3::new(x_abs_sum, y_abs_sum, z_abs_sum);
 
         // Perform nonhomogeneous conversion.
-        debug_assert_ne!(w, 0.0);
-        if w == 1.0 {
-            Self::new(x, y, z)
+        debug_assert_ne!(wp, 0.0);
+        if wp == 1.0 {
+            Self::new(xp, yp, zp)
         } else {
-            Self::new(x, y, z) / w
+            Self::new(xp, yp, zp) / wp
         }
     }
 
@@ -101,46 +106,50 @@ impl Point3 {
         p_error: &Vec3,
         abs_error: &mut Vec3,
     ) -> Self {
+        let x = self.x;
+        let y = self.y;
+        let z = self.z;
+
         // Compute transformed coordinates from point.
-        let x = t.m.m[0][0] * self.x + t.m.m[0][1] * self.y + t.m.m[0][2] * self.z + t.m.m[0][3];
-        let y = t.m.m[1][0] * self.x + t.m.m[1][1] * self.y + t.m.m[1][2] * self.z + t.m.m[1][3];
-        let z = t.m.m[2][0] * self.x + t.m.m[2][1] * self.y + t.m.m[2][2] * self.z + t.m.m[2][3];
-        let w = t.m.m[3][0] * self.x + t.m.m[3][1] * self.y + t.m.m[3][2] * self.z + t.m.m[3][3];
+        let xp = (t.m.m[0][0] * x + t.m.m[0][1] * y) + (t.m.m[0][2] * z + t.m.m[0][3]);
+        let yp = (t.m.m[1][0] * x + t.m.m[1][1] * y) + (t.m.m[1][2] * z + t.m.m[1][3]);
+        let zp = (t.m.m[2][0] * x + t.m.m[2][1] * y) + (t.m.m[2][2] * z + t.m.m[2][3]);
+        let wp = (t.m.m[3][0] * x + t.m.m[3][1] * y) + (t.m.m[3][2] * z + t.m.m[3][3]);
 
         abs_error.x = (gamma(3.0) + 1.0)
             * (t.m.m[0][0].abs() * p_error.x
                 + t.m.m[0][1].abs() * p_error.y
                 + t.m.m[0][2].abs() * p_error.z)
             + gamma(3.0)
-                * ((t.m.m[0][0] * self.x).abs()
-                    + (t.m.m[0][1] * self.y).abs()
-                    + (t.m.m[0][2] * self.z).abs()
+                * ((t.m.m[0][0] * x).abs()
+                    + (t.m.m[0][1] * y).abs()
+                    + (t.m.m[0][2] * z).abs()
                     + (t.m.m[0][3]).abs());
         abs_error.y = (gamma(3.0) + 1.0)
             * ((t.m.m[1][0]).abs() * p_error.x
                 + (t.m.m[1][1]).abs() * p_error.y
                 + (t.m.m[1][2]).abs() * p_error.z)
             + gamma(3.0)
-                * ((t.m.m[1][0] * self.x).abs()
-                    + (t.m.m[1][1] * self.y).abs()
-                    + (t.m.m[1][2] * self.z).abs()
+                * ((t.m.m[1][0] * x).abs()
+                    + (t.m.m[1][1] * y).abs()
+                    + (t.m.m[1][2] * z).abs()
                     + (t.m.m[1][3]).abs());
         abs_error.z = (gamma(3.0) + 1.0)
             * ((t.m.m[2][0]).abs() * p_error.x
                 + (t.m.m[2][1]).abs() * p_error.y
                 + (t.m.m[2][2]).abs() * p_error.z)
             + gamma(3.0)
-                * ((t.m.m[2][0] * self.x).abs()
-                    + (t.m.m[2][1] * self.y).abs()
-                    + (t.m.m[2][2] * self.z).abs()
+                * ((t.m.m[2][0] * x).abs()
+                    + (t.m.m[2][1] * y).abs()
+                    + (t.m.m[2][2] * z).abs()
                     + (t.m.m[2][3]).abs());
 
         // Perform nonhomogeneous conversion.
-        debug_assert_ne!(w, 0.0);
-        if w == 1.0 {
-            Self::new(x, y, z)
+        debug_assert_ne!(wp, 0.0);
+        if wp == 1.0 {
+            Self::new(xp, yp, zp)
         } else {
-            Self::new(x, y, z) / w
+            Self::new(xp, yp, zp) / wp
         }
     }
 

@@ -48,14 +48,14 @@ impl Vec3 {
         let y = self.y;
         let z = self.z;
 
-        *e = Vec3::new(
-            gamma(3.0)
-                * ((t.m.m[0][0] * x).abs() + (t.m.m[0][1] * y).abs() + (t.m.m[0][2] * z).abs()),
-            gamma(3.0)
-                * ((t.m.m[1][0] * x).abs() + (t.m.m[1][1] * y).abs() + (t.m.m[1][2] * z).abs()),
-            gamma(3.0)
-                * ((t.m.m[2][0] * x).abs() + (t.m.m[2][1] * y).abs() + (t.m.m[2][2] * z).abs()),
-        );
+        e.x = gamma(3.0)
+            * ((t.m.m[0][0] * x).abs() + (t.m.m[0][1] * y).abs() + (t.m.m[0][2] * z).abs());
+
+        e.y = gamma(3.0)
+            * ((t.m.m[1][0] * x).abs() + (t.m.m[1][1] * y).abs() + (t.m.m[1][2] * z).abs());
+
+        e.z = gamma(3.0)
+            * ((t.m.m[2][0] * x).abs() + (t.m.m[2][1] * y).abs() + (t.m.m[2][2] * z).abs());
 
         Self::new(
             t.m.m[0][0] * x + t.m.m[0][1] * y + t.m.m[0][2] * z,
