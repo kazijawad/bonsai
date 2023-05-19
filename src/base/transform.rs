@@ -65,11 +65,11 @@ impl Transform {
             1.0,
             0.0,
         );
-        let inverse_mat = mat.inverse();
+        let inv_mat = mat.inverse();
 
         // Scale canonical perspective view to specified field of view.
-        let inverse_tan_angle = 1.0 / (fov.to_radians() / 2.0).tan();
-        Self::scale(inverse_tan_angle, inverse_tan_angle, 1.0) * Self::new(mat, inverse_mat)
+        let inv_tag_angle = 1.0 / (fov.to_radians() / 2.0).tan();
+        Self::scale(inv_tag_angle, inv_tag_angle, 1.0) * Self::new(mat, inv_mat)
     }
 
     pub fn transform_bounds(&self, b: &Bounds3) -> Bounds3 {
@@ -156,7 +156,7 @@ impl Transform {
     }
 
     pub fn rotate(theta: Float, axis: &Vec3) -> Self {
-        let a = Vec3::normalize(axis);
+        let a = axis.normalize();
         let sin_theta = theta.to_radians().sin();
         let cos_theta = theta.to_radians().cos();
         let mut m = Mat4::default();
