@@ -133,7 +133,7 @@ impl Camera for PerspectiveCamera {
         }
 
         ray.time = lerp(sample.time, self.shutter_open, self.shutter_close);
-        *ray = ray.animated_transform(&self.camera_to_world);
+        *ray = ray.animated_transform_differential(&self.camera_to_world);
         ray.has_differentials = true;
 
         1.0
