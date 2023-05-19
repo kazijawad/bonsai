@@ -272,7 +272,7 @@ impl Div for EFloat {
         let high = if rhs.low < 0.0 && rhs.high > 0.0 {
             f32::INFINITY
         } else {
-            next_float_down(
+            next_float_up(
                 quotients[0]
                     .max(quotients[1])
                     .max(quotients[2])

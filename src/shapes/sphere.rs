@@ -170,9 +170,9 @@ impl Shape for Sphere {
 
         // Compute sphere UV derivatives.
         let z_radius = (p_hit.x * p_hit.x + p_hit.y * p_hit.y).sqrt();
-        let inverted_z_radius = 1.0 / z_radius;
-        let cos_phi = p_hit.x * inverted_z_radius;
-        let sin_phi = p_hit.y * inverted_z_radius;
+        let inv_z_radius = 1.0 / z_radius;
+        let cos_phi = p_hit.x * inv_z_radius;
+        let sin_phi = p_hit.y * inv_z_radius;
         let dpdu = Vec3::new(-self.phi_max * p_hit.y, self.phi_max * p_hit.x, 0.0);
         let dpdv = (self.theta_max - self.theta_min)
             * Vec3::new(

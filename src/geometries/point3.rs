@@ -377,7 +377,11 @@ impl Mul<Point3> for Float {
     type Output = Point3;
 
     fn mul(self, rhs: Point3) -> Self::Output {
-        rhs * self
+        Self::Output {
+            x: self * rhs.x,
+            y: self * rhs.y,
+            z: self * rhs.z,
+        }
     }
 }
 
@@ -385,7 +389,11 @@ impl Mul<&Point3> for Float {
     type Output = Point3;
 
     fn mul(self, rhs: &Point3) -> Self::Output {
-        rhs * self
+        Self::Output {
+            x: self * rhs.x,
+            y: self * rhs.y,
+            z: self * rhs.z,
+        }
     }
 }
 

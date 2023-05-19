@@ -308,7 +308,11 @@ impl Mul<Vec3> for Float {
     type Output = Vec3;
 
     fn mul(self, rhs: Vec3) -> Self::Output {
-        rhs * self
+        Self::Output {
+            x: self * rhs.x,
+            y: self * rhs.y,
+            z: self * rhs.z,
+        }
     }
 }
 
@@ -316,7 +320,11 @@ impl Mul<&Vec3> for Float {
     type Output = Vec3;
 
     fn mul(self, rhs: &Vec3) -> Self::Output {
-        rhs * self
+        Self::Output {
+            x: self * rhs.x,
+            y: self * rhs.y,
+            z: self * rhs.z,
+        }
     }
 }
 

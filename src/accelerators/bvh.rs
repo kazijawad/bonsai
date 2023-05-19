@@ -261,21 +261,21 @@ impl<'a> Primitive<'a> for BVH<'a> {
         }
     }
 
-    fn intersect(&self, ray: &mut Ray, it: &mut SurfaceInteraction<'a>) -> bool {
+    fn intersect(&self, ray: &mut Ray, si: &mut SurfaceInteraction<'a>) -> bool {
         if self.nodes.is_empty() {
             return false;
         }
 
         let mut hit = false;
-        let inverse_dir = Vec3::new(
+        let inv_dir = Vec3::new(
             1.0 / ray.direction.x,
             1.0 / ray.direction.y,
             1.0 / ray.direction.z,
         );
         let is_neg_dir = [
-            (inverse_dir.x < 0.0) as usize,
-            (inverse_dir.y < 0.0) as usize,
-            (inverse_dir.z < 0.0) as usize,
+            (inv_dir.x < 0.0) as usize,
+            (inv_dir.y < 0.0) as usize,
+            (inv_dir.z < 0.0) as usize,
         ];
 
         // Follow ray through BVH nodes to find primitive intersections.
@@ -286,13 +286,13 @@ impl<'a> Primitive<'a> for BVH<'a> {
             let node = self.nodes[current_node_index];
             if node
                 .bounds
-                .intersect_range_precomputed(ray, &inverse_dir, is_neg_dir)
+                .intersect_range_precomputed(ray, &inv_dir, is_neg_dir)
             {
                 if node.num_prims > 0 {
                     // Intersect ray with primitives in leaf BVH node.
                     for i in 0..node.num_prims {
                         let primitive = self.primitives[node.prims_offset + i];
-                        if primitive.intersect(ray, it) {
+                        if primitive.intersect(ray, si) {
                             hit = true;
                         }
                     }
@@ -329,15 +329,15 @@ impl<'a> Primitive<'a> for BVH<'a> {
             return false;
         }
 
-        let inverse_dir = Vec3::new(
+        let inv_dir = Vec3::new(
             1.0 / ray.direction.x,
             1.0 / ray.direction.y,
             1.0 / ray.direction.z,
         );
         let is_neg_dir = [
-            (inverse_dir.x < 0.0) as usize,
-            (inverse_dir.y < 0.0) as usize,
-            (inverse_dir.z < 0.0) as usize,
+            (inv_dir.x < 0.0) as usize,
+            (inv_dir.y < 0.0) as usize,
+            (inv_dir.z < 0.0) as usize,
         ];
 
         // Follow ray through BVH nodes to find primitive intersections.
@@ -348,7 +348,7 @@ impl<'a> Primitive<'a> for BVH<'a> {
             let node = self.nodes[current_node_index];
             if node
                 .bounds
-                .intersect_range_precomputed(ray, &inverse_dir, is_neg_dir)
+                .intersect_range_precomputed(ray, &inv_dir, is_neg_dir)
             {
                 if node.num_prims > 0 {
                     // Intersect ray with primitives in leaf BVH node.
