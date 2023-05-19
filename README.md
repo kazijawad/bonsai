@@ -1,31 +1,34 @@
 # Bonsai Renderer
 
-A physically-based software renderer built in Rust with minimal dependencies using recursing ray tracing for modeling light transport. This is an ongoing personal project with the goal of building an advanced production grade renderer.
+A physically-based software renderer built in Rust. This is an ongoing personal project with the goal of understanding and building advanced rendering techniques.
 
 # Features
 
-#### Shape System
+#### Primitives
 
-Supports standard shapes with an interface for intersection tests, sampling, and bounding box calculations.
+Supports intersection tests, sampling, and bounding box calculations on a set of standard shapes including triangles.
 
-#### Material System
+#### Materials
 
 Supports physically-based BRDFs, including microfacet models, and arbitrary combination of texture formats.
+Image textures can be mipmapped with trilinear filtering.
 
 #### Acceleration Structures
 
-Uses a recursive BVH traversel system with a primitive interface for implementing other acceleration structures.
+Uses a recursive BVH traversel system with support for implementing other acceleration structures.
 
 #### Hardware Acceleration
 
-Entirely CPU-based, designed for data-parallelism using parallel iterators and atomics in multithreaded rendering.
-
-#### Imaging Pipeline
-
-Uses a spectral interface for encoding RGB colors and outputs in 32-bit floating point EXR format with gamma correction.
+Completely CPU-based and designed for data-parallelism. Uses parallel iterators for multithreaded rendering.
 
 # References
 
-[Ray Tracing In One Weekened](https://raytracing.github.io)
+A list of resources I found useful while working on Bonsai.
 
 [Physically Based Rendering: From Theory To Implementation](https://pbrt.org)
+
+[Ray Tracing In One Weekened](https://raytracing.github.io)
+
+[Karl Li's Blog](https://blog.yiningkarlli.com/)
+
+[Graphics Programming Subreddit](https://www.reddit.com/r/graphicsprogramming)
