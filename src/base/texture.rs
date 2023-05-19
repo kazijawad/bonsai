@@ -20,10 +20,10 @@ pub trait TextureMapping3D: Send + Sync {
 }
 
 pub struct UVMapping2D {
-    pub su: Float,
-    pub sv: Float,
-    pub du: Float,
-    pub dv: Float,
+    pub u_scale: Float,
+    pub v_scale: Float,
+    pub u_delta: Float,
+    pub v_delta: Float,
 }
 
 pub struct SphericalMapping2D {
@@ -63,9 +63,12 @@ impl CylindricalMapping2D {
 
 impl TextureMapping2D for UVMapping2D {
     fn map(&self, si: &SurfaceInteraction, dstdx: &mut Vec2F, dstdy: &mut Vec2F) -> Point2F {
-        *dstdx = Vec2F::new(self.su * si.dudx, self.sv * si.dvdx);
-        *dstdy = Vec2F::new(self.su * si.dudy, self.sv * si.dvdy);
-        Point2F::new(self.su * si.uv[0] + self.du, self.sv * si.uv[1] + self.dv)
+        *dstdx = Vec2F::new(self.u_scale * si.dudx, self.v_scale * si.dvdx);
+        *dstdy = Vec2F::new(self.u_scale * si.dudy, self.v_scale * si.dvdy);
+        Point2F::new(
+            self.u_scale * si.uv[0] + self.u_delta,
+            self.v_scale * si.uv[1] + self.v_delta,
+        )
     }
 }
 
@@ -143,10 +146,10 @@ impl TextureMapping3D for IdentityMapping3D {
 impl Default for UVMapping2D {
     fn default() -> Self {
         Self {
-            su: 1.0,
-            sv: 1.0,
-            du: 0.0,
-            dv: 0.0,
+            u_scale: 1.0,
+            v_scale: 1.0,
+            u_delta: 0.0,
+            v_delta: 0.0,
         }
     }
 }
