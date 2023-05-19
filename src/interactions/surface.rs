@@ -131,54 +131,52 @@ impl<'a> SurfaceInteraction<'a> {
             self.dpdy = Vec3::default();
         };
 
-        if ray.has_differentials {
-            // Compute auxiliary intersection points with plane.
-            let d = self.n.dot_point(&self.p);
+        if !ray.has_differentials {
+            return fail();
+        }
 
-            let tx = -(self.n.dot_point(&ray.rx_origin) - d) / self.n.dot_vec(&ray.rx_direction);
-            if tx.is_infinite() || tx.is_nan() {
-                fail();
-                return;
-            }
-            let px = ray.rx_origin + tx * ray.rx_direction;
+        // Compute auxiliary intersection points with plane.
+        let d = self.n.dot_point(&self.p);
 
-            let ty = -(self.n.dot_point(&ray.ry_origin) - d) / self.n.dot_vec(&ray.ry_direction);
-            if ty.is_infinite() || ty.is_nan() {
-                fail();
-                return;
-            }
-            let py = ray.ry_origin + ty * ray.ry_direction;
+        let tx = -(self.n.dot_point(&ray.rx_origin) - d) / self.n.dot_vec(&ray.rx_direction);
+        if tx.is_infinite() || tx.is_nan() {
+            return fail();
+        }
+        let px = ray.rx_origin + tx * ray.rx_direction;
 
-            self.dpdx = px - self.p;
-            self.dpdy = py - self.p;
+        let ty = -(self.n.dot_point(&ray.ry_origin) - d) / self.n.dot_vec(&ray.ry_direction);
+        if ty.is_infinite() || ty.is_nan() {
+            return fail();
+        }
+        let py = ray.ry_origin + ty * ray.ry_direction;
 
-            // Choose two dimensions to use for ray offset computation.
-            let dim = if self.n.x.abs() > self.n.y.abs() && self.n.x.abs() > self.n.z.abs() {
-                [1, 2]
-            } else if self.n.y.abs() > self.n.z.abs() {
-                [0, 2]
-            } else {
-                [0, 1]
-            };
+        self.dpdx = px - self.p;
+        self.dpdy = py - self.p;
 
-            // Initialize matrices for offset computation.
-            let a = [
-                [self.dpdu[dim[0]], self.dpdv[dim[0]]],
-                [self.dpdu[dim[1]], self.dpdv[dim[1]]],
-            ];
-            let bx = [px[dim[0]] - self.p[dim[0]], px[dim[1]] - self.p[dim[1]]];
-            let by = [py[dim[0]] - self.p[dim[0]], py[dim[1]] - self.p[dim[1]]];
-
-            if !solve_linear_system_2x2(a, bx, &mut self.dudx, &mut self.dvdx) {
-                self.dudx = 0.0;
-                self.dvdx = 0.0;
-            }
-            if !solve_linear_system_2x2(a, by, &mut self.dudy, &mut self.dvdy) {
-                self.dudy = 0.0;
-                self.dvdy = 0.0;
-            }
+        // Choose two dimensions to use for ray offset computation.
+        let dim = if self.n.x.abs() > self.n.y.abs() && self.n.x.abs() > self.n.z.abs() {
+            [1, 2]
+        } else if self.n.y.abs() > self.n.z.abs() {
+            [0, 2]
         } else {
-            fail();
+            [0, 1]
+        };
+
+        // Initialize matrices for offset computation.
+        let a = [
+            [self.dpdu[dim[0]], self.dpdv[dim[0]]],
+            [self.dpdu[dim[1]], self.dpdv[dim[1]]],
+        ];
+        let bx = [px[dim[0]] - self.p[dim[0]], px[dim[1]] - self.p[dim[1]]];
+        let by = [py[dim[0]] - self.p[dim[0]], py[dim[1]] - self.p[dim[1]]];
+
+        if !solve_linear_system_2x2(a, bx, &mut self.dudx, &mut self.dvdx) {
+            self.dudx = 0.0;
+            self.dvdx = 0.0;
+        }
+        if !solve_linear_system_2x2(a, by, &mut self.dudy, &mut self.dvdy) {
+            self.dudy = 0.0;
+            self.dvdy = 0.0;
         }
     }
 
@@ -192,11 +190,11 @@ impl<'a> SurfaceInteraction<'a> {
     }
 
     pub fn transform(&mut self, t: &Transform) {
-        let mut p_error = Vec3::default();
+        let mut abs_error = Vec3::default();
         self.p = self
             .p
-            .transform_with_point_error(t, &self.p_error, &mut p_error);
-        self.p_error = p_error;
+            .transform_with_point_error(t, &self.p_error, &mut abs_error);
+        self.p_error = abs_error;
 
         self.wo = self.wo.transform(t);
         self.n = self.n.transform(t).normalize();

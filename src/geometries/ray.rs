@@ -38,11 +38,11 @@ impl Ray {
         self.origin + self.direction * t
     }
 
-    pub fn scale_differentials(&mut self, s: Float) {
-        self.rx_origin = self.origin + (self.rx_origin - self.origin) * s;
-        self.ry_origin = self.origin + (self.ry_origin - self.origin) * s;
-        self.rx_direction = self.direction + (self.rx_direction - self.direction) * s;
-        self.ry_direction = self.direction + (self.ry_direction - self.direction) * s;
+    pub fn scale_differentials(&mut self, scale: Float) {
+        self.rx_origin = self.origin + (self.rx_origin - self.origin) * scale;
+        self.ry_origin = self.origin + (self.ry_origin - self.origin) * scale;
+        self.rx_direction = self.direction + (self.rx_direction - self.direction) * scale;
+        self.ry_direction = self.direction + (self.ry_direction - self.direction) * scale;
     }
 
     pub fn transform(&self, t: &Transform) -> Self {
