@@ -8,6 +8,8 @@ cfg_if::cfg_if! {
     }
 }
 
+pub const PI_OVER_TWO: Float = PI / 2.0;
+
 pub const ONE_MINUS_EPSILON: Float = 1.0 - Float::EPSILON;
 pub const MACHINE_EPSILON: Float = Float::EPSILON * 0.5;
 

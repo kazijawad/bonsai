@@ -3,19 +3,19 @@ use std::{
     ops::{Add, Mul, Sub},
 };
 
-use crate::base::constants::{Float, PI};
+use crate::base::constants::{Float, PI, PI_OVER_TWO};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Interval {
-    pub low: Float,
-    pub high: Float,
+    pub min: Float,
+    pub max: Float,
 }
 
 impl Interval {
     pub fn new(x: Float, y: Float) -> Self {
         Self {
-            low: x.min(y),
-            high: x.max(y),
+            min: x.min(y),
+            max: x.max(y),
         }
     }
 
@@ -28,21 +28,24 @@ impl Interval {
         theta: Float,
         t_interval: Self,
         zeros: &mut [Float; 8],
-        zero_count: &mut u32,
+        zero_count: &mut usize,
         depth: i32,
     ) {
-        // Evaluate motion derivative in interval form, return if no zeros
+        // Evaluate motion derivative in interval form, return if no zeros.
         let range = Interval::from(c1)
             + (Interval::from(c2) + Interval::from(c3) * t_interval)
                 * (Interval::from(2.0 * theta) * t_interval).cos()
             + (Interval::from(c4) + Interval::from(c5) * t_interval)
                 * (Interval::from(2.0 * theta) * t_interval).sin();
-        if range.low > 0.0 || range.high < 0.0 || range.low == range.high {
+
+        if range.min > 0.0 || range.max < 0.0 || range.min == range.max {
             return;
         }
+
+        let mut mid = (t_interval.min + t_interval.max) * 0.5;
         if depth > 0 {
             // Split interval and check both resulting intervals.
-            let mid = (t_interval.low + t_interval.high) * 0.5;
+
             Interval::find_zeros(
                 c1,
                 c2,
@@ -50,11 +53,12 @@ impl Interval {
                 c4,
                 c5,
                 theta,
-                Interval::new(t_interval.low, mid),
+                Interval::new(t_interval.min, mid),
                 zeros,
                 zero_count,
                 depth - 1,
             );
+
             Interval::find_zeros(
                 c1,
                 c2,
@@ -62,73 +66,78 @@ impl Interval {
                 c4,
                 c5,
                 theta,
-                Interval::new(mid, t_interval.high),
+                Interval::new(mid, t_interval.max),
                 zeros,
                 zero_count,
                 depth - 1,
             );
         } else {
             // Use Newton's method to refine zero.
-            let mut t_newton = (t_interval.low + t_interval.high) * 0.5;
             for _ in 0..4 {
                 let f_newton = c1
-                    + (c2 + c3 * t_newton) * (2.0 * theta * t_newton).cos()
-                    + (c4 + c5 * t_newton) * (2.0 * theta * t_newton).sin();
-                let f_prime_newton = (c3 + 2.0 * (c4 + c5 * t_newton) * theta)
-                    * (2.0 * t_newton * theta).cos()
-                    + (c5 - 2.0 * (c2 + c3 * t_newton) * theta) * (2.0 * t_newton * theta).sin();
+                    + (c2 + c3 * mid) * (2.0 * theta * mid).cos()
+                    + (c4 + c5 * mid) * (2.0 * theta * mid).sin();
+
+                let f_prime_newton = (c3 + 2.0 * (c4 + c5 * mid) * theta)
+                    * (2.0 * mid * theta).cos()
+                    + (c5 - 2.0 * (c2 + c3 * mid) * theta) * (2.0 * mid * theta).sin();
+
                 if f_newton == 0.0 || f_prime_newton == 0.0 {
                     break;
                 }
-                t_newton = t_newton - f_newton / f_prime_newton;
+
+                mid = mid - f_newton / f_prime_newton;
             }
-            if t_newton >= t_interval.low - 1e-3 && t_newton < t_interval.high + 1e-3 {
-                zeros[*zero_count as usize] = t_newton;
+
+            if mid >= t_interval.min - 1e-3 && mid < t_interval.max + 1e-3 {
+                zeros[*zero_count] = mid;
                 *zero_count += 1;
             }
         }
     }
 
     pub fn sin(&self) -> Self {
-        debug_assert!(self.low >= 0.0 && self.high <= 2.0001 * PI);
-        let mut sin_low = self.low.sin();
-        let mut sin_high = self.high.sin();
+        debug_assert!(self.min >= 0.0 && self.max <= 2.0001 * PI);
 
-        if sin_low > sin_high {
-            mem::swap(&mut sin_low, &mut sin_high);
+        let mut sin_min = self.min.sin();
+        let mut sin_max = self.max.sin();
+
+        if sin_min > sin_max {
+            mem::swap(&mut sin_min, &mut sin_max);
         }
 
-        if self.low < PI / 2.0 && self.high > PI / 2.0 {
-            sin_high = 1.0;
+        if self.min < PI_OVER_TWO && self.max > PI_OVER_TWO {
+            sin_max = 1.0;
         }
 
-        if self.low < (3.0 / 2.0) * PI && self.high > (3.0 / 2.0) * PI {
-            sin_low = -1.0;
+        if self.min < (3.0 / 2.0) * PI && self.max > (3.0 / 2.0) * PI {
+            sin_min = -1.0;
         }
 
-        Interval::new(sin_low, sin_high)
+        Interval::new(sin_min, sin_max)
     }
 
     pub fn cos(&self) -> Self {
-        debug_assert!(self.low >= 0.0 && self.high <= 2.0001 * PI);
-        let mut cos_low = self.low.cos();
-        let mut cos_high = self.high.cos();
+        debug_assert!(self.min >= 0.0 && self.max <= 2.0001 * PI);
 
-        if cos_low > cos_high {
-            mem::swap(&mut cos_low, &mut cos_high);
+        let mut cos_min = self.min.cos();
+        let mut cos_max = self.max.cos();
+
+        if cos_min > cos_max {
+            mem::swap(&mut cos_min, &mut cos_max);
         }
 
-        if self.low < PI && self.high > PI {
-            cos_low = -1.0;
+        if self.min < PI && self.max > PI {
+            cos_min = -1.0;
         }
 
-        Interval::new(cos_low, cos_high)
+        Interval::new(cos_min, cos_max)
     }
 }
 
 impl From<Float> for Interval {
     fn from(x: Float) -> Self {
-        Self { low: x, high: x }
+        Self { min: x, max: x }
     }
 }
 
@@ -137,8 +146,8 @@ impl Add for Interval {
 
     fn add(self, rhs: Self) -> Self::Output {
         Self::Output {
-            low: self.low + rhs.low,
-            high: self.high + rhs.high,
+            min: self.min + rhs.min,
+            max: self.max + rhs.max,
         }
     }
 }
@@ -148,8 +157,8 @@ impl Add for &Interval {
 
     fn add(self, rhs: Self) -> Self::Output {
         Self::Output {
-            low: self.low + rhs.low,
-            high: self.high + rhs.high,
+            min: self.min + rhs.min,
+            max: self.max + rhs.max,
         }
     }
 }
@@ -159,8 +168,8 @@ impl Sub for Interval {
 
     fn sub(self, rhs: Self) -> Self::Output {
         Self::Output {
-            low: self.low - rhs.high,
-            high: self.high - rhs.low,
+            min: self.min - rhs.max,
+            max: self.max - rhs.min,
         }
     }
 }
@@ -170,8 +179,8 @@ impl Sub for &Interval {
 
     fn sub(self, rhs: Self) -> Self::Output {
         Self::Output {
-            low: self.low - rhs.high,
-            high: self.high - rhs.low,
+            min: self.min - rhs.max,
+            max: self.max - rhs.min,
         }
     }
 }
@@ -181,14 +190,14 @@ impl Mul for Interval {
 
     fn mul(self, rhs: Self) -> Self::Output {
         Self::Output {
-            low: (self.low * rhs.low)
-                .min(self.high * rhs.low)
-                .min(self.low * rhs.high)
-                .min(self.high * rhs.high),
-            high: (self.low * rhs.low)
-                .max(self.high * rhs.low)
-                .max(self.low * rhs.high)
-                .max(self.high * rhs.high),
+            min: (self.min * rhs.min)
+                .min(self.max * rhs.min)
+                .min(self.min * rhs.max)
+                .min(self.max * rhs.max),
+            max: (self.min * rhs.min)
+                .max(self.max * rhs.min)
+                .max(self.min * rhs.max)
+                .max(self.max * rhs.max),
         }
     }
 }
@@ -198,14 +207,14 @@ impl Mul for &Interval {
 
     fn mul(self, rhs: Self) -> Self::Output {
         Self::Output {
-            low: (self.low * rhs.low)
-                .min(self.high * rhs.low)
-                .min(self.low * rhs.high)
-                .min(self.high * rhs.high),
-            high: (self.low * rhs.low)
-                .max(self.high * rhs.low)
-                .max(self.low * rhs.high)
-                .max(self.high * rhs.high),
+            min: (self.min * rhs.min)
+                .min(self.max * rhs.min)
+                .min(self.min * rhs.max)
+                .min(self.max * rhs.max),
+            max: (self.min * rhs.min)
+                .max(self.max * rhs.min)
+                .max(self.min * rhs.max)
+                .max(self.max * rhs.max),
         }
     }
 }

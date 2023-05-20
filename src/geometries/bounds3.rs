@@ -37,6 +37,20 @@ impl Bounds3 {
         }
     }
 
+    pub fn union_mut(&mut self, b: &Self) {
+        self.min = Point3::new(
+            self.min.x.min(b.min.x),
+            self.min.y.min(b.min.y),
+            self.min.z.min(b.min.z),
+        );
+
+        self.max = Point3::new(
+            self.max.x.max(b.max.x),
+            self.max.y.max(b.max.y),
+            self.max.z.max(b.max.z),
+        );
+    }
+
     pub fn union_point(&self, p: &Point3) -> Self {
         Self {
             min: Point3::new(
@@ -50,6 +64,20 @@ impl Bounds3 {
                 self.max.z.max(p.z),
             ),
         }
+    }
+
+    pub fn union_point_mut(&mut self, p: &Point3) {
+        self.min = Point3::new(
+            self.min.x.min(p.x),
+            self.min.y.min(p.y),
+            self.min.z.min(p.z),
+        );
+
+        self.max = Point3::new(
+            self.max.x.max(p.x),
+            self.max.y.max(p.y),
+            self.max.z.max(p.z),
+        );
     }
 
     pub fn intersect(&self, b: &Self) -> Self {
@@ -100,9 +128,9 @@ impl Bounds3 {
     }
 
     pub fn distance_squared(&self, p: &Point3) -> Float {
-        let dx = (0.0 as Float).max(self.min.x - p.x).max(p.x - self.max.x);
-        let dy = (0.0 as Float).max(self.min.y - p.y).max(p.y - self.max.y);
-        let dz = (0.0 as Float).max(self.min.z - p.z).max(p.z - self.max.z);
+        let dx = (self.min.x - p.x).max(p.x - self.max.x).max(0.0);
+        let dy = (self.min.y - p.y).max(p.y - self.max.y).max(0.0);
+        let dz = (self.min.z - p.z).max(p.z - self.max.z).max(0.0);
         dx * dx + dy * dy + dz * dz
     }
 

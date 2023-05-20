@@ -15,8 +15,7 @@ use crate::{
 };
 
 pub struct TriangleMesh {
-    indices: Vec<usize>,
-    position: Vec<Point3>,
+    pub position: Vec<Point3>,
     tangent: Option<Vec<Vec3>>,
     normal: Option<Vec<Normal>>,
     uv: Option<Vec<Point2F>>,
@@ -24,7 +23,6 @@ pub struct TriangleMesh {
 
 pub struct TriangleMeshOptions {
     pub object_to_world: Transform,
-    pub indices: Vec<usize>,
     pub position: Vec<Point3>,
     pub tangent: Option<Vec<Vec3>>,
     pub normal: Option<Vec<Normal>>,
@@ -32,15 +30,15 @@ pub struct TriangleMeshOptions {
 }
 
 pub struct Triangle {
-    world_to_object: Transform,
+    world_to_object: Arc<Transform>,
     reverse_orientation: bool,
     transform_swaps_handedness: bool,
     mesh: Arc<TriangleMesh>,
-    indices: Vec<usize>,
+    offset: usize,
 }
 
 pub struct TriangleOptions {
-    pub transform: Transform,
+    pub world_to_object: Arc<Transform>,
     pub reverse_orientation: bool,
     pub mesh: Arc<TriangleMesh>,
     pub index: usize,
@@ -48,36 +46,42 @@ pub struct TriangleOptions {
 
 impl TriangleMesh {
     pub fn new(opts: TriangleMeshOptions) -> Self {
-        let position = opts
-            .position
-            .iter()
-            .map(|v| v.transform(&opts.object_to_world))
-            .collect();
+        let position = if opts.object_to_world.is_identity() {
+            opts.position.clone()
+        } else {
+            opts.position
+                .iter()
+                .map(|v| v.transform(&opts.object_to_world))
+                .collect()
+        };
 
         let tangent = if let Some(tangent) = opts.tangent {
-            Some(
+            Some(if opts.object_to_world.is_identity() {
+                tangent
+            } else {
                 tangent
                     .iter()
                     .map(|v| v.transform(&opts.object_to_world))
-                    .collect(),
-            )
+                    .collect()
+            })
         } else {
             None
         };
 
         let normal = if let Some(normal) = opts.normal {
-            Some(
+            Some(if opts.object_to_world.is_identity() {
+                normal
+            } else {
                 normal
                     .iter()
                     .map(|v| v.transform(&opts.object_to_world))
-                    .collect(),
-            )
+                    .collect()
+            })
         } else {
             None
         };
 
         Self {
-            indices: opts.indices,
             position,
             tangent,
             normal,
@@ -88,33 +92,21 @@ impl TriangleMesh {
 
 impl Triangle {
     pub fn new(opts: TriangleOptions) -> Self {
-        let transform_swaps_handedness = opts.transform.swaps_handedness();
-
+        let transform_swaps_handedness = opts.world_to_object.swaps_handedness();
         let offset = 3 * opts.index;
-        let indices = opts.mesh.indices[offset..offset + 3].to_vec();
-
-        let world_to_object = if opts.transform.is_identity() {
-            opts.transform
-        } else {
-            opts.transform.inverse()
-        };
 
         Self {
-            world_to_object,
+            world_to_object: opts.world_to_object,
             reverse_orientation: opts.reverse_orientation,
             transform_swaps_handedness,
             mesh: opts.mesh,
-            indices,
+            offset,
         }
     }
 
     fn get_uvs(&self) -> [Point2F; 3] {
         if let Some(uv) = &self.mesh.uv {
-            [
-                uv[self.indices[0]],
-                uv[self.indices[1]],
-                uv[self.indices[2]],
-            ]
+            [uv[self.offset], uv[self.offset + 1], uv[self.offset + 2]]
         } else {
             [
                 Point2F::default(),
@@ -127,24 +119,24 @@ impl Triangle {
 
 impl Shape for Triangle {
     fn object_bound(&self) -> Bounds3 {
-        let p0 = self.mesh.position[self.indices[0]].transform(&self.world_to_object);
-        let p1 = self.mesh.position[self.indices[1]].transform(&self.world_to_object);
-        let p2 = self.mesh.position[self.indices[2]].transform(&self.world_to_object);
+        let p0 = self.mesh.position[self.offset].transform(&self.world_to_object);
+        let p1 = self.mesh.position[self.offset + 1].transform(&self.world_to_object);
+        let p2 = self.mesh.position[self.offset + 2].transform(&self.world_to_object);
         Bounds3::new(&p0, &p1).union_point(&p2)
     }
 
     fn world_bound(&self) -> Bounds3 {
-        let p0 = self.mesh.position[self.indices[0]];
-        let p1 = self.mesh.position[self.indices[1]];
-        let p2 = self.mesh.position[self.indices[2]];
+        let p0 = self.mesh.position[self.offset];
+        let p1 = self.mesh.position[self.offset + 1];
+        let p2 = self.mesh.position[self.offset + 2];
         Bounds3::new(&p0, &p1).union_point(&p2)
     }
 
     fn intersect(&self, ray: &Ray, t_hit: &mut Float, si: &mut SurfaceInteraction) -> bool {
         // Get triangle vertices.
-        let p0 = &self.mesh.position[self.indices[0]];
-        let p1 = &self.mesh.position[self.indices[1]];
-        let p2 = &self.mesh.position[self.indices[2]];
+        let p0 = &self.mesh.position[self.offset];
+        let p1 = &self.mesh.position[self.offset + 1];
+        let p2 = &self.mesh.position[self.offset + 2];
 
         // Translate vertices based on ray origin.
         let ray_origin = Vec3::from(ray.origin);
@@ -313,9 +305,9 @@ impl Shape for Triangle {
         if self.mesh.normal.is_some() || self.mesh.tangent.is_some() {
             // Compute shading normal for triangle.
             let shading_normal = if let Some(normal) = &self.mesh.normal {
-                let new_normal = b0 * normal[self.indices[0]]
-                    + b1 * normal[self.indices[1]]
-                    + b2 * normal[self.indices[2]];
+                let new_normal = b0 * normal[self.offset]
+                    + b1 * normal[self.offset + 1]
+                    + b2 * normal[self.offset + 2];
                 if new_normal.length_squared() > 0.0 {
                     new_normal.normalize()
                 } else {
@@ -327,9 +319,9 @@ impl Shape for Triangle {
 
             // Compute shading tangent for triangle.
             let mut shading_tangent = if let Some(tangent) = &self.mesh.tangent {
-                let new_tangent = b0 * tangent[self.indices[0]]
-                    + b1 * tangent[self.indices[1]]
-                    + b2 * tangent[self.indices[2]];
+                let new_tangent = b0 * tangent[self.offset]
+                    + b1 * tangent[self.offset + 1]
+                    + b2 * tangent[self.offset + 2];
                 if new_tangent.length_squared() > 0.0 {
                     new_tangent.normalize()
                 } else {
@@ -357,8 +349,8 @@ impl Shape for Triangle {
                 // Compute deltas for triangle partial derivatives of normal.
                 let duv02 = uvs[0] - uvs[2];
                 let duv12 = uvs[1] - uvs[2];
-                let dn1 = normal[self.indices[0]] - normal[self.indices[2]];
-                let dn2 = normal[self.indices[1]] - normal[self.indices[2]];
+                let dn1 = normal[self.offset] - normal[self.offset + 2];
+                let dn2 = normal[self.offset + 1] - normal[self.offset + 2];
                 let determinant = duv02[0] * duv12[1] - duv02[1] * duv12[0];
                 let degenerate_uv = determinant.abs() < 1e-8;
                 if degenerate_uv {
@@ -367,9 +359,8 @@ impl Shape for Triangle {
                     // and dpdv when this happens. It's important to do this
                     // so that ray differentials for rays reflected from triangles
                     // with degenerate parameterizations are still reasonable.
-                    let dn = Vec3::from(normal[self.indices[2]] - normal[self.indices[0]]).cross(
-                        &Vec3::from(normal[self.indices[1]] - normal[self.indices[0]]),
-                    );
+                    let dn = Vec3::from(normal[self.offset + 2] - normal[self.offset])
+                        .cross(&Vec3::from(normal[self.offset + 1] - normal[self.offset]));
                     if dn.length_squared() != 0.0 {
                         let (dnu, dnv) = Vec3::coordinate_system(&dn);
                         dndu = Normal::from(dnu);
@@ -394,9 +385,9 @@ impl Shape for Triangle {
 
     fn intersect_test(&self, ray: &Ray) -> bool {
         // Get triangle vertices.
-        let p0 = &self.mesh.position[self.indices[0]];
-        let p1 = &self.mesh.position[self.indices[1]];
-        let p2 = &self.mesh.position[self.indices[2]];
+        let p0 = &self.mesh.position[self.offset];
+        let p1 = &self.mesh.position[self.offset + 1];
+        let p2 = &self.mesh.position[self.offset + 2];
 
         // Translate vertices based on ray origin.
         let ray_origin = Vec3::from(ray.origin);
@@ -528,9 +519,9 @@ impl Shape for Triangle {
         let b = uniform_sample_triangle(u);
 
         // Query triangle vertices.
-        let p0 = &self.mesh.position[self.indices[0]];
-        let p1 = &self.mesh.position[self.indices[1]];
-        let p2 = &self.mesh.position[self.indices[2]];
+        let p0 = &self.mesh.position[self.offset];
+        let p1 = &self.mesh.position[self.offset + 1];
+        let p2 = &self.mesh.position[self.offset + 2];
 
         let p = b[0] * p0 + b[1] * p1 + (1.0 - b[0] - b[1]) * p2;
 
@@ -539,9 +530,9 @@ impl Shape for Triangle {
         // Ensure correct orientation of the geometric normal.
         if let Some(normal) = &self.mesh.normal {
             let ns = Normal::from(
-                b[0] * normal[self.indices[0]]
-                    + b[1] * normal[self.indices[1]]
-                    + (1.0 - b[0] - b[1]) * normal[self.indices[2]],
+                b[0] * normal[self.offset]
+                    + b[1] * normal[self.offset + 1]
+                    + (1.0 - b[0] - b[1]) * normal[self.offset + 2],
             );
             n = n.face_forward(&ns);
         } else if self.reverse_orientation ^ self.transform_swaps_handedness {
@@ -564,17 +555,17 @@ impl Shape for Triangle {
     }
 
     fn area(&self) -> Float {
-        let p0 = &self.mesh.position[self.indices[0]];
-        let p1 = &self.mesh.position[self.indices[1]];
-        let p2 = &self.mesh.position[self.indices[2]];
+        let p0 = &self.mesh.position[self.offset];
+        let p1 = &self.mesh.position[self.offset + 1];
+        let p2 = &self.mesh.position[self.offset + 2];
         0.5 * (p1 - p0).cross(&(p2 - p0)).length()
     }
 
     fn solid_angle(&self, p: &Point3, _num_samples: u32) -> Float {
         // Project the vertices into the unit sphere around p.
-        let p1 = &self.mesh.position[self.indices[0]] - p;
-        let p2 = &self.mesh.position[self.indices[1]] - p;
-        let p3 = &self.mesh.position[self.indices[2]] - p;
+        let p1 = &self.mesh.position[self.offset] - p;
+        let p2 = &self.mesh.position[self.offset + 1] - p;
+        let p3 = &self.mesh.position[self.offset + 2] - p;
 
         let mut p1p2_cross = p1.cross(&p2);
         let mut p2p3_cross = p2.cross(&p3);

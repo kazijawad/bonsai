@@ -2,7 +2,7 @@ use rand::prelude::*;
 
 use crate::{
     base::{
-        constants::{Float, ONE_MINUS_EPSILON, PI},
+        constants::{Float, ONE_MINUS_EPSILON, PI, PI_OVER_TWO},
         math::find_interval,
     },
     geometries::{point2::Point2F, vec2::Vec2, vec3::Vec3},
@@ -192,7 +192,7 @@ pub fn concentric_sample_disk(u: &Point2F) -> Point2F {
     let (theta, radius) = if offset.x.abs() > offset.y.abs() {
         ((PI / 4.0) * (offset.y / offset.x), offset.x)
     } else {
-        ((PI / 2.0) - (PI / 4.0) * (offset.x / offset.y), offset.y)
+        (PI_OVER_TWO - (PI / 4.0) * (offset.x / offset.y), offset.y)
     };
 
     radius * Point2F::new(theta.cos(), theta.sin())

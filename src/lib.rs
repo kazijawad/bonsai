@@ -53,7 +53,10 @@ pub use geometries::{
     vec3::Vec3,
 };
 pub use integrators::whitted::WhittedIntegrator;
-pub use io::image::{Image, ImageWrapMode};
+pub use io::{
+    image::{Image, ImageWrapMode},
+    obj::OBJ,
+};
 pub use lights::{
     diffuse::{DiffuseAreaLight, DiffuseAreaLightOptions},
     directional::{DirectionalLight, DirectionalLightOptions},

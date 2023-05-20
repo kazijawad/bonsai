@@ -96,6 +96,33 @@ impl Transform {
         Self::new(m, m_inverse)
     }
 
+    pub fn rotate(theta: Float, axis: &Vec3) -> Self {
+        let a = axis.normalize();
+        let sin_theta = theta.to_radians().sin();
+        let cos_theta = theta.to_radians().cos();
+
+        let mut m = Mat4::default();
+
+        m.m[0][0] = a.x * a.x + (1.0 - a.x * a.x) * cos_theta;
+        m.m[0][1] = a.x * a.y * (1.0 - cos_theta) - a.z * sin_theta;
+        m.m[0][2] = a.x * a.z * (1.0 - cos_theta) + a.y * sin_theta;
+        m.m[0][3] = 0.0;
+
+        m.m[1][0] = a.x * a.y * (1.0 - cos_theta) + a.z * sin_theta;
+        m.m[1][1] = a.y * a.y + (1.0 - a.y * a.y) * cos_theta;
+        m.m[1][2] = a.y * a.z * (1.0 - cos_theta) - a.x * sin_theta;
+        m.m[1][3] = 0.0;
+
+        m.m[2][0] = a.x * a.z * (1.0 - cos_theta) - a.y * sin_theta;
+        m.m[2][1] = a.y * a.z * (1.0 - cos_theta) + a.x * sin_theta;
+        m.m[2][2] = a.z * a.z + (1.0 - a.z * a.z) * cos_theta;
+        m.m[2][3] = 0.0;
+
+        let m_transpose = m.transpose();
+
+        Self::new(m, m_transpose)
+    }
+
     pub fn scale(x: Float, y: Float, z: Float) -> Self {
         debug_assert!(x != 0.0 && y != 0.0 && z != 0.0);
         let m = Mat4::new(
@@ -120,64 +147,6 @@ impl Transform {
             1.0,
         );
         Self::new(m, m_inverse)
-    }
-
-    pub fn rotate_x(theta: Float) -> Self {
-        let sin_theta = theta.to_radians().sin();
-        let cos_theta = theta.to_radians().cos();
-        let m = Mat4::new(
-            1.0, 0.0, 0.0, 0.0, 0.0, cos_theta, -sin_theta, 0.0, 0.0, sin_theta, cos_theta, 0.0,
-            0.0, 0.0, 0.0, 1.0,
-        );
-        let m_transpose = m.transpose();
-        Self::new(m, m_transpose)
-    }
-
-    pub fn rotate_y(theta: Float) -> Self {
-        let sin_theta = theta.to_radians().sin();
-        let cos_theta = theta.to_radians().cos();
-        let m = Mat4::new(
-            cos_theta, 0.0, sin_theta, 0.0, 0.0, 1.0, 0.0, 0.0, -sin_theta, 0.0, cos_theta, 0.0,
-            0.0, 0.0, 0.0, 1.0,
-        );
-        let m_transpose = m.transpose();
-        Self::new(m, m_transpose)
-    }
-
-    pub fn rotate_z(theta: Float) -> Self {
-        let sin_theta = theta.to_radians().sin();
-        let cos_theta = theta.to_radians().cos();
-        let m = Mat4::new(
-            cos_theta, -sin_theta, 0.0, 0.0, sin_theta, cos_theta, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
-            0.0, 0.0, 0.0, 1.0,
-        );
-        let m_transpose = m.transpose();
-        Self::new(m, m_transpose)
-    }
-
-    pub fn rotate(theta: Float, axis: &Vec3) -> Self {
-        let a = axis.normalize();
-        let sin_theta = theta.to_radians().sin();
-        let cos_theta = theta.to_radians().cos();
-        let mut m = Mat4::default();
-
-        m.m[0][0] = a.x * a.x + (1.0 - a.x * a.x) * cos_theta;
-        m.m[0][1] = a.x * a.y * (1.0 - cos_theta) - a.z * sin_theta;
-        m.m[0][2] = a.x * a.z * (1.0 - cos_theta) + a.y * sin_theta;
-        m.m[0][3] = 0.0;
-
-        m.m[1][0] = a.x * a.y * (1.0 - cos_theta) + a.z * sin_theta;
-        m.m[1][1] = a.y * a.y + (1.0 - a.y * a.y) * cos_theta;
-        m.m[1][2] = a.y * a.z * (1.0 - cos_theta) - a.x * sin_theta;
-        m.m[1][3] = 0.0;
-
-        m.m[2][0] = a.x * a.z * (1.0 - cos_theta) - a.y * sin_theta;
-        m.m[2][1] = a.y * a.z * (1.0 - cos_theta) + a.x * sin_theta;
-        m.m[2][2] = a.z * a.z + (1.0 - a.z * a.z) * cos_theta;
-        m.m[2][3] = 0.0;
-
-        let m_transpose = m.transpose();
-        Self::new(m, m_transpose)
     }
 
     pub fn look_at(position: &Point3, look: &Point3, up: &Vec3) -> Self {
