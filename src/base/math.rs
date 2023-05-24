@@ -1,7 +1,4 @@
-use crate::{
-    base::constants::{Float, MACHINE_EPSILON},
-    geometries::point3::Point3,
-};
+use crate::base::constants::{Float, MACHINE_EPSILON};
 
 pub fn gamma(n: Float) -> Float {
     (n * MACHINE_EPSILON) / (1.0 - n * MACHINE_EPSILON)

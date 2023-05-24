@@ -1,6 +1,6 @@
 use crate::{
     base::{
-        constants::{Float, PI},
+        constants::{Float, INV_TWO_PI, PI},
         transform::Transform,
     },
     geometries::{point2::Point2F, point3::Point3, vec2::Vec2F, vec3::Vec3},
@@ -57,7 +57,7 @@ impl SphericalMapping2D {
 impl CylindricalMapping2D {
     fn cylinder(&self, p: &Point3) -> Point2F {
         let v = (p.transform(&self.world_to_texture) - Point3::default()).normalize();
-        Point2F::new((PI + v.y.atan2(v.x)) * (1.0 / (2.0 * PI)), v.z)
+        Point2F::new((PI + v.y.atan2(v.x)) * INV_TWO_PI, v.z)
     }
 }
 

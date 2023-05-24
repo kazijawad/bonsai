@@ -2,7 +2,7 @@ use crate::{
     base::{
         constants::{Float, ONE_MINUS_EPSILON, PI},
         interaction::Interaction,
-        light::{AreaLight, Light, LightPointSample, VisibilityTester},
+        light::{AreaLight, Light, LightPointSample, LightRaySample, VisibilityTester},
         sampling::{cosine_hemisphere_pdf, cosine_sample_hemisphere},
         shape::Shape,
     },
@@ -79,13 +79,13 @@ impl<'a> Light for DiffuseAreaLight<'a> {
         origin_sample: &Point2F,
         direction_sample: &Point2F,
         _: Float,
-    ) -> (RGBSpectrum, Ray, Normal, Float, Float) {
-        let mut pdf_position = 0.0;
-        let point_it = self.shape.sample(origin_sample, &mut pdf_position);
+    ) -> LightRaySample {
+        let mut position_pdf = 0.0;
+        let point_it = self.shape.sample(origin_sample, &mut position_pdf);
 
         // Sample a cosine-weighted outgoing direction.
         let mut direction: Vec3;
-        let pdf_direction: Float;
+        let direction_pdf: Float;
         if self.double_sided {
             let mut sample = direction_sample.clone();
             // Choose a side to sample and then remap the sample to [0,1] before
@@ -98,23 +98,23 @@ impl<'a> Light for DiffuseAreaLight<'a> {
                 direction = cosine_sample_hemisphere(&sample);
                 direction.z *= -1.0;
             }
-            pdf_direction = 0.5 * cosine_hemisphere_pdf(direction.z.abs());
+            direction_pdf = 0.5 * cosine_hemisphere_pdf(direction.z.abs());
         } else {
             direction = cosine_sample_hemisphere(direction_sample);
-            pdf_direction = cosine_hemisphere_pdf(direction.z);
+            direction_pdf = cosine_hemisphere_pdf(direction.z);
         }
 
         let normal = Vec3::from(point_it.n());
         let (v1, v2) = Vec3::coordinate_system(&normal);
         direction = direction.x * v1 + direction.y * v2 + direction.z * normal;
 
-        (
-            self.emission(&point_it, &direction),
-            point_it.spawn_ray(&direction),
-            point_it.n(),
-            pdf_position,
-            pdf_direction,
-        )
+        LightRaySample {
+            radiance: self.emission(&point_it, &direction),
+            ray: point_it.spawn_ray(&direction),
+            light_normal: point_it.n(),
+            position_pdf,
+            direction_pdf,
+        }
     }
 
     fn ray_pdf(&self, ray: &Ray, surface_normal: &Normal) -> (Float, Float) {

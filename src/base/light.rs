@@ -18,12 +18,7 @@ pub trait Light: Send + Sync {
         0.0
     }
 
-    fn sample_ray(
-        &self,
-        u1: &Point2F,
-        u2: &Point2F,
-        time: Float,
-    ) -> (RGBSpectrum, Ray, Normal, Float, Float);
+    fn sample_ray(&self, u1: &Point2F, u2: &Point2F, time: Float) -> LightRaySample;
 
     fn ray_pdf(&self, ray: &Ray, n: &Normal) -> (Float, Float);
 
@@ -41,6 +36,14 @@ pub struct LightPointSample {
     pub wi: Vec3,
     pub pdf: Float,
     pub visibility: Option<VisibilityTester>,
+}
+
+pub struct LightRaySample {
+    pub radiance: RGBSpectrum,
+    pub ray: Ray,
+    pub light_normal: Normal,
+    pub position_pdf: Float,
+    pub direction_pdf: Float,
 }
 
 pub struct VisibilityTester {

@@ -2,7 +2,7 @@ use rand::prelude::*;
 
 use crate::{
     base::{
-        constants::{Float, ONE_MINUS_EPSILON, PI, PI_OVER_TWO},
+        constants::{Float, INV_TWO_PI, ONE_MINUS_EPSILON, PI, PI_OVER_TWO},
         math::find_interval,
     },
     geometries::{point2::Point2F, vec2::Vec2, vec3::Vec3},
@@ -110,6 +110,12 @@ impl Distribution2D {
 
         Point2F::new(d0, d1)
     }
+
+    pub fn pdf(&self, p: &Point2F) -> Float {
+        let u = (p[0] as usize * self.p_cond_v[0].count()).clamp(0, self.p_cond_v[0].count() - 1);
+        let v = (p[1] as usize * self.p_marginal.count()).clamp(0, self.p_marginal.count() - 1);
+        self.p_cond_v[v].func[u] / self.p_marginal.func_int
+    }
 }
 
 pub fn shuffle<T>(sample: &mut [T], count: usize, num_dims: usize, rng: &mut StdRng) {
@@ -206,7 +212,7 @@ pub fn uniform_sample_hemisphere(u: &Point2F) -> Vec3 {
 }
 
 pub fn uniform_hemisphere_pdf() -> Float {
-    1.0 / (2.0 * PI)
+    INV_TWO_PI
 }
 
 pub fn uniform_sample_sphere(u: &Point2F) -> Vec3 {

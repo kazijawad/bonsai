@@ -2,7 +2,7 @@ use crate::{
     base::{
         constants::{Float, PI},
         interaction::Interaction,
-        light::{Light, LightPointSample, VisibilityTester},
+        light::{Light, LightPointSample, LightRaySample, VisibilityTester},
         primitive::Primitive,
         sampling::concentric_sample_disk,
     },
@@ -68,12 +68,7 @@ impl Light for DirectionalLight {
         }
     }
 
-    fn sample_ray(
-        &self,
-        u1: &Point2F,
-        _: &Point2F,
-        time: Float,
-    ) -> (RGBSpectrum, Ray, Normal, Float, Float) {
+    fn sample_ray(&self, u1: &Point2F, _: &Point2F, time: Float) -> LightRaySample {
         // Choose point on disk oriented toward infinite light direction.
         let (v1, v2) = Vec3::coordinate_system(&self.direction);
         let concentric_disk = concentric_sample_disk(u1);
@@ -88,13 +83,13 @@ impl Light for DirectionalLight {
             time,
         );
 
-        (
-            self.intensity,
+        LightRaySample {
+            radiance: self.intensity,
             ray,
-            Normal::from(ray.direction),
-            1.0 / (PI * self.world_radius * self.world_radius),
-            1.0,
-        )
+            light_normal: Normal::from(ray.direction),
+            position_pdf: 1.0 / (PI * self.world_radius * self.world_radius),
+            direction_pdf: 1.0,
+        }
     }
 
     fn ray_pdf(&self, _ray: &Ray, _surface_normal: &Normal) -> (Float, Float) {

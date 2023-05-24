@@ -3,7 +3,7 @@ use crate::{
         bxdf::cos_theta,
         constants::{Float, PI},
         interaction::Interaction,
-        light::{Light, LightPointSample, VisibilityTester},
+        light::{Light, LightPointSample, LightRaySample, VisibilityTester},
         sampling::{uniform_cone_pdf, uniform_sample_cone},
         transform::Transform,
     },
@@ -101,12 +101,7 @@ impl Light for SpotLight {
         }
     }
 
-    fn sample_ray(
-        &self,
-        u1: &Point2F,
-        _: &Point2F,
-        time: Float,
-    ) -> (RGBSpectrum, Ray, Normal, Float, Float) {
+    fn sample_ray(&self, u1: &Point2F, _: &Point2F, time: Float) -> LightRaySample {
         let w = uniform_sample_cone(u1, self.cos_total_width);
         let ray = Ray::new(
             &self.position,
@@ -114,13 +109,13 @@ impl Light for SpotLight {
             Float::INFINITY,
             time,
         );
-        (
-            self.intensity * self.falloff(&ray.direction),
+        LightRaySample {
+            radiance: self.intensity * self.falloff(&ray.direction),
             ray,
-            Normal::from(ray.direction),
-            1.0,
-            uniform_cone_pdf(self.cos_total_width),
-        )
+            light_normal: Normal::from(ray.direction),
+            position_pdf: 1.0,
+            direction_pdf: uniform_cone_pdf(self.cos_total_width),
+        }
     }
 
     fn ray_pdf(&self, ray: &Ray, _: &Normal) -> (Float, Float) {

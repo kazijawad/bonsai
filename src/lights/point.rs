@@ -2,7 +2,7 @@ use crate::{
     base::{
         constants::{Float, PI},
         interaction::Interaction,
-        light::{Light, LightPointSample, VisibilityTester},
+        light::{Light, LightPointSample, LightRaySample, VisibilityTester},
         sampling::{uniform_sample_sphere, uniform_sphere_pdf},
         transform::Transform,
     },
@@ -54,25 +54,20 @@ impl Light for PointLight {
         }
     }
 
-    fn sample_ray(
-        &self,
-        u1: &Point2F,
-        _: &Point2F,
-        time: Float,
-    ) -> (RGBSpectrum, Ray, Normal, Float, Float) {
+    fn sample_ray(&self, u1: &Point2F, _: &Point2F, time: Float) -> LightRaySample {
         let ray = Ray::new(
             &self.position,
             &uniform_sample_sphere(u1),
             Float::INFINITY,
             time,
         );
-        (
-            self.intensity,
+        LightRaySample {
+            radiance: self.intensity,
             ray,
-            Normal::from(ray.direction),
-            1.0,
-            uniform_sphere_pdf(),
-        )
+            light_normal: Normal::from(ray.direction),
+            position_pdf: 1.0,
+            direction_pdf: uniform_sphere_pdf(),
+        }
     }
 
     fn ray_pdf(&self, _ray: &Ray, _surface_normal: &Normal) -> (Float, Float) {
