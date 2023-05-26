@@ -1,9 +1,10 @@
 use crate::{
     base::constants::Float,
     geometries::{normal::Normal, point3::Point3, ray::Ray, vec3::Vec3},
+    interactions::surface::SurfaceInteraction,
 };
 
-pub trait Interaction: Send + Sync {
+pub trait Interaction<'a>: Send + Sync {
     fn p(&self) -> Point3;
 
     fn p_error(&self) -> Vec3;
@@ -36,5 +37,9 @@ pub trait Interaction: Send + Sync {
             .offset_ray_origin(&it.p_error(), &it.n(), &(origin - it.p()));
         let direction = target - origin;
         Ray::new(&origin, &direction, 1.0 - 0.0001, self.time())
+    }
+
+    fn surface_interaction(&self) -> Option<&SurfaceInteraction<'a>> {
+        None
     }
 }

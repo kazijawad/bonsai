@@ -1,9 +1,8 @@
-use rand::prelude::*;
-
 use crate::{
     base::{
         constants::{Float, INV_TWO_PI, ONE_MINUS_EPSILON, PI, PI_OVER_TWO},
         math::find_interval,
+        rng::RNG,
     },
     geometries::{point2::Point2F, vec2::Vec2, vec3::Vec3},
 };
@@ -75,6 +74,29 @@ impl Distribution1D {
 
         (offset as Float + du) / self.count() as Float
     }
+
+    pub fn sample_discrete(
+        &self,
+        u: Float,
+        pdf: &mut Float,
+        u_remapped: Option<&mut Float>,
+    ) -> usize {
+        // Find surrounding CDF segments and offset.
+        let offset = find_interval(self.cdf.len(), |index| self.cdf[index] <= u);
+
+        *pdf = if self.func_int > 0.0 {
+            self.func[offset] / (self.func_int * self.count() as Float)
+        } else {
+            0.0
+        };
+
+        if let Some(ur) = u_remapped {
+            *ur = (u - self.cdf[offset]) / (self.cdf[offset + 1] - self.cdf[offset]);
+            debug_assert!(*ur >= 0.0 && *ur <= 1.0);
+        }
+
+        offset
+    }
 }
 
 impl Distribution2D {
@@ -118,69 +140,63 @@ impl Distribution2D {
     }
 }
 
-pub fn shuffle<T>(sample: &mut [T], count: usize, num_dims: usize, rng: &mut StdRng) {
-    for i in 0..count {
-        let other = i + rng.gen_range(0..(count - i));
-        for j in 0..num_dims {
-            sample.swap(num_dims * i + j, num_dims * other + j);
+pub fn shuffle<T>(rng: &mut RNG, samples: &mut [T], dimensions: usize) {
+    let sample_count = samples.len();
+
+    for i in 0..sample_count {
+        let other = i + rng.uniform_discrete_range(0, sample_count - i);
+        for j in 0..dimensions {
+            samples.swap(dimensions * i + j, dimensions * other + j);
         }
     }
 }
 
-pub fn stratified_sample_1d(
-    samples: &mut [Float],
-    num_samples: usize,
-    rng: &mut StdRng,
-    jitter: bool,
-) {
-    let inv_num_samples = 1.0 / num_samples as Float;
-    for i in 0..num_samples {
-        let delta = if jitter { rng.gen_range(0.0..1.0) } else { 0.5 };
-        samples[i] = ((i as Float + delta) * inv_num_samples).min(ONE_MINUS_EPSILON);
+pub fn stratified_sample_1d(rng: &mut RNG, samples: &mut [Float], jitter_samples: bool) {
+    let sample_count = samples.len();
+
+    let inv_sample_count = 1.0 / sample_count as Float;
+
+    for i in 0..sample_count {
+        let delta = if jitter_samples {
+            rng.uniform_continuous()
+        } else {
+            0.5
+        };
+
+        samples[i] = ((i as Float + delta) * inv_sample_count).min(ONE_MINUS_EPSILON);
     }
 }
 
 pub fn stratified_sample_2d(
+    rng: &mut RNG,
     samples: &mut [Point2F],
     nx: usize,
     ny: usize,
-    rng: &mut StdRng,
-    jitter: bool,
+    jitter_samples: bool,
 ) {
-    let dx = 1.0 / nx as Float;
-    let dy = 1.0 / ny as Float;
+    let delta_x = 1.0 / nx as Float;
+    let delta_y = 1.0 / ny as Float;
+
     let mut i = 0;
     for y in 0..ny {
         for x in 0..nx {
-            let jx = if jitter { rng.gen_range(0.0..1.0) } else { 0.5 };
-            let jy = if jitter { rng.gen_range(0.0..1.0) } else { 0.5 };
-            samples[i].x = Float::min((x as Float + jx) * dx, ONE_MINUS_EPSILON);
-            samples[i].y = Float::min((y as Float + jy) * dy, ONE_MINUS_EPSILON);
+            let jitter_x = if jitter_samples {
+                rng.uniform_continuous()
+            } else {
+                0.5
+            };
+
+            let jitter_y = if jitter_samples {
+                rng.uniform_continuous()
+            } else {
+                0.5
+            };
+
+            let sample = &mut samples[i];
+            sample.x = Float::min((x as Float + jitter_x) * delta_x, ONE_MINUS_EPSILON);
+            sample.y = Float::min((y as Float + jitter_y) * delta_y, ONE_MINUS_EPSILON);
+
             i += 1;
-        }
-    }
-}
-
-pub fn latin_hypercube(
-    samples: &mut [Point2F],
-    num_samples: usize,
-    num_dims: usize,
-    rng: &mut StdRng,
-) {
-    // Generate LHS samples along diagonal.
-    let inverse_num_samples = 1.0 / num_samples as Float;
-    for i in 0..num_samples {
-        for j in 0..num_dims {
-            let sj = (i as Float + rng.gen_range(0.0..1.0)) * inverse_num_samples;
-            samples[num_dims * i + j].x = sj.min(ONE_MINUS_EPSILON);
-        }
-    }
-
-    // Permute LHS samples in each dimension.
-    for i in 0..num_dims {
-        for j in 0..num_samples {
-            let other = j + rng.gen_range(0..(num_samples - j));
-            samples.swap(num_dims * j + i, num_dims * other + i);
         }
     }
 }
@@ -250,4 +266,10 @@ pub fn cosine_sample_hemisphere(u: &Point2F) -> Vec3 {
 
 pub fn cosine_hemisphere_pdf(cos_theta: Float) -> Float {
     cos_theta * (1.0 / PI)
+}
+
+pub fn power_heuristic(nf: Float, pdf_f: Float, ng: Float, pdf_g: Float) -> Float {
+    let f = nf * pdf_f;
+    let g = ng * pdf_g;
+    (f * f) / (f * f + g * g)
 }

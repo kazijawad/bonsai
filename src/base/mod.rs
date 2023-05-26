@@ -15,6 +15,7 @@ pub mod math;
 pub mod microfacet;
 pub mod mipmap;
 pub mod primitive;
+pub mod rng;
 pub mod sampler;
 pub mod sampling;
 pub mod scene;

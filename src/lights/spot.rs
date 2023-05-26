@@ -3,7 +3,10 @@ use crate::{
         bxdf::cos_theta,
         constants::{Float, PI},
         interaction::Interaction,
-        light::{Light, LightPointSample, LightRaySample, VisibilityTester},
+        light::{
+            Light, LightFlag, LightPointSample, LightRaySample, VisibilityTester,
+            DELTA_POSITION_LIGHT,
+        },
         sampling::{uniform_cone_pdf, uniform_sample_cone},
         transform::Transform,
     },
@@ -21,6 +24,7 @@ pub struct SpotLight {
     intensity: RGBSpectrum,
     cos_total_width: Float,
     cos_falloff_start: Float,
+    flag: LightFlag,
 }
 
 pub struct SpotLightOptions {
@@ -56,6 +60,7 @@ impl SpotLight {
             intensity: opts.intensity,
             cos_total_width: opts.cone_angle.to_radians().cos(),
             cos_falloff_start: (opts.cone_angle - opts.cone_delta_angle).to_radians().cos(),
+            flag: DELTA_POSITION_LIGHT,
         }
     }
 
@@ -127,5 +132,9 @@ impl Light for SpotLight {
                 0.0
             },
         )
+    }
+
+    fn flag(&self) -> LightFlag {
+        self.flag
     }
 }

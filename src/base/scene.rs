@@ -1,5 +1,8 @@
 use crate::{
-    base::{light::Light, primitive::Primitive},
+    base::{
+        light::{Light, INFINITE_LIGHT},
+        primitive::Primitive,
+    },
     geometries::{bounds3::Bounds3, ray::Ray},
     interactions::surface::SurfaceInteraction,
 };
@@ -18,7 +21,7 @@ impl<'a> Scene<'a> {
         let infinite_lights = lights
             .iter()
             .map(|v| *v)
-            .filter(|v| v.is_infinite())
+            .filter(|v| v.flag() & INFINITE_LIGHT != 0)
             .collect();
 
         Self {

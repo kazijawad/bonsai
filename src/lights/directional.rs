@@ -2,7 +2,10 @@ use crate::{
     base::{
         constants::{Float, PI},
         interaction::Interaction,
-        light::{Light, LightPointSample, LightRaySample, VisibilityTester},
+        light::{
+            Light, LightFlag, LightPointSample, LightRaySample, VisibilityTester,
+            DELTA_DIRECTION_LIGHT,
+        },
         primitive::Primitive,
         sampling::concentric_sample_disk,
     },
@@ -16,6 +19,7 @@ pub struct DirectionalLight {
     direction: Vec3,
     world_center: Point3,
     world_radius: Float,
+    flag: LightFlag,
 }
 
 pub struct DirectionalLightOptions<'a> {
@@ -40,6 +44,7 @@ impl DirectionalLight {
             direction,
             world_center,
             world_radius,
+            flag: DELTA_DIRECTION_LIGHT,
         }
     }
 }
@@ -94,5 +99,9 @@ impl Light for DirectionalLight {
 
     fn ray_pdf(&self, _ray: &Ray, _surface_normal: &Normal) -> (Float, Float) {
         (1.0 / (PI * self.world_radius * self.world_radius), 0.0)
+    }
+
+    fn flag(&self) -> LightFlag {
+        self.flag
     }
 }

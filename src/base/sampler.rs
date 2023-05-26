@@ -6,9 +6,9 @@ use crate::{
 };
 
 pub trait Sampler: Send + Sync + DynClone {
-    fn seed(&self, seed: i32) -> Box<dyn Sampler>;
+    fn seed(&self, seed: u64) -> Box<dyn Sampler>;
 
-    fn start_pixel(&mut self, p: &Point2I);
+    fn start_pixel_sample(&mut self, p: &Point2I);
 
     fn get_1d(&mut self) -> Float;
     fn get_2d(&mut self) -> Point2F;
@@ -21,16 +21,13 @@ pub trait Sampler: Send + Sync + DynClone {
         }
     }
 
-    fn request_1d_batch(&mut self, n: usize);
-    fn request_2d_batch(&mut self, n: usize);
-
-    fn get_1d_batch(&mut self, n: usize) -> Vec<Float>;
-    fn get_2d_batch(&mut self, n: usize) -> Vec<Point2F>;
-
     fn start_next_sample(&mut self) -> bool;
-    fn set_sample_number(&mut self, sample_number: usize) -> bool;
 
-    fn current_sample_number(&self) -> usize;
+    fn current_sample_index(&self) -> usize;
+
+    fn round_count(&self, n: usize) -> usize {
+        n
+    }
 
     fn samples_per_pixel(&self) -> usize;
 }

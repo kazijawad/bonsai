@@ -3,7 +3,9 @@ use crate::{
         constants::{Float, INV_PI, INV_TWO_PI, PI},
         geometry::{spherical_phi, spherical_theta},
         interaction::Interaction,
-        light::{Light, LightPointSample, LightRaySample, VisibilityTester},
+        light::{
+            Light, LightFlag, LightPointSample, LightRaySample, VisibilityTester, INFINITE_LIGHT,
+        },
         mipmap::MIPMap,
         primitive::Primitive,
         sampling::{concentric_sample_disk, Distribution2D},
@@ -23,6 +25,7 @@ pub struct InfiniteAreaLight {
     world_center: Point3,
     world_radius: Float,
     distribution: Distribution2D,
+    flag: LightFlag,
 }
 
 pub struct InfiniteAreaLightOptions<'a> {
@@ -71,6 +74,7 @@ impl InfiniteAreaLight {
             world_center,
             world_radius,
             distribution: Distribution2D::new(func, width, height),
+            flag: INFINITE_LIGHT,
         }
     }
 }
@@ -229,7 +233,7 @@ impl Light for InfiniteAreaLight {
         )
     }
 
-    fn is_infinite(&self) -> bool {
-        true
+    fn flag(&self) -> LightFlag {
+        self.flag
     }
 }

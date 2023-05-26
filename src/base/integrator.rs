@@ -1,12 +1,20 @@
+use rayon::prelude::*;
+
 use crate::{
     base::{
-        bxdf::{BSDF_REFLECTION, BSDF_SPECULAR, BSDF_TRANSMISSION},
+        bxdf::{BSDF_ALL, BSDF_REFLECTION, BSDF_SPECULAR, BSDF_TRANSMISSION},
+        camera::Camera,
+        constants::Float,
         interaction::Interaction,
+        light::{is_delta_light, Light},
         sampler::Sampler,
+        sampling::{power_heuristic, Distribution1D},
         scene::Scene,
         spectrum::Spectrum,
     },
     geometries::{
+        bounds2::Bounds2I,
+        point2::{Point2F, Point2I},
         ray::{Ray, RayDifferentials},
         vec3::Vec3,
     },
@@ -14,16 +22,122 @@ use crate::{
     spectra::rgb::RGBSpectrum,
 };
 
+const TILE_SIZE: i32 = 16;
+
 pub trait Integrator: Send + Sync {
     fn render(&self, scene: &Scene);
 }
 
-pub trait SamplerIntegrator: Send + Sync + Integrator {
+pub trait SamplerIntegrator: Send + Sync {
+    fn camera(&self) -> &dyn Camera;
+
+    fn sampler(&self) -> &dyn Sampler;
+
+    fn render(&self, scene: &Scene) {
+        // Compute number of tiles to use for parallel rendering.
+        let sample_bounds = self.camera().film().sample_bounds();
+        let sample_extent = sample_bounds.diagonal();
+        let num_tiles = Point2I::new(
+            (sample_extent.x + TILE_SIZE - 1) / TILE_SIZE,
+            (sample_extent.y + TILE_SIZE - 1) / TILE_SIZE,
+        );
+
+        (0..num_tiles.y)
+            .collect::<Vec<i32>>()
+            .par_iter()
+            .for_each(|y| {
+                for x in 0..num_tiles.x {
+                    let tile = Point2I::new(x, *y);
+
+                    // Get sampler instance for tile.
+                    let seed = (tile.y * num_tiles.x + tile.x) as u64;
+                    let mut sampler = self.sampler().seed(seed);
+
+                    // Compute sample bounds for tile.
+                    let x0 = sample_bounds.min.x + tile.x * TILE_SIZE;
+                    let x1 = (x0 + TILE_SIZE).min(sample_bounds.max.x);
+
+                    let y0 = sample_bounds.min.y + tile.y * TILE_SIZE;
+                    let y1 = (y0 + TILE_SIZE).min(sample_bounds.max.y);
+
+                    let tile_bounds = Bounds2I::new(&Point2I::new(x0, y0), &Point2I::new(x1, y1));
+
+                    let mut film_tile = self.camera().film().get_film_tile(&tile_bounds);
+
+                    tile_bounds.traverse(|pixel| {
+                        sampler.start_pixel_sample(&pixel);
+
+                        if !self.camera().film().cropped_pixel_bounds.inside_exclusive(&pixel) {
+                            return;
+                        }
+
+                        loop {
+                            let camera_sample = sampler.get_camera_sample(&pixel);
+
+                            // Generate camera ray for current sample.
+                            let mut ray = Ray::default();
+                            let ray_weight = self.camera()
+                                .generate_ray(&camera_sample, &mut ray);
+                            ray.scale_differentials(
+                                1.0 / (sampler.samples_per_pixel() as Float).sqrt(),
+                            );
+
+                            // Evaluate radiance along camera ray.
+                            let mut radiance = if ray_weight > 0.0 {
+                                self.radiance(&mut ray, scene, sampler.as_mut(), 0)
+                            } else {
+                                RGBSpectrum::default()
+                            };
+
+                            // Issue warning if unexpected radiance value returned.
+                            if radiance.is_nan() {
+                                eprintln!(
+                                    "NaN radiance value returned for pixel ({:?}, {:?}), sample {:?}. Setting to black.",
+                                    pixel.x,
+                                    pixel.y,
+                                    sampler.current_sample_index()
+                                );
+                                radiance = RGBSpectrum::default();
+                            } else if radiance.y() < -1e-5 {
+                                eprintln!(
+                                    "Negative luminance value, {:?}, returned for pixel ({:?}, {:?}), sample {:?}, Setting to black.",
+                                    radiance.y(),
+                                    pixel.x,
+                                    pixel.y,
+                                    sampler.current_sample_index()
+                                );
+                                radiance = RGBSpectrum::default();
+                            } else if radiance.y().is_infinite() {
+                                eprintln!(
+                                    "Infinite luminance returned for pixel ({:?}, {:?}), sample {:?}, Setting to black.",
+                                    pixel.x,
+                                    pixel.y,
+                                    sampler.current_sample_index()
+                                );
+                                radiance = RGBSpectrum::default();
+                            }
+
+                            // Add camera ray's contribution to image.
+                            film_tile.add_sample(camera_sample.film, radiance, ray_weight);
+
+                            if !sampler.start_next_sample() {
+                                break;
+                            }
+                        }
+                    });
+
+                    self.camera().film().merge_film_tile(film_tile);
+                }
+            });
+
+        self.camera().film().write_image(1.0);
+    }
+
     fn radiance(
         &self,
         ray: &mut Ray,
         scene: &Scene,
-        sampler: &mut Box<dyn Sampler>,
+        sampler: &mut dyn Sampler,
         depth: u32,
     ) -> RGBSpectrum;
 
@@ -32,7 +146,7 @@ pub trait SamplerIntegrator: Send + Sync + Integrator {
         ray: &Ray,
         si: &SurfaceInteraction,
         scene: &Scene,
-        sampler: &mut Box<dyn Sampler>,
+        sampler: &mut dyn Sampler,
         depth: u32,
     ) -> RGBSpectrum {
         // Compute specular reflection direction and BSDF.
@@ -89,7 +203,7 @@ pub trait SamplerIntegrator: Send + Sync + Integrator {
         ray: &Ray,
         si: &SurfaceInteraction,
         scene: &Scene,
-        sampler: &mut Box<dyn Sampler>,
+        sampler: &mut dyn Sampler,
         depth: u32,
     ) -> RGBSpectrum {
         let p = si.p;
@@ -155,4 +269,172 @@ pub trait SamplerIntegrator: Send + Sync + Integrator {
 
         result
     }
+}
+
+pub fn uniform_sample_all_lights(
+    it: &dyn Interaction,
+    scene: &Scene,
+    sampler: &mut dyn Sampler,
+    light_sample_counts: &[usize],
+) -> RGBSpectrum {
+    let mut output = RGBSpectrum::default();
+
+    for i in 0..scene.lights.len() {
+        let light = scene.lights[i];
+        let sample_count = light_sample_counts[i];
+
+        let u_light_batch = (0..sample_count)
+            .map(|_| sampler.get_2d())
+            .collect::<Vec<Point2F>>();
+        let u_scattering_batch = (0..sample_count)
+            .map(|_| sampler.get_2d())
+            .collect::<Vec<Point2F>>();
+
+        let mut direct_output = RGBSpectrum::default();
+        for j in 0..sample_count {
+            direct_output +=
+                estimate_direct(it, scene, light, &u_scattering_batch[j], &u_light_batch[j]);
+        }
+        output += direct_output / sample_count as Float;
+    }
+
+    output
+}
+
+pub fn uniform_sample_one_light(
+    it: &dyn Interaction,
+    scene: &Scene,
+    sampler: &mut dyn Sampler,
+    light_distribution: Option<Distribution1D>,
+) -> RGBSpectrum {
+    // Randomly choose a single light to sample from.
+    let num_lights = scene.lights.len();
+    if num_lights == 0 {
+        return RGBSpectrum::default();
+    }
+
+    let light_index;
+    let mut light_pdf = 0.0;
+    if let Some(light_dist) = light_distribution {
+        light_index = light_dist.sample_discrete(sampler.get_1d(), &mut light_pdf, None);
+        if light_pdf == 0.0 {
+            return RGBSpectrum::default();
+        }
+    } else {
+        light_index =
+            (sampler.get_1d() * num_lights as Float).min(num_lights as Float - 1.0) as usize;
+        light_pdf = 1.0 / num_lights as Float;
+    };
+
+    let light = scene.lights[light_index];
+    let u_light = sampler.get_2d();
+    let u_scattering = sampler.get_2d();
+
+    estimate_direct(it, scene, light, &u_scattering, &u_light) / light_pdf
+}
+
+fn estimate_direct(
+    it: &dyn Interaction,
+    scene: &Scene,
+    light: &dyn Light,
+    u_scattering: &Point2F,
+    u_light: &Point2F,
+) -> RGBSpectrum {
+    let bsdf_flags = BSDF_ALL & !BSDF_SPECULAR;
+    let mut output = RGBSpectrum::default();
+
+    // Sample light source with multiple importance sampling.
+    let mut light_sample = light.sample_point(it, u_light);
+    let mut scattering_pdf = 0.0;
+    if light_sample.pdf > 0.0 && !light_sample.radiance.is_black() {
+        let mut f = RGBSpectrum::default();
+
+        if let Some(si) = it.surface_interaction() {
+            // Evaluate BSDF for light sampling strategy.
+            let bsdf = si
+                .bsdf
+                .as_ref()
+                .expect("Failed to find BSDF inside SurfaceInteraction");
+            f = bsdf.f(&si.wo, &light_sample.wi, bsdf_flags)
+                * light_sample.wi.abs_dot_normal(&si.shading.n);
+            scattering_pdf = bsdf.pdf(&si.wo, &light_sample.wi, bsdf_flags);
+        }
+
+        if !f.is_black() {
+            // Compute effect of visibility for light sample.
+            if !light_sample
+                .visibility
+                .expect("Failed to find VisibilityTester on LightPointSample")
+                .is_unoccluded(scene)
+            {
+                light_sample.radiance = RGBSpectrum::default();
+            }
+
+            // Add light's contribution to reflected radiance.
+            if !light_sample.radiance.is_black() {
+                if is_delta_light(light.flag()) {
+                    output += f * light_sample.radiance / light_sample.pdf;
+                } else {
+                    let weight = power_heuristic(1.0, light_sample.pdf, 1.0, scattering_pdf);
+                    output += f * light_sample.radiance * weight / light_sample.pdf;
+                }
+            }
+        }
+    }
+
+    // Sample BSDF with multiple importance sampling.
+    if !is_delta_light(light.flag()) {
+        let mut f = RGBSpectrum::default();
+        let mut sampled_specular = false;
+
+        if let Some(si) = it.surface_interaction() {
+            // Sample scattered direction for surface interactions.
+            let bsdf_sample = si
+                .bsdf
+                .as_ref()
+                .expect("Failed to find BSDF inside SurfaceInteraction")
+                .sample(&si.wo, u_scattering, bsdf_flags);
+
+            f = bsdf_sample.f * bsdf_sample.wi.abs_dot_normal(&si.shading.n);
+            sampled_specular = (bsdf_sample.sampled_type & BSDF_SPECULAR) != 0;
+        }
+
+        if !f.is_black() && scattering_pdf > 0.0 {
+            // Account for light contributions along sampled direction.
+            let mut weight = 1.0;
+            if !sampled_specular {
+                light_sample.pdf = light.point_pdf(it, &light_sample.wi);
+                if light_sample.pdf == 0.0 {
+                    return output;
+                }
+
+                weight = power_heuristic(1.0, scattering_pdf, 1.0, light_sample.pdf);
+            }
+
+            // Find intersection.
+            let mut light_si = SurfaceInteraction::default();
+            let mut ray = it.spawn_ray(&light_sample.wi);
+            let si_intersection = scene.intersect(&mut ray, &mut light_si);
+
+            // Add light contribution from material sampling.
+            let mut radiance = RGBSpectrum::default();
+            if si_intersection {
+                let primitive = light_si
+                    .primitive
+                    .as_ref()
+                    .expect("Failed to find primitive on SurfaceInteraction");
+                if primitive.area_light().is_some() {
+                    radiance = light_si.emitted_radiance(&-light_sample.wi);
+                }
+            } else {
+                radiance = light.radiance(&ray);
+            }
+
+            if !radiance.is_black() {
+                output += f * radiance * weight / scattering_pdf;
+            }
+        }
+    }
+
+    output
 }

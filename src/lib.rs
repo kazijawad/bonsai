@@ -26,6 +26,7 @@ pub use base::{
     material::Material,
     mipmap::MIPMap,
     primitive::Primitive,
+    rng::RNG,
     sampler::Sampler,
     scene::Scene,
     texture::{
@@ -52,7 +53,10 @@ pub use geometries::{
     vec2::{Vec2, Vec2F, Vec2I},
     vec3::Vec3,
 };
-pub use integrators::whitted::WhittedIntegrator;
+pub use integrators::{
+    direct::{DirectLightingIntegrator, LightStrategy},
+    whitted::WhittedIntegrator,
+};
 pub use io::{
     image::{Image, ImageWrapMode},
     obj::OBJ,

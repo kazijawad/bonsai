@@ -2,7 +2,10 @@ use crate::{
     base::{
         constants::{Float, ONE_MINUS_EPSILON, PI},
         interaction::Interaction,
-        light::{AreaLight, Light, LightPointSample, LightRaySample, VisibilityTester},
+        light::{
+            AreaLight, Light, LightFlag, LightPointSample, LightRaySample, VisibilityTester,
+            AREA_LIGHT,
+        },
         sampling::{cosine_hemisphere_pdf, cosine_sample_hemisphere},
         shape::Shape,
     },
@@ -16,6 +19,7 @@ pub struct DiffuseAreaLight<'a> {
     shape: &'a (dyn Shape + 'a),
     double_sided: bool,
     area: Float,
+    flag: LightFlag,
 }
 
 pub struct DiffuseAreaLightOptions<'a> {
@@ -32,6 +36,7 @@ impl<'a> DiffuseAreaLight<'a> {
             shape: opts.shape,
             double_sided: opts.double_sided,
             area,
+            flag: AREA_LIGHT,
         }
     }
 }
@@ -133,6 +138,10 @@ impl<'a> Light for DiffuseAreaLight<'a> {
                 cosine_hemisphere_pdf(surface_normal.dot(&Normal::from(ray.direction)))
             },
         )
+    }
+
+    fn flag(&self) -> LightFlag {
+        self.flag
     }
 }
 

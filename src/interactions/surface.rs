@@ -224,7 +224,7 @@ impl<'a> SurfaceInteraction<'a> {
     }
 }
 
-impl<'a> Interaction for SurfaceInteraction<'a> {
+impl<'a> Interaction<'a> for SurfaceInteraction<'a> {
     fn p(&self) -> Point3 {
         self.p
     }
@@ -243,6 +243,10 @@ impl<'a> Interaction for SurfaceInteraction<'a> {
 
     fn n(&self) -> Normal {
         self.n
+    }
+
+    fn surface_interaction(&self) -> Option<&SurfaceInteraction<'a>> {
+        Some(self)
     }
 }
 

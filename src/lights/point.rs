@@ -2,7 +2,10 @@ use crate::{
     base::{
         constants::{Float, PI},
         interaction::Interaction,
-        light::{Light, LightPointSample, LightRaySample, VisibilityTester},
+        light::{
+            Light, LightFlag, LightPointSample, LightRaySample, VisibilityTester,
+            DELTA_POSITION_LIGHT,
+        },
         sampling::{uniform_sample_sphere, uniform_sphere_pdf},
         transform::Transform,
     },
@@ -14,6 +17,7 @@ use crate::{
 pub struct PointLight {
     position: Point3,
     intensity: RGBSpectrum,
+    flag: LightFlag,
 }
 
 pub struct PointLightOptions {
@@ -27,6 +31,7 @@ impl PointLight {
         Self {
             position,
             intensity: opts.intensity,
+            flag: DELTA_POSITION_LIGHT,
         }
     }
 }
@@ -72,5 +77,9 @@ impl Light for PointLight {
 
     fn ray_pdf(&self, _ray: &Ray, _surface_normal: &Normal) -> (Float, Float) {
         (0.0, uniform_sphere_pdf())
+    }
+
+    fn flag(&self) -> LightFlag {
+        self.flag
     }
 }

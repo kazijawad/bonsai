@@ -216,7 +216,7 @@ impl BSDF {
         }
     }
 
-    pub fn pdf(self, wo_world: &Vec3, wi_world: &Vec3, flags: BxDFType) -> Float {
+    pub fn pdf(&self, wo_world: &Vec3, wi_world: &Vec3, flags: BxDFType) -> Float {
         if self.bxdfs.len() == 0 {
             return 0.0;
         }
