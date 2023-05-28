@@ -4,29 +4,28 @@ use bonsai::*;
 
 fn main() {
     let material = Arc::new(MatteMaterial {
-        kd: Box::new(ConstantTexture {
-            value: RGBSpectrum::new(1.0),
+        kd: Box::new(UVTexture {
+            mapping: Box::new(UVMapping2D::default()),
         }),
         sigma: Box::new(ConstantTexture { value: 0.0 }),
     });
 
-    let triangles = OBJ::read(
-        "assets/meshes/bunny.obj",
-        Transform::translate(&Vec3::new(0.0, 0.0, -0.1))
-            * Transform::rotate(180.0, &Vec3::new(0.0, 0.0, 1.0))
-            * Transform::rotate(90.0, &Vec3::new(1.0, 0.0, 0.0)),
-    );
+    let sphere = Arc::new(Sphere::new(SphereOptions {
+        transform: Transform::default(),
+        reverse_orientation: false,
+        radius: 1.0,
+        z_min: -1.0,
+        z_max: 1.0,
+        phi_max: 360.0,
+    }));
 
-    let mut primitives: Vec<Arc<dyn Primitive>> = Vec::with_capacity(triangles.len());
-    for triangle in triangles {
-        primitives.push(Arc::new(GeometricPrimitive {
-            shape: Arc::new(triangle),
-            material: material.clone(),
-            area_light: None,
-        }))
-    }
+    let primitive = Arc::new(GeometricPrimitive {
+        shape: sphere,
+        material,
+        area_light: None,
+    });
 
-    let aggregate = Box::new(BVH::new(primitives));
+    let aggregate = Box::new(BVH::new(vec![primitive]));
 
     let infinite_light = Box::new(InfiniteAreaLight::new(InfiniteAreaLightOptions {
         bounds: aggregate.bounds(),
@@ -47,7 +46,7 @@ fn main() {
     });
 
     let camera_transform = Transform::look_at(
-        &Point3::new(0.5, 0.0, 0.0),
+        &Point3::new(5.0, 0.0, 0.0),
         &Point3::new(0.0, 0.0, 0.0),
         &Vec3::new(0.0, 0.0, 1.0),
     );

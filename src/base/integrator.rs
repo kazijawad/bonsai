@@ -8,7 +8,7 @@ use crate::{
         interaction::Interaction,
         light::{is_delta_light, Light},
         sampler::Sampler,
-        sampling::{power_heuristic, Distribution1D},
+        sampling::power_heuristic,
         scene::Scene,
         spectrum::Spectrum,
     },
@@ -310,26 +310,15 @@ pub fn uniform_sample_one_light(
     it: &dyn Interaction,
     scene: &Scene,
     sampler: &mut dyn Sampler,
-    light_distribution: Option<Distribution1D>,
 ) -> RGBSpectrum {
     // Randomly choose a single light to sample from.
-    let num_lights = scene.lights.len();
-    if num_lights == 0 {
+    let num_lights = scene.lights.len() as Float;
+    if num_lights == 0.0 {
         return RGBSpectrum::default();
     }
 
-    let light_index;
-    let mut light_pdf = 0.0;
-    if let Some(light_dist) = light_distribution {
-        light_index = light_dist.sample_discrete(sampler.get_1d(), &mut light_pdf, None);
-        if light_pdf == 0.0 {
-            return RGBSpectrum::default();
-        }
-    } else {
-        light_index =
-            (sampler.get_1d() * num_lights as Float).min(num_lights as Float - 1.0) as usize;
-        light_pdf = 1.0 / num_lights as Float;
-    };
+    let light_index = (sampler.get_1d() * num_lights).min(num_lights - 1.0) as usize;
+    let light_pdf = 1.0 / num_lights;
 
     let light = &scene.lights[light_index];
     let u_light = sampler.get_2d();

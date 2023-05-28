@@ -55,6 +55,7 @@ pub use geometries::{
 };
 pub use integrators::{
     direct::{DirectLightingIntegrator, LightStrategy},
+    path::PathIntegrator,
     whitted::WhittedIntegrator,
 };
 pub use io::{

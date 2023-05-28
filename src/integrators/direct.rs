@@ -96,7 +96,7 @@ impl SamplerIntegrator for DirectLightingIntegrator {
                 output +=
                     uniform_sample_all_lights(&si, &scene, sampler, &self.light_sample_counts);
             } else {
-                output += uniform_sample_one_light(&si, &scene, sampler, None);
+                output += uniform_sample_one_light(&si, &scene, sampler);
             }
         }
 
