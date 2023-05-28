@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     base::{
         bsdf::BSDF, constants::Float, interaction::Interaction, material::TransportMode,
@@ -15,7 +17,7 @@ pub struct Shading {
     pub dndv: Normal,
 }
 
-pub struct SurfaceInteraction<'a> {
+pub struct SurfaceInteraction {
     pub p: Point3,
     pub p_error: Vec3,
     pub time: Float,
@@ -28,7 +30,7 @@ pub struct SurfaceInteraction<'a> {
     pub dndv: Normal,
     pub shading: Shading,
     pub bsdf: Option<BSDF>,
-    pub primitive: Option<&'a (dyn Primitive<'a> + 'a)>,
+    pub primitive: Option<Arc<dyn Primitive>>,
     pub dpdx: Vec3,
     pub dpdy: Vec3,
     pub dudx: Float,
@@ -37,7 +39,7 @@ pub struct SurfaceInteraction<'a> {
     pub dvdy: Float,
 }
 
-impl<'a> SurfaceInteraction<'a> {
+impl SurfaceInteraction {
     pub fn new(
         p: Point3,
         p_error: Vec3,
@@ -116,9 +118,9 @@ impl<'a> SurfaceInteraction<'a> {
         allow_multiple_lobes: bool,
     ) {
         self.compute_differentials(ray);
-        self.primitive
-            .expect("Failed to find primitive on SurfaceInteraction")
-            .compute_scattering_functions(self, mode, allow_multiple_lobes);
+        if let Some(primitive) = self.primitive.clone().as_mut() {
+            primitive.compute_scattering_functions(self, mode, allow_multiple_lobes);
+        }
     }
 
     pub fn compute_differentials(&mut self, ray: &Ray) {
@@ -183,7 +185,7 @@ impl<'a> SurfaceInteraction<'a> {
     }
 
     pub fn emitted_radiance(&self, direction: &Vec3) -> RGBSpectrum {
-        if let Some(primitive) = self.primitive {
+        if let Some(primitive) = self.primitive.as_ref() {
             if let Some(area_light) = primitive.area_light() {
                 return area_light.emission(self, direction);
             }
@@ -224,7 +226,7 @@ impl<'a> SurfaceInteraction<'a> {
     }
 }
 
-impl<'a> Interaction<'a> for SurfaceInteraction<'a> {
+impl Interaction for SurfaceInteraction {
     fn p(&self) -> Point3 {
         self.p
     }
@@ -245,12 +247,12 @@ impl<'a> Interaction<'a> for SurfaceInteraction<'a> {
         self.n
     }
 
-    fn surface_interaction(&self) -> Option<&SurfaceInteraction<'a>> {
+    fn surface_interaction(&self) -> Option<&SurfaceInteraction> {
         Some(self)
     }
 }
 
-impl<'a> Default for SurfaceInteraction<'a> {
+impl Default for SurfaceInteraction {
     fn default() -> Self {
         Self {
             p: Point3::default(),

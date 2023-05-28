@@ -4,10 +4,10 @@ use crate::{
     interactions::surface::SurfaceInteraction,
 };
 
-pub trait Primitive<'a>: Send + Sync {
-    fn world_bound(&self) -> Bounds3;
+pub trait Primitive: Send + Sync {
+    fn bounds(&self) -> Bounds3;
 
-    fn intersect(&'a self, ray: &mut Ray, interaction: &mut SurfaceInteraction<'a>) -> bool;
+    fn intersect(&self, ray: &mut Ray, interaction: &mut SurfaceInteraction) -> bool;
     fn intersect_test(&self, ray: &Ray) -> bool;
 
     fn compute_scattering_functions(

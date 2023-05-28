@@ -57,15 +57,15 @@ impl Cylinder {
 }
 
 impl Shape for Cylinder {
-    fn object_bound(&self) -> Bounds3 {
+    fn object_bounds(&self) -> Bounds3 {
         Bounds3::new(
             &Point3::new(-self.radius, -self.radius, self.z_min),
             &Point3::new(self.radius, self.radius, self.z_max),
         )
     }
 
-    fn world_bound(&self) -> Bounds3 {
-        self.object_to_world.transform_bounds(&self.object_bound())
+    fn world_bounds(&self) -> Bounds3 {
+        self.object_to_world.transform_bounds(&self.object_bounds())
     }
 
     fn intersect(&self, ray: &Ray, t_hit: &mut Float, si: &mut SurfaceInteraction) -> bool {

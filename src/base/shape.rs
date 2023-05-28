@@ -10,9 +10,9 @@ use crate::{
 };
 
 pub trait Shape: Send + Sync {
-    fn object_bound(&self) -> Bounds3;
+    fn object_bounds(&self) -> Bounds3;
 
-    fn world_bound(&self) -> Bounds3;
+    fn world_bounds(&self) -> Bounds3;
 
     fn intersect(&self, ray: &Ray, t_hit: &mut Float, si: &mut SurfaceInteraction) -> bool;
 

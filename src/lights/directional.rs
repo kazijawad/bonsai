@@ -6,10 +6,11 @@ use crate::{
             Light, LightFlag, LightPointSample, LightRaySample, VisibilityTester,
             DELTA_DIRECTION_LIGHT,
         },
-        primitive::Primitive,
         sampling::concentric_sample_disk,
     },
-    geometries::{normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3},
+    geometries::{
+        bounds3::Bounds3, normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3,
+    },
     interactions::base::BaseInteraction,
     spectra::rgb::RGBSpectrum,
 };
@@ -22,8 +23,8 @@ pub struct DirectionalLight {
     flag: LightFlag,
 }
 
-pub struct DirectionalLightOptions<'a> {
-    pub scene: &'a (dyn Primitive<'a> + 'a),
+pub struct DirectionalLightOptions {
+    pub bounds: Bounds3,
     pub from: Point3,
     pub to: Point3,
     pub intensity: RGBSpectrum,
@@ -35,8 +36,7 @@ impl DirectionalLight {
 
         let mut world_center = Point3::default();
         let mut world_radius = 0.0;
-        opts.scene
-            .world_bound()
+        opts.bounds
             .bounding_sphere(&mut world_center, &mut world_radius);
 
         Self {

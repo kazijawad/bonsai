@@ -280,7 +280,7 @@ pub fn uniform_sample_all_lights(
     let mut output = RGBSpectrum::default();
 
     for i in 0..scene.lights.len() {
-        let light = scene.lights[i];
+        let light = &scene.lights[i];
         let sample_count = light_sample_counts[i];
 
         let u_light_batch = (0..sample_count)
@@ -292,8 +292,13 @@ pub fn uniform_sample_all_lights(
 
         let mut direct_output = RGBSpectrum::default();
         for j in 0..sample_count {
-            direct_output +=
-                estimate_direct(it, scene, light, &u_scattering_batch[j], &u_light_batch[j]);
+            direct_output += estimate_direct(
+                it,
+                scene,
+                light.as_ref(),
+                &u_scattering_batch[j],
+                &u_light_batch[j],
+            );
         }
         output += direct_output / sample_count as Float;
     }
@@ -326,11 +331,11 @@ pub fn uniform_sample_one_light(
         light_pdf = 1.0 / num_lights as Float;
     };
 
-    let light = scene.lights[light_index];
+    let light = &scene.lights[light_index];
     let u_light = sampler.get_2d();
     let u_scattering = sampler.get_2d();
 
-    estimate_direct(it, scene, light, &u_scattering, &u_light) / light_pdf
+    estimate_direct(it, scene, light.as_ref(), &u_scattering, &u_light) / light_pdf
 }
 
 fn estimate_direct(

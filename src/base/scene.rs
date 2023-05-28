@@ -7,36 +7,33 @@ use crate::{
     interactions::surface::SurfaceInteraction,
 };
 
-pub struct Scene<'a> {
-    pub lights: Vec<&'a (dyn Light + 'a)>,
-    pub infinite_lights: Vec<&'a (dyn Light + 'a)>,
-    aggregate: &'a (dyn Primitive<'a> + 'a),
-    bounds: Bounds3,
+pub struct Scene {
+    pub lights: Vec<Box<dyn Light>>,
+    pub infinite_lights_index: Vec<usize>,
+    pub aggregate: Box<dyn Primitive>,
+    pub bounds: Bounds3,
 }
 
-impl<'a> Scene<'a> {
-    pub fn new(aggregate: &'a (dyn Primitive<'a> + 'a), lights: Vec<&'a (dyn Light + 'a)>) -> Self {
-        let bounds = aggregate.world_bound();
+impl Scene {
+    pub fn new(aggregate: Box<dyn Primitive>, lights: Vec<Box<dyn Light>>) -> Self {
+        let bounds = aggregate.bounds();
 
-        let infinite_lights = lights
-            .iter()
-            .map(|v| *v)
-            .filter(|v| v.flag() & INFINITE_LIGHT != 0)
-            .collect();
+        let mut infinite_lights_index = Vec::new();
+        for (i, light) in lights.iter().enumerate() {
+            if light.flag() & INFINITE_LIGHT != 0 {
+                infinite_lights_index.push(i)
+            }
+        }
 
         Self {
             bounds,
             lights,
-            infinite_lights,
+            infinite_lights_index,
             aggregate,
         }
     }
 
-    pub fn world_bound(&self) -> Bounds3 {
-        self.bounds
-    }
-
-    pub fn intersect(&self, ray: &mut Ray, si: &mut SurfaceInteraction<'a>) -> bool {
+    pub fn intersect(&self, ray: &mut Ray, si: &mut SurfaceInteraction) -> bool {
         self.aggregate.intersect(ray, si)
     }
 

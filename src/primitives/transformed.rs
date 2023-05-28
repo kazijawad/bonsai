@@ -9,18 +9,18 @@ use crate::{
     interactions::surface::SurfaceInteraction,
 };
 
-pub struct TransformedPrimitive<'a> {
-    primitive: &'a (dyn Primitive<'a> + 'a),
+pub struct TransformedPrimitive {
+    primitive: Box<dyn Primitive>,
     primitive_to_world: AnimatedTransform,
 }
 
-impl<'a> Primitive<'a> for TransformedPrimitive<'a> {
-    fn world_bound(&self) -> Bounds3 {
+impl Primitive for TransformedPrimitive {
+    fn bounds(&self) -> Bounds3 {
         self.primitive_to_world
-            .motion_bounds(&self.primitive.world_bound())
+            .motion_bounds(&self.primitive.bounds())
     }
 
-    fn intersect(&self, ray: &mut Ray, si: &mut SurfaceInteraction<'a>) -> bool {
+    fn intersect(&self, ray: &mut Ray, si: &mut SurfaceInteraction) -> bool {
         let mut interpolated_primitive_to_world = Transform::default();
 
         // Compute ray after transformation applied by primitive_to_world.

@@ -7,12 +7,13 @@ use crate::{
             Light, LightFlag, LightPointSample, LightRaySample, VisibilityTester, INFINITE_LIGHT,
         },
         mipmap::MIPMap,
-        primitive::Primitive,
         sampling::{concentric_sample_disk, Distribution2D},
         spectrum::Spectrum,
         transform::Transform,
     },
-    geometries::{normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3},
+    geometries::{
+        bounds3::Bounds3, normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3,
+    },
     interactions::base::BaseInteraction,
     io::image::{Image, ImageWrapMode},
     spectra::rgb::RGBSpectrum,
@@ -29,7 +30,7 @@ pub struct InfiniteAreaLight {
 }
 
 pub struct InfiniteAreaLightOptions<'a> {
-    pub scene: &'a (dyn Primitive<'a> + 'a),
+    pub bounds: Bounds3,
     pub transform: Transform,
     pub intensity: RGBSpectrum,
     pub filename: &'a str,
@@ -63,8 +64,7 @@ impl InfiniteAreaLight {
 
         let mut world_center = Point3::default();
         let mut world_radius = 0.0;
-        opts.scene
-            .world_bound()
+        opts.bounds
             .bounding_sphere(&mut world_center, &mut world_radius);
 
         Self {

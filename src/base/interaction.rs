@@ -4,7 +4,7 @@ use crate::{
     interactions::surface::SurfaceInteraction,
 };
 
-pub trait Interaction<'a>: Send + Sync {
+pub trait Interaction: Send + Sync {
     fn p(&self) -> Point3;
 
     fn p_error(&self) -> Vec3;
@@ -39,7 +39,7 @@ pub trait Interaction<'a>: Send + Sync {
         Ray::new(&origin, &direction, 1.0 - 0.0001, self.time())
     }
 
-    fn surface_interaction(&self) -> Option<&SurfaceInteraction<'a>> {
+    fn surface_interaction(&self) -> Option<&SurfaceInteraction> {
         None
     }
 }

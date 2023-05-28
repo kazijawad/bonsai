@@ -118,14 +118,14 @@ impl Triangle {
 }
 
 impl Shape for Triangle {
-    fn object_bound(&self) -> Bounds3 {
+    fn object_bounds(&self) -> Bounds3 {
         let p0 = self.mesh.position[self.offset].transform(&self.world_to_object);
         let p1 = self.mesh.position[self.offset + 1].transform(&self.world_to_object);
         let p2 = self.mesh.position[self.offset + 2].transform(&self.world_to_object);
         Bounds3::new(&p0, &p1).union_point(&p2)
     }
 
-    fn world_bound(&self) -> Bounds3 {
+    fn world_bounds(&self) -> Bounds3 {
         let p0 = self.mesh.position[self.offset];
         let p1 = self.mesh.position[self.offset + 1];
         let p2 = self.mesh.position[self.offset + 2];

@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use itertools::partition;
 use rayon::prelude::*;
 
@@ -15,8 +17,8 @@ use crate::{
 const MAX_PRIMITIVES_IN_NODE: usize = 256;
 const PARTITION_BUCKET_SIZE: usize = 16;
 
-pub struct BVH<'a> {
-    primitives: Vec<&'a (dyn Primitive<'a> + 'a)>,
+pub struct BVH {
+    primitives: Vec<Arc<dyn Primitive>>,
     nodes: Vec<BVHNode>,
 }
 
@@ -51,8 +53,8 @@ struct BucketInfo {
     bounds: Bounds3,
 }
 
-impl<'a> BVH<'a> {
-    pub fn new(primitives: Vec<&'a (dyn Primitive<'a> + 'a)>) -> Self {
+impl BVH {
+    pub fn new(primitives: Vec<Arc<dyn Primitive>>) -> Self {
         if primitives.is_empty() {
             return Self {
                 primitives,
@@ -64,12 +66,12 @@ impl<'a> BVH<'a> {
         let mut primitive_info: Vec<BVHPrimitiveInfo> = primitives
             .par_iter()
             .enumerate()
-            .map(|(i, p)| BVHPrimitiveInfo::new(i, p.world_bound()))
+            .map(|(i, p)| BVHPrimitiveInfo::new(i, p.bounds()))
             .collect();
 
         // Build BVH tree for primitives.
         let mut total_nodes = 0;
-        let mut ordered_primitives: Vec<&dyn Primitive> = Vec::with_capacity(primitives.len());
+        let mut ordered_primitives: Vec<Arc<dyn Primitive>> = Vec::with_capacity(primitives.len());
         let root = Self::build(
             &primitives,
             &mut primitive_info,
@@ -89,10 +91,10 @@ impl<'a> BVH<'a> {
     }
 
     fn build(
-        primitives: &[&'a (dyn Primitive<'a> + 'a)],
+        primitives: &[Arc<dyn Primitive>],
         primitive_info: &mut [BVHPrimitiveInfo],
         count: &mut usize,
-        ordered_primitives: &mut Vec<&'a (dyn Primitive<'a> + 'a)>,
+        ordered_primitives: &mut Vec<Arc<dyn Primitive>>,
     ) -> BVHBuildNode {
         debug_assert_ne!(primitive_info.len(), 0);
 
@@ -111,7 +113,7 @@ impl<'a> BVH<'a> {
             let node_offset = ordered_primitives.len();
             let index = primitive_info[0].index;
 
-            ordered_primitives.push(primitives[index]);
+            ordered_primitives.push(primitives[index].clone());
             node.init_leaf(node_offset, size, &bounds);
 
             return node;
@@ -129,7 +131,7 @@ impl<'a> BVH<'a> {
                 let node_offset = ordered_primitives.len();
 
                 for p in primitive_info.iter() {
-                    ordered_primitives.push(primitives[p.index]);
+                    ordered_primitives.push(primitives[p.index].clone());
                 }
 
                 node.init_leaf(node_offset, size, &bounds);
@@ -216,7 +218,7 @@ impl<'a> BVH<'a> {
                         let prim_offset = ordered_primitives.len();
 
                         for p in primitive_info.iter() {
-                            ordered_primitives.push(primitives[p.index]);
+                            ordered_primitives.push(primitives[p.index].clone());
                         }
 
                         node.init_leaf(prim_offset, size, &bounds);
@@ -269,16 +271,16 @@ impl<'a> BVH<'a> {
     }
 }
 
-impl<'a> Primitive<'a> for BVH<'a> {
-    fn world_bound(&self) -> Bounds3 {
-        if !self.nodes.is_empty() {
-            self.nodes[0].bounds
-        } else {
+impl Primitive for BVH {
+    fn bounds(&self) -> Bounds3 {
+        if self.nodes.is_empty() {
             Bounds3::default()
+        } else {
+            self.nodes[0].bounds
         }
     }
 
-    fn intersect(&self, ray: &mut Ray, si: &mut SurfaceInteraction<'a>) -> bool {
+    fn intersect(&self, ray: &mut Ray, si: &mut SurfaceInteraction) -> bool {
         if self.nodes.is_empty() {
             return false;
         }
@@ -314,7 +316,7 @@ impl<'a> Primitive<'a> for BVH<'a> {
                 if node.count > 0 {
                     // Intersect ray with primitives in leaf BVH node.
                     for i in 0..node.count {
-                        let primitive = self.primitives[node.primitive_offset + i];
+                        let primitive = &self.primitives[node.primitive_offset + i];
                         if primitive.intersect(ray, si) {
                             hit = true;
                         }

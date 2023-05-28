@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     base::{
         constants::Float,
@@ -10,24 +12,25 @@ use crate::{
     interactions::surface::SurfaceInteraction,
 };
 
-pub struct GeometricPrimitive<'a> {
-    pub shape: &'a (dyn Shape + 'a),
-    pub material: &'a (dyn Material + 'a),
-    pub area_light: Option<&'a (dyn AreaLight + 'a)>,
+#[derive(Clone)]
+pub struct GeometricPrimitive {
+    pub shape: Arc<dyn Shape>,
+    pub material: Arc<dyn Material>,
+    pub area_light: Option<Arc<dyn AreaLight>>,
 }
 
-impl<'a> Primitive<'a> for GeometricPrimitive<'a> {
-    fn world_bound(&self) -> Bounds3 {
-        self.shape.world_bound()
+impl Primitive for GeometricPrimitive {
+    fn bounds(&self) -> Bounds3 {
+        self.shape.world_bounds()
     }
 
-    fn intersect(&'a self, ray: &mut Ray, si: &mut SurfaceInteraction<'a>) -> bool {
+    fn intersect(&self, ray: &mut Ray, si: &mut SurfaceInteraction) -> bool {
         let mut t_hit: Float = 0.0;
         if !self.shape.intersect(ray, &mut t_hit, si) {
             return false;
         }
         ray.t_max = t_hit;
-        si.primitive = Some(self);
+        si.primitive = Some(Arc::new(self.clone()));
         true
     }
 
@@ -46,10 +49,10 @@ impl<'a> Primitive<'a> for GeometricPrimitive<'a> {
     }
 
     fn material(&self) -> Option<&dyn Material> {
-        Some(self.material)
+        Some(self.material.as_ref())
     }
 
     fn area_light(&self) -> Option<&dyn AreaLight> {
-        self.area_light
+        self.area_light.as_deref()
     }
 }

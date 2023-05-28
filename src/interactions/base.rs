@@ -12,7 +12,7 @@ pub struct BaseInteraction {
     pub n: Normal,
 }
 
-impl<'a> Interaction<'a> for BaseInteraction {
+impl Interaction for BaseInteraction {
     fn p(&self) -> Point3 {
         self.p
     }
@@ -34,7 +34,7 @@ impl<'a> Interaction<'a> for BaseInteraction {
     }
 }
 
-impl<'a> From<&dyn Interaction<'a>> for BaseInteraction {
+impl From<&dyn Interaction> for BaseInteraction {
     fn from(it: &dyn Interaction) -> Self {
         Self {
             p: it.p(),

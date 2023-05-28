@@ -11,12 +11,12 @@ use crate::{
     spectra::rgb::RGBSpectrum,
 };
 
-pub struct MatteMaterial<'a> {
-    pub kd: &'a (dyn Texture<RGBSpectrum> + 'a),
-    pub sigma: &'a (dyn Texture<Float> + 'a),
+pub struct MatteMaterial {
+    pub kd: Box<dyn Texture<RGBSpectrum>>,
+    pub sigma: Box<dyn Texture<Float>>,
 }
 
-impl<'a> Material for MatteMaterial<'a> {
+impl Material for MatteMaterial {
     fn compute_scattering_functions(
         &self,
         si: &mut SurfaceInteraction,
