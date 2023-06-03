@@ -7,7 +7,7 @@ use crate::base::{
     spectrum::{rgb_to_xyz, xyz_to_rgb, Spectrum, RGB, XYZ},
 };
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub struct RGBSpectrum {
     components: [Float; 3],
 }

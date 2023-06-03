@@ -3,7 +3,7 @@ use crate::{
     geometries::{point2::Point2F, ray::Ray},
 };
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub struct CameraSample {
     pub film: Point2F,
     pub lens: Point2F,

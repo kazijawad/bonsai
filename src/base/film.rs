@@ -17,14 +17,14 @@ use crate::{
 
 const FILTER_TABLE_WIDTH: usize = 16;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Pixel {
     xyz: [Float; 3],
     splat_xyz: [Float; 3],
     filter_weight_sum: Float,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct FilmTilePixel {
     contribution_sum: RGBSpectrum,
     filter_weight_sum: Float,

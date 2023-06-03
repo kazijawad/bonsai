@@ -15,7 +15,6 @@ pub enum ImageWrapMode {
     Clamp,
 }
 
-#[derive(Debug)]
 pub struct Image {
     pub resolution: Point2I,
     pub pixels: Vec<Float>,

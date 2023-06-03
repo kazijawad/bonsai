@@ -14,7 +14,7 @@ pub struct Transform {
     pub m_inverse: Mat4,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct AnimatedTransform {
     pub start_transform: Transform,
     pub end_transform: Transform,
@@ -32,7 +32,7 @@ pub struct AnimatedTransform {
     c5: Option<Vec<DerivativeTerm>>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 struct DerivativeTerm {
     kc: Float,
     kx: Float,

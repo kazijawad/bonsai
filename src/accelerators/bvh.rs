@@ -22,7 +22,6 @@ pub struct BVH {
     nodes: Vec<BVHNode>,
 }
 
-#[derive(Debug, Clone)]
 struct BVHNode {
     bounds: Bounds3,
     primitive_offset: usize,
@@ -31,14 +30,12 @@ struct BVHNode {
     axis: usize,
 }
 
-#[derive(Debug)]
 struct BVHPrimitiveInfo {
     index: usize,
     bounds: Bounds3,
     centroid: Point3,
 }
 
-#[derive(Debug)]
 struct BVHBuildNode {
     bounds: Bounds3,
     children: Box<[BVHBuildNode]>,
@@ -47,7 +44,6 @@ struct BVHBuildNode {
     count: usize,
 }
 
-#[derive(Debug, Clone)]
 struct BucketInfo {
     count: Float,
     bounds: Bounds3,
@@ -79,7 +75,9 @@ impl BVH {
             &mut ordered_primitives,
         );
 
-        let mut nodes = vec![BVHNode::default(); total_nodes];
+        let mut nodes: Vec<BVHNode> = Vec::with_capacity(total_nodes);
+        unsafe { nodes.set_len(total_nodes) }
+
         let offset = &mut 0;
         Self::flatten(&mut nodes, &root, offset);
         debug_assert_eq!(total_nodes, *offset);
@@ -148,8 +146,8 @@ impl BVH {
                     });
                 } else {
                     // Allocate bucket info for SAH partition buckets.
-                    let mut buckets =
-                        vec![BucketInfo::default(); PARTITION_BUCKET_SIZE].into_boxed_slice();
+                    let mut buckets: Vec<BucketInfo> = Vec::with_capacity(PARTITION_BUCKET_SIZE);
+                    unsafe { buckets.set_len(PARTITION_BUCKET_SIZE) }
 
                     // Initialize bucket info for SAH partition buckets.
                     for p in primitive_info.iter() {

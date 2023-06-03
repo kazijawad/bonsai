@@ -2,7 +2,7 @@ use rand::{distributions::Uniform, prelude::Distribution, rngs::StdRng, Rng, See
 
 use crate::base::constants::Float;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct RNG {
     rng: StdRng,
     continuous_dist: Uniform<Float>,
