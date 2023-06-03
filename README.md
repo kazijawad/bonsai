@@ -4,22 +4,27 @@ A physically-based software renderer built in Rust. This is an ongoing personal 
 
 # Features
 
-#### Primitives
+#### Geometry Processing
 
-Supports intersection tests, sampling, and bounding box calculations on a set of standard shapes including triangles.
+Geometry processing is based on mathematical constructs like rays, vectors, and normals.
+The shape interface allows for intersection tests, sampling, and bounding box calculations.
+Primitives support animated transformations and area light attachments.
 
 #### Materials
 
-Supports physically-based BRDFs, including microfacet models, and arbitrary combination of texture formats.
-Image textures can be mipmapped with trilinear filtering.
+Materials are defined through physically-based BRDFs and textures.
+Textures can be defined by the RGB spectrum or numeric values.
+Image textures use a mipmap pyramind with trilinear filtering.
 
 #### Acceleration Structures
 
-Uses a recursive BVH traversel system with support for implementing other acceleration structures.
+The primitive interface allows for acceleration structures.
+Bonsai includes a standard BVH structure that is recursively constructed using SAH.
 
 #### Hardware Acceleration
 
-Completely CPU-based and designed for data-parallelism. Uses parallel iterators for multithreaded rendering.
+Entirely CPU-based and designed for data-parallelism.
+Multithreaded rendering is achieved with parallel iterators and film tiles.
 
 # References
 
