@@ -312,14 +312,14 @@ pub fn uniform_sample_one_light(
     scene: &Scene,
     sampler: &mut dyn Sampler,
 ) -> RGBSpectrum {
-    // Randomly choose a single light to sample from.
-    let num_lights = scene.lights.len() as Float;
-    if num_lights == 0.0 {
+    if scene.lights.is_empty() {
         return RGBSpectrum::default();
     }
 
-    let light_index = (sampler.get_1d() * num_lights).min(num_lights - 1.0) as usize;
-    let light_pdf = 1.0 / num_lights;
+    // Randomly choose a single light to sample from.
+    let light_count = scene.lights.len() as Float;
+    let light_index = (sampler.get_1d() * light_count).min(light_count - 1.0) as usize;
+    let light_pdf = 1.0 / light_count;
 
     let light = &scene.lights[light_index];
     let u_light = sampler.get_2d();

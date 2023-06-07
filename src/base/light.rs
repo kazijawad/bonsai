@@ -49,7 +49,7 @@ pub trait Light: Send + Sync {
         direction_pdf: &mut Float,
     );
 
-    fn num_samples(&self) -> usize {
+    fn sample_count(&self) -> usize {
         1
     }
 

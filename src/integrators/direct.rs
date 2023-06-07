@@ -37,7 +37,7 @@ impl DirectLightingIntegrator {
             scene
                 .lights
                 .iter()
-                .map(|light| sampler.round_count(light.num_samples()))
+                .map(|light| sampler.round_count(light.sample_count()))
                 .collect()
         } else {
             Vec::new()
