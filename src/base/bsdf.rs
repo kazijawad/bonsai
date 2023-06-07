@@ -11,14 +11,14 @@ use crate::{
 };
 
 // A heuristic to preallocate the bxdfs parameters.
-const MAX_BXDFS: usize = 8;
+const BSDF_CAPACITY: usize = 8;
 
 pub struct BSDF {
     pub eta: Float,
-    ns: Normal,
-    ng: Normal,
-    ss: Vec3,
-    ts: Vec3,
+    shading_normal: Normal,
+    geometric_normal: Normal,
+    s_shading: Vec3,
+    t_shading: Vec3,
     bxdfs: Vec<Box<dyn BxDF>>,
 }
 
@@ -30,24 +30,29 @@ pub struct BSDFSample {
 }
 
 impl BSDF {
-    pub fn new(si: &Interaction, eta: Float) -> Self {
-        let so = si.surface.as_ref().unwrap();
+    pub fn new(it: &Interaction, eta: Float) -> Self {
+        let si = it.surface.as_ref().unwrap();
 
-        let ns = so.shading.normal;
-        let ss = so.shading.dpdu.normalize();
+        let shading_normal = si.shading.normal;
+        let geometric_normal = it.normal;
+
+        let s_shading = si.shading.dpdu.normalize();
+        let t_shading = Vec3::from(shading_normal).cross(&s_shading);
+
+        let bxdfs = Vec::with_capacity(BSDF_CAPACITY);
 
         Self {
             eta,
-            ns,
-            ng: si.normal,
-            ss,
-            ts: Vec3::from(ns).cross(&ss),
-            bxdfs: Vec::with_capacity(MAX_BXDFS),
+            shading_normal,
+            geometric_normal,
+            s_shading,
+            t_shading,
+            bxdfs,
         }
     }
 
-    pub fn add(&mut self, b: Box<dyn BxDF>) {
-        self.bxdfs.push(b);
+    pub fn add(&mut self, bxdf: Box<dyn BxDF>) {
+        self.bxdfs.push(bxdf);
     }
 
     pub fn num_components(&self, flags: BxDFType) -> usize {
@@ -61,14 +66,18 @@ impl BSDF {
     }
 
     pub fn world_to_local(&self, v: &Vec3) -> Vec3 {
-        Vec3::new(v.dot(&self.ss), v.dot(&self.ts), v.dot_normal(&self.ns))
+        Vec3::new(
+            v.dot(&self.s_shading),
+            v.dot(&self.t_shading),
+            v.dot_normal(&self.shading_normal),
+        )
     }
 
     pub fn local_to_world(&self, v: &Vec3) -> Vec3 {
         Vec3::new(
-            self.ss.x * v.x + self.ts.x * v.y + self.ns.x * v.z,
-            self.ss.y * v.x + self.ts.y * v.y + self.ns.y * v.z,
-            self.ss.z * v.x + self.ts.z * v.y + self.ns.z * v.z,
+            self.s_shading.x * v.x + self.t_shading.x * v.y + self.shading_normal.x * v.z,
+            self.s_shading.y * v.x + self.t_shading.y * v.y + self.shading_normal.y * v.z,
+            self.s_shading.z * v.x + self.t_shading.z * v.y + self.shading_normal.z * v.z,
         )
     }
 
@@ -79,7 +88,9 @@ impl BSDF {
             return RGBSpectrum::default();
         }
 
-        let reflect = wi_world.dot_normal(&self.ng) * wo_world.dot_normal(&self.ng) > 0.0;
+        let reflect = wi_world.dot_normal(&self.geometric_normal)
+            * wo_world.dot_normal(&self.geometric_normal)
+            > 0.0;
         let mut f = RGBSpectrum::default();
         for bxdf in self.bxdfs.iter() {
             if bxdf.matches_flags(flags)
@@ -198,7 +209,9 @@ impl BSDF {
 
         // Compute value of BSDF for sampled direction.
         if bxdf.bxdf_type() & BSDF_SPECULAR == 0 {
-            let reflect = wi_world.dot_normal(&self.ng) * wo_world.dot_normal(&self.ng) > 0.0;
+            let reflect = wi_world.dot_normal(&self.geometric_normal)
+                * wo_world.dot_normal(&self.geometric_normal)
+                > 0.0;
             sample.f = RGBSpectrum::default();
             for b in self.bxdfs.iter() {
                 if b.matches_flags(bxdf_type)
