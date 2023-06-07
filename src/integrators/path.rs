@@ -13,7 +13,6 @@ use crate::{
         spectrum::Spectrum,
     },
     geometries::ray::Ray,
-    interactions::surface::SurfaceInteraction,
     spectra::rgb::RGBSpectrum,
 };
 
@@ -70,15 +69,15 @@ impl SamplerIntegrator for PathIntegrator {
         // Find next path vertex and accumulate contribution.
         loop {
             // Intersect ray with scene.
-            let mut si = SurfaceInteraction::default();
-            let si_intersection = scene.intersect(&mut ray, &mut si);
+            let mut it = Interaction::default();
+            let intersection = scene.intersect(&mut ray, &mut it);
 
             // Add intersection emission if it is the first intersection
             // from camera ray or the prior path segment included a
             // specular BSDF component.
             if bounces == 0 || specular_bounce {
-                if si_intersection {
-                    output += beta * si.emitted_radiance(&-ray.direction);
+                if intersection {
+                    output += beta * it.emitted_radiance(&-ray.direction);
                 } else {
                     for light in scene.lights.iter() {
                         output += beta * light.radiance(&ray);
@@ -88,14 +87,16 @@ impl SamplerIntegrator for PathIntegrator {
 
             // Terminate path if there was no intersection or
             // max_depth is reached.
-            if !si_intersection || bounces >= self.max_depth {
+            if !intersection || bounces >= self.max_depth {
                 break;
             }
 
             // Compute scattering functions and skip over medium boundaries.
-            si.compute_scattering_functions(&ray, TransportMode::Radiance, true);
+            it.compute_scattering_functions(&ray, TransportMode::Radiance, true);
+
+            let si = it.surface.as_ref().unwrap();
             if si.bsdf.is_none() {
-                ray = si.spawn_ray(&ray.direction);
+                ray = it.spawn_ray(&ray.direction);
                 bounces -= 1;
                 continue;
             }
@@ -104,7 +105,7 @@ impl SamplerIntegrator for PathIntegrator {
             // ignoring specular BSDFs.
             let bsdf = si.bsdf.as_ref().unwrap();
             if bsdf.num_components(BSDF_ALL & !BSDF_SPECULAR) > 0 {
-                output += beta * uniform_sample_one_light(&si, scene, sampler);
+                output += beta * uniform_sample_one_light(&it, scene, sampler);
             }
 
             // Sample BSDF to get new path direction.
@@ -113,13 +114,14 @@ impl SamplerIntegrator for PathIntegrator {
             if bsdf_sample.f.is_black() || bsdf_sample.pdf == 0.0 {
                 break;
             }
-            beta *= bsdf_sample.f * bsdf_sample.wi.abs_dot_normal(&si.shading.n) / bsdf_sample.pdf;
+            beta *=
+                bsdf_sample.f * bsdf_sample.wi.abs_dot_normal(&si.shading.normal) / bsdf_sample.pdf;
             specular_bounce = (bsdf_sample.sampled_type & BSDF_SPECULAR) != 0;
             if (bsdf_sample.sampled_type & BSDF_SPECULAR) != 0
                 && (bsdf_sample.sampled_type & BSDF_TRANSMISSION) != 0
             {
                 let eta = bsdf.eta;
-                eta_scale *= if wo.dot_normal(&si.n) > 0.0 {
+                eta_scale *= if wo.dot_normal(&it.normal) > 0.0 {
                     eta * eta
                 } else {
                     1.0 / (eta * eta)

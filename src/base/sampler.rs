@@ -1,5 +1,5 @@
 use crate::{
-    base::{camera::CameraSample, constants::Float},
+    base::{camera::CameraRaySample, constants::Float},
     geometries::point2::{Point2F, Point2I},
 };
 
@@ -11,8 +11,8 @@ pub trait Sampler: Send + Sync {
     fn get_1d(&mut self) -> Float;
     fn get_2d(&mut self) -> Point2F;
 
-    fn get_camera_sample(&mut self, pixel: &Point2I) -> CameraSample {
-        CameraSample {
+    fn get_camera_sample(&mut self, pixel: &Point2I) -> CameraRaySample {
+        CameraRaySample {
             film: Point2F::from(pixel.clone()) + self.get_2d(),
             lens: self.get_2d(),
             time: self.get_1d(),

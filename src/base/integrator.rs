@@ -18,7 +18,6 @@ use crate::{
         ray::{Ray, RayDifferentials},
         vec3::Vec3,
     },
-    interactions::surface::SurfaceInteraction,
     spectra::rgb::RGBSpectrum,
 };
 
@@ -144,13 +143,14 @@ pub trait SamplerIntegrator: Send + Sync {
     fn specular_reflect(
         &self,
         ray: &Ray,
-        si: &SurfaceInteraction,
+        it: &Interaction,
         scene: &Scene,
         sampler: &mut dyn Sampler,
         depth: u32,
     ) -> RGBSpectrum {
         // Compute specular reflection direction and BSDF.
-        let wo = si.wo;
+        let wo = it.direction;
+        let si = it.surface.as_ref().unwrap();
 
         let sample = si
             .bsdf
@@ -159,13 +159,13 @@ pub trait SamplerIntegrator: Send + Sync {
             .sample(&wo, &sampler.get_2d(), BSDF_REFLECTION | BSDF_SPECULAR);
 
         // Return contribution of specular reflection.
-        let ns = &si.shading.n;
+        let ns = &si.shading.normal;
         if sample.pdf > 0.0 && !sample.f.is_black() && sample.wi.abs_dot_normal(ns) != 0.0 {
             // Compute ray differential for specular reflection.
-            let mut ray_diff = si.spawn_ray(&sample.wi);
+            let mut ray_diff = it.spawn_ray(&sample.wi);
             if let Some(diff) = ray.differentials.as_ref() {
-                let rx_origin = si.p + si.dpdx;
-                let ry_origin = si.p + si.dpdy;
+                let rx_origin = it.point + si.dpdx;
+                let ry_origin = it.point + si.dpdy;
 
                 // Compute differential reflected directions.
                 let dndx = si.shading.dndu * si.dudx + si.shading.dndv * si.dvdx;
@@ -201,13 +201,14 @@ pub trait SamplerIntegrator: Send + Sync {
     fn specular_transmit(
         &self,
         ray: &Ray,
-        si: &SurfaceInteraction,
+        it: &Interaction,
         scene: &Scene,
         sampler: &mut dyn Sampler,
         depth: u32,
     ) -> RGBSpectrum {
-        let p = si.p;
-        let wo = si.wo;
+        let p = it.point;
+        let wo = it.direction;
+        let si = it.surface.as_ref().unwrap();
 
         let bsdf = si
             .bsdf
@@ -217,10 +218,10 @@ pub trait SamplerIntegrator: Send + Sync {
         let sample = bsdf.sample(&wo, &sampler.get_2d(), BSDF_TRANSMISSION | BSDF_SPECULAR);
 
         let mut result = RGBSpectrum::default();
-        let mut ns = si.shading.n;
+        let mut ns = si.shading.normal;
         if sample.pdf > 0.0 && !sample.f.is_black() && sample.wi.abs_dot_normal(&ns) != 0.0 {
             // Compute ray differential for specular reflection.
-            let mut ray_diff = si.spawn_ray(&sample.wi);
+            let mut ray_diff = it.spawn_ray(&sample.wi);
             if let Some(diff) = ray.differentials.as_ref() {
                 let rx_origin = p + si.dpdx;
                 let ry_origin = p + si.dpdy;
@@ -272,7 +273,7 @@ pub trait SamplerIntegrator: Send + Sync {
 }
 
 pub fn uniform_sample_all_lights(
-    it: &dyn Interaction,
+    it: &Interaction,
     scene: &Scene,
     sampler: &mut dyn Sampler,
     light_sample_counts: &[usize],
@@ -307,7 +308,7 @@ pub fn uniform_sample_all_lights(
 }
 
 pub fn uniform_sample_one_light(
-    it: &dyn Interaction,
+    it: &Interaction,
     scene: &Scene,
     sampler: &mut dyn Sampler,
 ) -> RGBSpectrum {
@@ -328,7 +329,7 @@ pub fn uniform_sample_one_light(
 }
 
 fn estimate_direct(
-    it: &dyn Interaction,
+    it: &Interaction,
     scene: &Scene,
     light: &dyn Light,
     u_scattering: &Point2F,
@@ -343,15 +344,15 @@ fn estimate_direct(
     if light_sample.pdf > 0.0 && !light_sample.radiance.is_black() {
         let mut f = RGBSpectrum::default();
 
-        if let Some(si) = it.surface_interaction() {
+        if let Some(si) = &it.surface {
             // Evaluate BSDF for light sampling strategy.
             let bsdf = si
                 .bsdf
                 .as_ref()
                 .expect("Failed to find BSDF inside SurfaceInteraction");
-            f = bsdf.f(&si.wo, &light_sample.wi, bsdf_flags)
-                * light_sample.wi.abs_dot_normal(&si.shading.n);
-            scattering_pdf = bsdf.pdf(&si.wo, &light_sample.wi, bsdf_flags);
+            f = bsdf.f(&it.direction, &light_sample.wi, bsdf_flags)
+                * light_sample.wi.abs_dot_normal(&si.shading.normal);
+            scattering_pdf = bsdf.pdf(&it.direction, &light_sample.wi, bsdf_flags);
         }
 
         if !f.is_black() {
@@ -381,15 +382,15 @@ fn estimate_direct(
         let mut f = RGBSpectrum::default();
         let mut sampled_specular = false;
 
-        if let Some(si) = it.surface_interaction() {
+        if let Some(si) = &it.surface {
             // Sample scattered direction for surface interactions.
             let bsdf_sample = si
                 .bsdf
                 .as_ref()
                 .expect("Failed to find BSDF inside SurfaceInteraction")
-                .sample(&si.wo, u_scattering, bsdf_flags);
+                .sample(&it.direction, u_scattering, bsdf_flags);
 
-            f = bsdf_sample.f * bsdf_sample.wi.abs_dot_normal(&si.shading.n);
+            f = bsdf_sample.f * bsdf_sample.wi.abs_dot_normal(&si.shading.normal);
             sampled_specular = (bsdf_sample.sampled_type & BSDF_SPECULAR) != 0;
         }
 
@@ -406,19 +407,22 @@ fn estimate_direct(
             }
 
             // Find intersection.
-            let mut light_si = SurfaceInteraction::default();
+            let mut light_it = Interaction::default();
             let mut ray = it.spawn_ray(&light_sample.wi);
-            let si_intersection = scene.intersect(&mut ray, &mut light_si);
+            let surface_intersection = scene.intersect(&mut ray, &mut light_it);
 
             // Add light contribution from material sampling.
             let mut radiance = RGBSpectrum::default();
-            if si_intersection {
-                let primitive = light_si
+            if surface_intersection {
+                let si = light_it.surface.as_ref().unwrap();
+
+                let primitive = si
                     .primitive
                     .as_ref()
                     .expect("Failed to find primitive on SurfaceInteraction");
+
                 if primitive.area_light().is_some() {
-                    radiance = light_si.emitted_radiance(&-light_sample.wi);
+                    radiance = light_it.emitted_radiance(&-light_sample.wi);
                 }
             } else {
                 radiance = light.radiance(&ray);

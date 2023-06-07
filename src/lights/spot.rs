@@ -13,7 +13,6 @@ use crate::{
     geometries::{
         mat4::Mat4, normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3,
     },
-    interactions::base::BaseInteraction,
     spectra::rgb::RGBSpectrum,
 };
 
@@ -87,20 +86,26 @@ impl Light for SpotLight {
         self.intensity * 2.0 * PI * (1.0 - 0.5 * (self.cos_falloff_start + self.cos_total_width))
     }
 
-    fn sample_point(&self, it: &dyn Interaction, _sample: &Point2F) -> LightPointSample {
-        let wi = (self.position - it.p()).normalize();
+    fn sample_point(&self, it: &Interaction, _sample: &Point2F) -> LightPointSample {
+        let wi = (self.position - it.point).normalize();
         LightPointSample {
-            radiance: self.intensity * self.falloff(&-wi) / self.position.distance_squared(&it.p()),
+            radiance: self.intensity * self.falloff(&-wi)
+                / self.position.distance_squared(&it.point),
             wi,
             pdf: 1.0,
             visibility: Some(VisibilityTester::new(
-                BaseInteraction::from(it),
-                BaseInteraction {
-                    p: self.position,
-                    p_error: Vec3::default(),
-                    time: it.time(),
-                    wo: Vec3::default(),
-                    n: Normal::default(),
+                Interaction {
+                    point: it.point,
+                    point_error: it.point_error,
+                    time: it.time,
+                    direction: it.direction,
+                    normal: it.normal,
+                    surface: None,
+                },
+                Interaction {
+                    point: self.position,
+                    time: it.time,
+                    ..Default::default()
                 },
             )),
         }

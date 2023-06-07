@@ -8,7 +8,6 @@ use crate::{
         scene::Scene,
     },
     geometries::ray::Ray,
-    interactions::surface::SurfaceInteraction,
     spectra::rgb::RGBSpectrum,
 };
 
@@ -73,8 +72,8 @@ impl SamplerIntegrator for DirectLightingIntegrator {
         let mut output = RGBSpectrum::default();
 
         // Find closest ray intersection or return background radiance.
-        let mut si = SurfaceInteraction::default();
-        if !scene.intersect(ray, &mut si) {
+        let mut it = Interaction::default();
+        if !scene.intersect(ray, &mut it) {
             for light in scene.lights.iter() {
                 output += light.radiance(&ray)
             }
@@ -82,28 +81,30 @@ impl SamplerIntegrator for DirectLightingIntegrator {
         }
 
         // Compute scattering functions for surface interaction.
-        si.compute_scattering_functions(ray, TransportMode::Radiance, false);
+        it.compute_scattering_functions(ray, TransportMode::Radiance, false);
+
+        let si = it.surface.as_ref().unwrap();
         if si.bsdf.is_none() {
-            return self.radiance(&mut si.spawn_ray(&ray.direction), scene, sampler, depth);
+            return self.radiance(&mut it.spawn_ray(&ray.direction), scene, sampler, depth);
         }
 
         // Compute emitted radiance from area light intersection.
-        output += si.emitted_radiance(&si.wo);
+        output += it.emitted_radiance(&it.direction);
 
         // Compute direct lighting based on sampling strategy.
         if !scene.lights.is_empty() {
             if let LightStrategy::UniformSampleAll = self.strategy {
                 output +=
-                    uniform_sample_all_lights(&si, &scene, sampler, &self.light_sample_counts);
+                    uniform_sample_all_lights(&it, &scene, sampler, &self.light_sample_counts);
             } else {
-                output += uniform_sample_one_light(&si, &scene, sampler);
+                output += uniform_sample_one_light(&it, &scene, sampler);
             }
         }
 
         if depth + 1 < self.max_depth {
             // Trace rays for specular reflection and refraction.
-            output += self.specular_reflect(ray, &si, scene, sampler, depth);
-            output += self.specular_transmit(ray, &si, scene, sampler, depth);
+            output += self.specular_reflect(ray, &it, scene, sampler, depth);
+            output += self.specular_transmit(ray, &it, scene, sampler, depth);
         }
 
         output

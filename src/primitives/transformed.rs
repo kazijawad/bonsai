@@ -1,12 +1,12 @@
 use crate::{
     base::{
+        interaction::Interaction,
         light::AreaLight,
         material::{Material, TransportMode},
         primitive::Primitive,
         transform::{AnimatedTransform, Transform},
     },
     geometries::{bounds3::Bounds3, ray::Ray},
-    interactions::surface::SurfaceInteraction,
 };
 
 pub struct TransformedPrimitive {
@@ -20,7 +20,7 @@ impl Primitive for TransformedPrimitive {
             .motion_bounds(&self.primitive.bounds())
     }
 
-    fn intersect(&self, ray: &mut Ray, si: &mut SurfaceInteraction) -> bool {
+    fn intersect(&self, ray: &mut Ray, si: &mut Interaction) -> bool {
         let mut interpolated_primitive_to_world = Transform::default();
 
         // Compute ray after transformation applied by primitive_to_world.
@@ -52,7 +52,7 @@ impl Primitive for TransformedPrimitive {
 
     fn compute_scattering_functions(
         &self,
-        si: &mut SurfaceInteraction,
+        si: &mut Interaction,
         mode: TransportMode,
         allow_multiple_lobes: bool,
     ) {

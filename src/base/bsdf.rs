@@ -4,9 +4,9 @@ use crate::{
     base::{
         bxdf::{BxDF, BxDFType, BSDF_REFLECTION, BSDF_SPECULAR, BSDF_TRANSMISSION},
         constants::{Float, ONE_MINUS_EPSILON},
+        interaction::Interaction,
     },
     geometries::{normal::Normal, point2::Point2F, vec3::Vec3},
-    interactions::surface::SurfaceInteraction,
     spectra::rgb::RGBSpectrum,
 };
 
@@ -30,14 +30,16 @@ pub struct BSDFSample {
 }
 
 impl BSDF {
-    pub fn new(si: &SurfaceInteraction, eta: Float) -> Self {
-        let ns = si.shading.n;
-        let ss = si.shading.dpdu.normalize();
+    pub fn new(si: &Interaction, eta: Float) -> Self {
+        let so = si.surface.as_ref().unwrap();
+
+        let ns = so.shading.normal;
+        let ss = so.shading.dpdu.normalize();
 
         Self {
             eta,
             ns,
-            ng: si.n,
+            ng: si.normal,
             ss,
             ts: Vec3::from(ns).cross(&ss),
             bxdfs: Vec::with_capacity(MAX_BXDFS),

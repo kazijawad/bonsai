@@ -5,7 +5,6 @@ mod cameras;
 mod filters;
 mod geometries;
 mod integrators;
-mod interactions;
 mod io;
 mod lights;
 mod materials;

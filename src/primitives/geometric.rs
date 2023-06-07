@@ -3,13 +3,13 @@ use std::sync::Arc;
 use crate::{
     base::{
         constants::Float,
+        interaction::Interaction,
         light::AreaLight,
         material::{Material, TransportMode},
         primitive::Primitive,
         shape::Shape,
     },
     geometries::{bounds3::Bounds3, ray::Ray},
-    interactions::surface::SurfaceInteraction,
 };
 
 #[derive(Clone)]
@@ -24,13 +24,16 @@ impl Primitive for GeometricPrimitive {
         self.shape.world_bounds()
     }
 
-    fn intersect(&self, ray: &mut Ray, si: &mut SurfaceInteraction) -> bool {
+    fn intersect(&self, ray: &mut Ray, si: &mut Interaction) -> bool {
         let mut t_hit: Float = 0.0;
         if !self.shape.intersect(ray, &mut t_hit, si) {
             return false;
         }
         ray.t_max = t_hit;
-        si.primitive = Some(Arc::new(self.clone()));
+
+        let so = si.surface.as_mut().unwrap();
+        so.primitive = Some(Arc::new(self.clone()));
+
         true
     }
 
@@ -40,7 +43,7 @@ impl Primitive for GeometricPrimitive {
 
     fn compute_scattering_functions(
         &self,
-        si: &mut SurfaceInteraction,
+        si: &mut Interaction,
         mode: TransportMode,
         allow_multiple_lobes: bool,
     ) {

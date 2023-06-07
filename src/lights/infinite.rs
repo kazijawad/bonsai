@@ -14,7 +14,6 @@ use crate::{
     geometries::{
         bounds3::Bounds3, normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3,
     },
-    interactions::base::BaseInteraction,
     io::image::{Image, ImageWrapMode},
     spectra::rgb::RGBSpectrum,
 };
@@ -96,7 +95,7 @@ impl Light for InfiniteAreaLight {
         self.mipmap.trilinear_filter(&st, 0.0)
     }
 
-    fn sample_point(&self, it: &dyn Interaction, u: &Point2F) -> LightPointSample {
+    fn sample_point(&self, it: &Interaction, u: &Point2F) -> LightPointSample {
         // Find (u,v) sample coordinates in infinite light texture.
         let mut map_pdf = 0.0;
         let uv = self.distribution.sample_continuous(u, &mut map_pdf);
@@ -130,13 +129,18 @@ impl Light for InfiniteAreaLight {
 
         // Return radiance value for infinite light direction.
         let visibility = Some(VisibilityTester::new(
-            BaseInteraction::from(it),
-            BaseInteraction {
-                p: it.p() + wi * (2.0 * self.world_radius),
-                p_error: Vec3::default(),
-                time: it.time(),
-                wo: Vec3::default(),
-                n: Normal::default(),
+            Interaction {
+                point: it.point,
+                point_error: it.point_error,
+                time: it.time,
+                direction: it.direction,
+                normal: it.normal,
+                surface: None,
+            },
+            Interaction {
+                point: it.point + wi * (2.0 * self.world_radius),
+                time: it.time,
+                ..Default::default()
             },
         ));
 
@@ -148,7 +152,7 @@ impl Light for InfiniteAreaLight {
         }
     }
 
-    fn point_pdf(&self, _: &dyn Interaction, w: &Vec3) -> Float {
+    fn point_pdf(&self, _: &Interaction, w: &Vec3) -> Float {
         let wi = w.transform(&self.world_to_light);
 
         let theta = spherical_theta(&wi);

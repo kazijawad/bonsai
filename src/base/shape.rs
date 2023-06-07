@@ -6,7 +6,6 @@ use crate::{
     geometries::{
         bounds3::Bounds3, normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3,
     },
-    interactions::{base::BaseInteraction, surface::SurfaceInteraction},
 };
 
 pub trait Shape: Send + Sync {
@@ -14,27 +13,22 @@ pub trait Shape: Send + Sync {
 
     fn world_bounds(&self) -> Bounds3;
 
-    fn intersect(&self, ray: &Ray, t_hit: &mut Float, si: &mut SurfaceInteraction) -> bool;
+    fn intersect(&self, ray: &Ray, t_hit: &mut Float, si: &mut Interaction) -> bool;
 
     fn intersect_test(&self, ray: &Ray) -> bool;
 
-    fn sample(&self, u: &Point2F, pdf: &mut Float) -> BaseInteraction;
+    fn sample(&self, u: &Point2F, pdf: &mut Float) -> Interaction;
 
-    fn sample_from_ref(
-        &self,
-        r: &dyn Interaction,
-        u: &Point2F,
-        pdf: &mut Float,
-    ) -> BaseInteraction {
+    fn sample_from_ref(&self, r: &Interaction, u: &Point2F, pdf: &mut Float) -> Interaction {
         let it = self.sample(u, pdf);
 
-        let mut wi = it.p - r.p();
+        let mut wi = it.point - r.point;
         if wi.length_squared() == 0.0 {
             *pdf = 0.0;
         } else {
             wi = wi.normalize();
             // Convert from area measure to solid angle measure.
-            *pdf = r.p().distance_squared(&it.p) / it.n.abs_dot_vec(&-wi);
+            *pdf = r.point.distance_squared(&it.point) / it.normal.abs_dot_vec(&-wi);
             if pdf.is_infinite() {
                 *pdf = 0.0;
             }
@@ -43,21 +37,22 @@ pub trait Shape: Send + Sync {
         it
     }
 
-    fn pdf(&self, _interaction: &dyn Interaction) -> Float {
+    fn pdf(&self, _: &Interaction) -> Float {
         1.0 / self.area()
     }
 
-    fn pdf_from_ref(&self, it: &dyn Interaction, wi: &Vec3) -> Float {
+    fn pdf_from_ref(&self, it: &Interaction, wi: &Vec3) -> Float {
         let ray = it.spawn_ray(wi);
         let mut t_hit = 0.0;
 
-        let mut si = SurfaceInteraction::default();
+        let mut si = Interaction::default();
         if !self.intersect(&ray, &mut t_hit, &mut si) {
             return 0.0;
         }
 
         // Convert light sample weight to solid angle measure.
-        let mut pdf = it.p().distance_squared(&si.p) / (si.n.abs_dot_vec(&-wi) * self.area());
+        let mut pdf =
+            it.point.distance_squared(&si.point) / (si.normal.abs_dot_vec(&-wi) * self.area());
         if pdf.is_infinite() {
             pdf = 0.0;
         }
@@ -68,12 +63,13 @@ pub trait Shape: Send + Sync {
     fn area(&self) -> Float;
 
     fn solid_angle(&self, p: &Point3, num_samples: u32) -> Float {
-        let it = BaseInteraction {
-            p: p.clone(),
-            p_error: Vec3::default(),
+        let it = Interaction {
+            point: p.clone(),
+            point_error: Vec3::default(),
             time: 0.0,
-            wo: Vec3::new(0.0, 0.0, 1.0),
-            n: Normal::default(),
+            direction: Vec3::new(0.0, 0.0, 1.0),
+            normal: Normal::default(),
+            surface: None,
         };
 
         let mut solid_angle = 0.0;
@@ -83,7 +79,7 @@ pub trait Shape: Send + Sync {
             let mut pdf = 0.0;
             let sample = self.sample_from_ref(&it, &u, &mut pdf);
 
-            if pdf > 0.0 && !self.intersect_test(&Ray::new(p, &(&sample.p - p), 0.999, 0.0)) {
+            if pdf > 0.0 && !self.intersect_test(&Ray::new(p, &(&sample.point - p), 0.999, 0.0)) {
                 solid_angle += 1.0 / pdf;
             }
         }

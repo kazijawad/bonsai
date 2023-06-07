@@ -9,8 +9,7 @@ use crate::{
         sampling::{uniform_sample_sphere, uniform_sphere_pdf},
         transform::Transform,
     },
-    geometries::{normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3},
-    interactions::base::BaseInteraction,
+    geometries::{normal::Normal, point2::Point2F, point3::Point3, ray::Ray},
     spectra::rgb::RGBSpectrum,
 };
 
@@ -41,19 +40,24 @@ impl Light for PointLight {
         4.0 * PI * self.intensity
     }
 
-    fn sample_point(&self, it: &dyn Interaction, _: &Point2F) -> LightPointSample {
+    fn sample_point(&self, it: &Interaction, _: &Point2F) -> LightPointSample {
         LightPointSample {
-            radiance: self.intensity / self.position.distance_squared(&it.p()),
-            wi: (self.position - it.p()).normalize(),
+            radiance: self.intensity / self.position.distance_squared(&it.point),
+            wi: (self.position - it.point).normalize(),
             pdf: 1.0,
             visibility: Some(VisibilityTester::new(
-                BaseInteraction::from(it),
-                BaseInteraction {
-                    p: self.position,
-                    p_error: Vec3::default(),
-                    time: it.time(),
-                    wo: Vec3::default(),
-                    n: Normal::default(),
+                Interaction {
+                    point: it.point,
+                    point_error: it.point_error,
+                    time: it.time,
+                    direction: it.direction,
+                    normal: it.normal,
+                    surface: None,
+                },
+                Interaction {
+                    point: self.position,
+                    time: it.time,
+                    ..Default::default()
                 },
             )),
         }

@@ -1,10 +1,10 @@
 use crate::{
     base::{
+        interaction::Interaction,
         spectrum::{Spectrum, RGB},
         texture::{Texture, TextureMapping2D},
     },
     geometries::vec2::Vec2F,
-    interactions::surface::SurfaceInteraction,
     spectra::rgb::RGBSpectrum,
 };
 
@@ -13,7 +13,7 @@ pub struct UVTexture {
 }
 
 impl Texture<RGBSpectrum> for UVTexture {
-    fn evaluate(&self, si: &SurfaceInteraction) -> RGBSpectrum {
+    fn evaluate(&self, si: &Interaction) -> RGBSpectrum {
         let mut dstdx = Vec2F::default();
         let mut dstdy = Vec2F::default();
         let st = self.mapping.map(si, &mut dstdx, &mut dstdy);

@@ -3,6 +3,7 @@ use std::{mem, sync::Arc};
 use crate::{
     base::{
         constants::{Float, PI},
+        interaction::{Interaction, SurfaceOptions},
         math::gamma,
         sampling::uniform_sample_triangle,
         shape::Shape,
@@ -11,7 +12,6 @@ use crate::{
     geometries::{
         bounds3::Bounds3, normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3,
     },
-    interactions::{base::BaseInteraction, surface::SurfaceInteraction},
 };
 
 pub struct TriangleMesh {
@@ -132,7 +132,7 @@ impl Shape for Triangle {
         Bounds3::new(&p0, &p1).union_point(&p2)
     }
 
-    fn intersect(&self, ray: &Ray, t_hit: &mut Float, si: &mut SurfaceInteraction) -> bool {
+    fn intersect(&self, ray: &Ray, t_hit: &mut Float, it: &mut Interaction) -> bool {
         // Get triangle vertices.
         let p0 = &self.mesh.position[self.offset];
         let p1 = &self.mesh.position[self.offset + 1];
@@ -271,35 +271,39 @@ impl Shape for Triangle {
         let x_abs_sum = (b0 * p0.x).abs() + (b1 * p1.x).abs() + (b2 * p2.x).abs();
         let y_abs_sum = (b0 * p0.y).abs() + (b1 * p1.y).abs() + (b2 * p2.y).abs();
         let z_abs_sum = (b0 * p0.z).abs() + (b1 * p1.z).abs() + (b2 * p2.z).abs();
-        let p_error = gamma(7.0) * Vec3::new(x_abs_sum, y_abs_sum, z_abs_sum);
+        let point_error = gamma(7.0) * Vec3::new(x_abs_sum, y_abs_sum, z_abs_sum);
 
         // Interpolate UV parametric coordinates and hit point.
-        let p_hit = b0 * p0 + b1 * p1 + b2 * p2;
+        let point_hit = b0 * p0 + b1 * p1 + b2 * p2;
         let uv_hit = b0 * uvs[0] + b1 * uvs[1] + b2 * uvs[2];
 
         // Fill in interaction from triangle hit.
-        *si = SurfaceInteraction::new(
-            p_hit,
-            p_error,
-            uv_hit,
-            -ray.direction,
-            dpdu,
-            dpdv,
-            Normal::default(),
-            Normal::default(),
+        *it = Interaction::new(
+            point_hit,
+            point_error,
             ray.time,
-            self.reverse_orientation,
-            self.transform_swaps_handedness,
+            -ray.direction,
+            None,
+            Some(SurfaceOptions {
+                uv: uv_hit,
+                dpdu,
+                dpdv,
+                dndu: Normal::default(),
+                dndv: Normal::default(),
+                reverse_orientation: self.reverse_orientation,
+                transform_swaps_handedness: self.transform_swaps_handedness,
+            }),
         );
+        let si = it.surface.as_mut().unwrap();
 
         // Override surface normals in interaction for triangle.
         let new_normal = Normal::from(dp02.cross(&dp12).normalize());
-        si.n = new_normal;
-        si.shading.n = new_normal;
+        it.normal = new_normal;
+        si.shading.normal = new_normal;
         if self.reverse_orientation ^ self.transform_swaps_handedness {
-            let new_normal = -si.n;
-            si.n = new_normal;
-            si.shading.n = new_normal;
+            let new_normal = -it.normal;
+            it.normal = new_normal;
+            si.shading.normal = new_normal;
         }
 
         if self.mesh.normal.is_some() || self.mesh.tangent.is_some() {
@@ -311,10 +315,10 @@ impl Shape for Triangle {
                 if new_normal.length_squared() > 0.0 {
                     new_normal.normalize()
                 } else {
-                    si.n
+                    it.normal
                 }
             } else {
-                si.n
+                it.normal
             };
 
             // Compute shading tangent for triangle.
@@ -376,7 +380,7 @@ impl Shape for Triangle {
             if self.reverse_orientation {
                 shading_bitangent = -shading_bitangent;
             }
-            si.set_shading_geometry(&shading_tangent, &shading_bitangent, &dndu, &dndv, true);
+            it.set_shading_geometry(&shading_tangent, &shading_bitangent, &dndu, &dndv, true);
         }
 
         *t_hit = t;
@@ -515,7 +519,7 @@ impl Shape for Triangle {
         true
     }
 
-    fn sample(&self, u: &Point2F, pdf: &mut Float) -> BaseInteraction {
+    fn sample(&self, u: &Point2F, pdf: &mut Float) -> Interaction {
         let b = uniform_sample_triangle(u);
 
         // Query triangle vertices.
@@ -523,34 +527,34 @@ impl Shape for Triangle {
         let p1 = &self.mesh.position[self.offset + 1];
         let p2 = &self.mesh.position[self.offset + 2];
 
-        let p = b[0] * p0 + b[1] * p1 + (1.0 - b[0] - b[1]) * p2;
+        let point = b[0] * p0 + b[1] * p1 + (1.0 - b[0] - b[1]) * p2;
 
         // Compute surface normal for sampled point on triangle.
-        let mut n = Normal::from((p1 - p0).cross(&(p2 - p0)).normalize());
+        let mut normal = Normal::from((p1 - p0).cross(&(p2 - p0)).normalize());
+
         // Ensure correct orientation of the geometric normal.
-        if let Some(normal) = &self.mesh.normal {
-            let ns = Normal::from(
-                b[0] * normal[self.offset]
-                    + b[1] * normal[self.offset + 1]
-                    + (1.0 - b[0] - b[1]) * normal[self.offset + 2],
+        if let Some(mesh_normal) = &self.mesh.normal {
+            let shaded_normal = Normal::from(
+                b[0] * mesh_normal[self.offset]
+                    + b[1] * mesh_normal[self.offset + 1]
+                    + (1.0 - b[0] - b[1]) * mesh_normal[self.offset + 2],
             );
-            n = n.face_forward(&ns);
+            normal = normal.face_forward(&shaded_normal);
         } else if self.reverse_orientation ^ self.transform_swaps_handedness {
-            n *= -1.0;
+            normal *= -1.0;
         }
 
         // Compute error bounds for sampled point on triangle.
         let p_abs_sum = (b[0] * p0).abs() + (b[1] * p1).abs() + ((1.0 - b[0] - b[1]) * p2).abs();
-        let p_error = gamma(6.0) * Vec3::from(p_abs_sum);
+        let point_error = gamma(6.0) * Vec3::from(p_abs_sum);
 
         *pdf = 1.0 / self.area();
 
-        BaseInteraction {
-            p,
-            p_error,
-            time: 0.0,
-            wo: Vec3::default(),
-            n,
+        Interaction {
+            point,
+            point_error,
+            normal,
+            ..Default::default()
         }
     }
 

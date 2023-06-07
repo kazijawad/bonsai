@@ -12,7 +12,6 @@ use crate::{
         shape::Shape,
     },
     geometries::{normal::Normal, point2::Point2F, ray::Ray, vec3::Vec3},
-    interactions::base::BaseInteraction,
     spectra::rgb::RGBSpectrum,
 };
 
@@ -52,10 +51,10 @@ impl Light for DiffuseAreaLight {
         }
     }
 
-    fn sample_point(&self, it: &dyn Interaction, sample: &Point2F) -> LightPointSample {
+    fn sample_point(&self, it: &Interaction, sample: &Point2F) -> LightPointSample {
         let mut pdf = 0.0;
         let point_it = self.shape.sample_from_ref(it, sample, &mut pdf);
-        if pdf == 0.0 || (point_it.p() - it.p()).length_squared() == 0.0 {
+        if pdf == 0.0 || (point_it.point - it.point).length_squared() == 0.0 {
             return LightPointSample {
                 radiance: RGBSpectrum::default(),
                 wi: Vec3::default(),
@@ -64,10 +63,20 @@ impl Light for DiffuseAreaLight {
             };
         }
 
-        let wi = (point_it.p() - it.p()).normalize();
+        let wi = (point_it.point - it.point).normalize();
         let radiance = self.emission(&point_it, &wi);
 
-        let visibility = VisibilityTester::new(BaseInteraction::from(it), point_it);
+        let visibility = VisibilityTester::new(
+            Interaction {
+                point: it.point,
+                point_error: it.point_error,
+                time: it.time,
+                direction: it.direction,
+                normal: it.normal,
+                surface: None,
+            },
+            point_it,
+        );
 
         LightPointSample {
             radiance,
@@ -77,7 +86,7 @@ impl Light for DiffuseAreaLight {
         }
     }
 
-    fn point_pdf(&self, it: &dyn Interaction, dir: &Vec3) -> Float {
+    fn point_pdf(&self, it: &Interaction, dir: &Vec3) -> Float {
         self.shape.pdf_from_ref(it, dir)
     }
 
@@ -111,26 +120,27 @@ impl Light for DiffuseAreaLight {
             direction_pdf = cosine_hemisphere_pdf(direction.z);
         }
 
-        let normal = Vec3::from(point_it.n());
+        let normal = Vec3::from(point_it.normal);
         let (v1, v2) = Vec3::coordinate_system(&normal);
         direction = direction.x * v1 + direction.y * v2 + direction.z * normal;
 
         LightRaySample {
             radiance: self.emission(&point_it, &direction),
             ray: point_it.spawn_ray(&direction),
-            light_normal: point_it.n(),
+            light_normal: point_it.normal,
             position_pdf,
             direction_pdf,
         }
     }
 
     fn ray_pdf(&self, ray: &Ray, surface_normal: &Normal) -> (Float, Float) {
-        let interaction = BaseInteraction {
-            p: ray.origin,
-            p_error: Vec3::default(),
+        let interaction = Interaction {
+            point: ray.origin,
+            point_error: Vec3::default(),
             time: ray.time,
-            wo: Vec3::from(*surface_normal),
-            n: surface_normal.clone(),
+            direction: Vec3::from(*surface_normal),
+            normal: surface_normal.clone(),
+            surface: None,
         };
         (
             self.shape.pdf(&interaction),
@@ -148,8 +158,8 @@ impl Light for DiffuseAreaLight {
 }
 
 impl AreaLight for DiffuseAreaLight {
-    fn emission(&self, it: &dyn Interaction, dir: &Vec3) -> RGBSpectrum {
-        if self.double_sided || it.n().dot(&Normal::from(*dir)) > 0.0 {
+    fn emission(&self, it: &Interaction, dir: &Vec3) -> RGBSpectrum {
+        if self.double_sided || it.normal.dot(&Normal::from(*dir)) > 0.0 {
             self.intensity
         } else {
             RGBSpectrum::default()

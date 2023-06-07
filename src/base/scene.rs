@@ -1,10 +1,10 @@
 use crate::{
     base::{
+        interaction::Interaction,
         light::{Light, INFINITE_LIGHT},
         primitive::Primitive,
     },
     geometries::{bounds3::Bounds3, ray::Ray},
-    interactions::surface::SurfaceInteraction,
 };
 
 pub struct Scene {
@@ -33,7 +33,7 @@ impl Scene {
         }
     }
 
-    pub fn intersect(&self, ray: &mut Ray, si: &mut SurfaceInteraction) -> bool {
+    pub fn intersect(&self, ray: &mut Ray, si: &mut Interaction) -> bool {
         self.aggregate.intersect(ray, si)
     }
 

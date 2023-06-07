@@ -1,7 +1,6 @@
 use crate::{
     base::{constants::Float, interaction::Interaction, scene::Scene},
     geometries::{normal::Normal, point2::Point2F, ray::Ray, vec3::Vec3},
-    interactions::base::BaseInteraction,
     spectra::rgb::RGBSpectrum,
 };
 
@@ -11,34 +10,6 @@ pub const DELTA_POSITION_LIGHT: LightFlag = 1;
 pub const DELTA_DIRECTION_LIGHT: LightFlag = 2;
 pub const AREA_LIGHT: LightFlag = 4;
 pub const INFINITE_LIGHT: LightFlag = 8;
-
-pub trait Light: Send + Sync {
-    fn power(&self) -> RGBSpectrum;
-
-    fn radiance(&self, _: &Ray) -> RGBSpectrum {
-        RGBSpectrum::default()
-    }
-
-    fn sample_point(&self, it: &dyn Interaction, u: &Point2F) -> LightPointSample;
-
-    fn point_pdf(&self, _: &dyn Interaction, _dir: &Vec3) -> Float {
-        0.0
-    }
-
-    fn sample_ray(&self, u1: &Point2F, u2: &Point2F, time: Float) -> LightRaySample;
-
-    fn ray_pdf(&self, ray: &Ray, n: &Normal) -> (Float, Float);
-
-    fn num_samples(&self) -> usize {
-        1
-    }
-
-    fn flag(&self) -> LightFlag;
-}
-
-pub trait AreaLight: Light {
-    fn emission(&self, it: &dyn Interaction, dir: &Vec3) -> RGBSpectrum;
-}
 
 pub struct LightPointSample {
     pub radiance: RGBSpectrum,
@@ -55,13 +26,41 @@ pub struct LightRaySample {
     pub direction_pdf: Float,
 }
 
+pub trait Light: Send + Sync {
+    fn power(&self) -> RGBSpectrum;
+
+    fn radiance(&self, _: &Ray) -> RGBSpectrum {
+        RGBSpectrum::default()
+    }
+
+    fn sample_point(&self, it: &Interaction, u: &Point2F) -> LightPointSample;
+
+    fn point_pdf(&self, _: &Interaction, _dir: &Vec3) -> Float {
+        0.0
+    }
+
+    fn sample_ray(&self, u1: &Point2F, u2: &Point2F, time: Float) -> LightRaySample;
+
+    fn ray_pdf(&self, ray: &Ray, n: &Normal) -> (Float, Float);
+
+    fn num_samples(&self) -> usize {
+        1
+    }
+
+    fn flag(&self) -> LightFlag;
+}
+
+pub trait AreaLight: Light {
+    fn emission(&self, it: &Interaction, dir: &Vec3) -> RGBSpectrum;
+}
+
 pub struct VisibilityTester {
-    pub p0: BaseInteraction,
-    pub p1: BaseInteraction,
+    pub p0: Interaction,
+    pub p1: Interaction,
 }
 
 impl VisibilityTester {
-    pub fn new(p0: BaseInteraction, p1: BaseInteraction) -> Self {
+    pub fn new(p0: Interaction, p1: Interaction) -> Self {
         Self { p0, p1 }
     }
 

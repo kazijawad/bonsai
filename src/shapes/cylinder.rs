@@ -2,6 +2,7 @@ use crate::{
     base::{
         constants::{Float, PI},
         efloat::EFloat,
+        interaction::{Interaction, SurfaceOptions},
         math::{gamma, lerp},
         shape::Shape,
         transform::Transform,
@@ -9,7 +10,6 @@ use crate::{
     geometries::{
         bounds3::Bounds3, normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3,
     },
-    interactions::{base::BaseInteraction, surface::SurfaceInteraction},
 };
 
 pub struct Cylinder {
@@ -68,7 +68,7 @@ impl Shape for Cylinder {
         self.object_to_world.transform_bounds(&self.object_bounds())
     }
 
-    fn intersect(&self, ray: &Ray, t_hit: &mut Float, si: &mut SurfaceInteraction) -> bool {
+    fn intersect(&self, ray: &Ray, t_hit: &mut Float, si: &mut Interaction) -> bool {
         // Transform ray to object space.
         let mut origin_error = Vec3::default();
         let mut direction_error = Vec3::default();
@@ -107,20 +107,20 @@ impl Shape for Cylinder {
         }
 
         // Compute cylinder hit position and phi.
-        let mut p_hit = ray.at(Float::from(t_shape_hit));
+        let mut point_hit = ray.at(Float::from(t_shape_hit));
 
         // Refine cylinder intersection point.
-        let hit_radius = (p_hit.x * p_hit.x + p_hit.y * p_hit.y).sqrt();
-        p_hit.x *= self.radius / hit_radius;
-        p_hit.y *= self.radius / hit_radius;
+        let hit_radius = (point_hit.x * point_hit.x + point_hit.y * point_hit.y).sqrt();
+        point_hit.x *= self.radius / hit_radius;
+        point_hit.y *= self.radius / hit_radius;
 
-        let mut phi = p_hit.y.atan2(p_hit.x);
+        let mut phi = point_hit.y.atan2(point_hit.x);
         if phi < 0.0 {
             phi += 2.0 * PI
         }
 
         // Test cylinder intersection against clipping parameters.
-        if p_hit.z < self.z_min || p_hit.z > self.z_max || phi > self.phi_max {
+        if point_hit.z < self.z_min || point_hit.z > self.z_max || phi > self.phi_max {
             if t_shape_hit == t1 {
                 return false;
             }
@@ -130,31 +130,31 @@ impl Shape for Cylinder {
 
             // Recompute cylinder hit position and phi.
             t_shape_hit = t1;
-            p_hit = ray.at(Float::from(t_shape_hit));
+            point_hit = ray.at(Float::from(t_shape_hit));
 
             // Refine cylinder intersection point.
-            let hit_radius = (p_hit.x * p_hit.x + p_hit.y * p_hit.y).sqrt();
-            p_hit.x *= self.radius / hit_radius;
-            p_hit.y *= self.radius / hit_radius;
-            phi = p_hit.y.atan2(p_hit.x);
+            let hit_radius = (point_hit.x * point_hit.x + point_hit.y * point_hit.y).sqrt();
+            point_hit.x *= self.radius / hit_radius;
+            point_hit.y *= self.radius / hit_radius;
+            phi = point_hit.y.atan2(point_hit.x);
             if phi < 0.0 {
                 phi += 2.0 * PI;
             }
-            if p_hit.z < self.z_min || p_hit.z > self.z_max || phi > self.phi_max {
+            if point_hit.z < self.z_min || point_hit.z > self.z_max || phi > self.phi_max {
                 return false;
             }
         }
 
         // Find parametric representation of cylinder hit.
         let u = phi / self.phi_max;
-        let v = (p_hit.z - self.z_min) / (self.z_max - self.z_min);
+        let v = (point_hit.z - self.z_min) / (self.z_max - self.z_min);
 
         // Compute cylinder UV derivatives.
-        let dpdu = Vec3::new(-self.phi_max * p_hit.y, self.phi_max * p_hit.x, 0.0);
+        let dpdu = Vec3::new(-self.phi_max * point_hit.y, self.phi_max * point_hit.x, 0.0);
         let dpdv = Vec3::new(0.0, 0.0, self.z_max - self.z_min);
 
         // Compute cylinder normal derivatives.
-        let d2pduu = -self.phi_max * self.phi_max * Vec3::new(p_hit.x, p_hit.y, 0.0);
+        let d2pduu = -self.phi_max * self.phi_max * Vec3::new(point_hit.x, point_hit.y, 0.0);
         let d2pduv = Vec3::default();
         let d2pdvv = Vec3::default();
 
@@ -179,21 +179,24 @@ impl Shape for Cylinder {
         );
 
         // Compute error bounds for cylinder intersection.
-        let p_error = gamma(3.0) * Vec3::new(p_hit.x, p_hit.y, 0.0).abs();
+        let point_error = gamma(3.0) * Vec3::new(point_hit.x, point_hit.y, 0.0).abs();
 
         // Initialize interaction from parametric information.
-        *si = SurfaceInteraction::new(
-            p_hit,
-            p_error,
-            Point2F::new(u, v),
-            -ray.direction,
-            dpdu,
-            dpdv,
-            dndu,
-            dndv,
+        *si = Interaction::new(
+            point_hit,
+            point_error,
             ray.time,
-            self.reverse_orientation,
-            self.transform_swaps_handedness,
+            -ray.direction,
+            None,
+            Some(SurfaceOptions {
+                uv: Point2F::new(u, v),
+                dpdu,
+                dpdv,
+                dndu,
+                dndv,
+                reverse_orientation: self.reverse_orientation,
+                transform_swaps_handedness: self.transform_swaps_handedness,
+            }),
         );
         si.transform(&self.object_to_world);
 
@@ -283,15 +286,15 @@ impl Shape for Cylinder {
         true
     }
 
-    fn sample(&self, u: &Point2F, pdf: &mut Float) -> BaseInteraction {
+    fn sample(&self, u: &Point2F, pdf: &mut Float) -> Interaction {
         let z = lerp(u.x, self.z_min, self.z_max);
         let phi = u.y * self.phi_max;
         let mut object_point = Point3::new(self.radius * phi.cos(), self.radius * phi.sin(), z);
 
-        let mut n =
+        let mut normal =
             Normal::new(object_point.x, object_point.y, 0.0).transform(&self.object_to_world);
         if self.reverse_orientation {
-            n *= -1.0;
+            normal *= -1.0;
         }
 
         // Reproject point to cylinder surface and compute error.
@@ -300,21 +303,20 @@ impl Shape for Cylinder {
         object_point.y *= self.radius / hit_radius;
 
         let object_point_error = gamma(3.0) * Vec3::new(object_point.x, object_point.y, 0.0).abs();
-        let mut p_error = Vec3::default();
-        let p = object_point.transform_with_point_error(
+        let mut point_error = Vec3::default();
+        let point = object_point.transform_with_point_error(
             &self.object_to_world,
             &object_point_error,
-            &mut p_error,
+            &mut point_error,
         );
 
         *pdf = 1.0 / self.area();
 
-        BaseInteraction {
-            p,
-            p_error,
-            time: 0.0,
-            wo: Vec3::default(),
-            n,
+        Interaction {
+            point,
+            point_error,
+            normal,
+            ..Default::default()
         }
     }
 

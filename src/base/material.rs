@@ -1,4 +1,4 @@
-use crate::interactions::surface::SurfaceInteraction;
+use crate::base::interaction::Interaction;
 
 #[derive(Debug, Clone, Copy)]
 pub enum TransportMode {
@@ -9,7 +9,7 @@ pub enum TransportMode {
 pub trait Material: Send + Sync {
     fn compute_scattering_functions(
         &self,
-        si: &mut SurfaceInteraction,
+        si: &mut Interaction,
         mode: TransportMode,
         allow_multiple_lobes: bool,
     );

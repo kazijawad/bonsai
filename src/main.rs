@@ -74,7 +74,6 @@ fn main() {
         jitter_samples: true,
     }));
 
-    let integrator =
-        DirectLightingIntegrator::new(camera, sampler, &scene, 5, LightStrategy::UniformSampleAll);
+    let integrator = WhittedIntegrator::new(camera, sampler, 5);
     integrator.render(&scene);
 }

@@ -1,6 +1,7 @@
 use crate::{
     base::{
         constants::{Float, PI},
+        interaction::{Interaction, SurfaceOptions},
         sampling::concentric_sample_disk,
         shape::Shape,
         transform::Transform,
@@ -8,7 +9,6 @@ use crate::{
     geometries::{
         bounds3::Bounds3, normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3,
     },
-    interactions::{base::BaseInteraction, surface::SurfaceInteraction},
 };
 
 pub struct Disk {
@@ -67,7 +67,7 @@ impl Shape for Disk {
         self.object_to_world.transform_bounds(&self.object_bounds())
     }
 
-    fn intersect(&self, ray: &Ray, t_hit: &mut Float, si: &mut SurfaceInteraction) -> bool {
+    fn intersect(&self, ray: &Ray, t_hit: &mut Float, si: &mut Interaction) -> bool {
         // Transform ray to object space.
         let mut origin_error = Vec3::default();
         let mut direction_error = Vec3::default();
@@ -87,14 +87,14 @@ impl Shape for Disk {
         }
 
         // Check if hit point is inside disk radii and max phi.
-        let mut p_hit = ray.at(t_shape_hit);
-        let dist = p_hit.x * p_hit.x + p_hit.y * p_hit.y;
+        let mut point_hit = ray.at(t_shape_hit);
+        let dist = point_hit.x * point_hit.x + point_hit.y * point_hit.y;
         if dist > self.radius * self.radius || dist < self.inner_radius * self.inner_radius {
             return false;
         }
 
         // Test disk phi value against max phi.
-        let mut phi = p_hit.y.atan2(p_hit.x);
+        let mut phi = point_hit.y.atan2(point_hit.x);
         if phi < 0.0 {
             phi += 2.0 * PI;
         }
@@ -106,30 +106,34 @@ impl Shape for Disk {
         let u = phi / self.phi_max;
         let r_hit = dist.sqrt();
         let v = (self.radius - r_hit) / (self.radius - self.inner_radius);
-        let dpdu = Vec3::new(-self.phi_max * p_hit.y, self.phi_max * p_hit.x, 0.0);
-        let dpdv = Vec3::new(p_hit.x, p_hit.y, 0.0) * (self.inner_radius - self.radius) / r_hit;
+        let dpdu = Vec3::new(-self.phi_max * point_hit.y, self.phi_max * point_hit.x, 0.0);
+        let dpdv =
+            Vec3::new(point_hit.x, point_hit.y, 0.0) * (self.inner_radius - self.radius) / r_hit;
         let dndu = Normal::default();
         let dndv = Normal::default();
 
         // Refine disk intersection point.
-        p_hit.z = self.height;
+        point_hit.z = self.height;
 
         // Compute error bounds for disk intersection.
-        let p_error = Vec3::default();
+        let point_error = Vec3::default();
 
         // Initialize interaction from parametric information.
-        *si = SurfaceInteraction::new(
-            p_hit,
-            p_error,
-            Point2F::new(u, v),
-            -ray.direction,
-            dpdu,
-            dpdv,
-            dndu,
-            dndv,
+        *si = Interaction::new(
+            point_hit,
+            point_error,
             ray.time,
-            self.reverse_orientation,
-            self.transform_swaps_handedness,
+            -ray.direction,
+            None,
+            Some(SurfaceOptions {
+                uv: Point2F::new(u, v),
+                dpdu,
+                dpdv,
+                dndu,
+                dndv,
+                reverse_orientation: self.reverse_orientation,
+                transform_swaps_handedness: self.transform_swaps_handedness,
+            }),
         );
         si.transform(&self.object_to_world);
 
@@ -177,7 +181,7 @@ impl Shape for Disk {
         true
     }
 
-    fn sample(&self, u: &Point2F, pdf: &mut Float) -> BaseInteraction {
+    fn sample(&self, u: &Point2F, pdf: &mut Float) -> Interaction {
         let disk_point = concentric_sample_disk(u);
         let object_point = Point3::new(
             disk_point.x * self.radius,
@@ -185,28 +189,27 @@ impl Shape for Disk {
             self.height,
         );
 
-        let mut n = Normal::new(0.0, 0.0, 1.0)
+        let mut normal = Normal::new(0.0, 0.0, 1.0)
             .transform(&self.object_to_world)
             .normalize();
         if self.reverse_orientation {
-            n *= -1.0;
+            normal *= -1.0;
         }
 
-        let mut p_error = Vec3::default();
-        let p = object_point.transform_with_point_error(
+        let mut point_error = Vec3::default();
+        let point = object_point.transform_with_point_error(
             &self.object_to_world,
             &Vec3::default(),
-            &mut p_error,
+            &mut point_error,
         );
 
         *pdf = 1.0 / self.area();
 
-        BaseInteraction {
-            p,
-            p_error,
-            time: 0.0,
-            wo: Vec3::default(),
-            n,
+        Interaction {
+            point,
+            point_error,
+            normal,
+            ..Default::default()
         }
     }
 

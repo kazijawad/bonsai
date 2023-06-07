@@ -1,10 +1,10 @@
 use crate::{
     base::{
+        interaction::Interaction,
         mipmap::MIPMap,
         texture::{Texture, TextureMapping2D},
     },
     geometries::vec2::Vec2F,
-    interactions::surface::SurfaceInteraction,
     io::image::{Image, ImageWrapMode},
     spectra::rgb::RGBSpectrum,
 };
@@ -33,7 +33,7 @@ impl ImageTexture {
 }
 
 impl Texture<RGBSpectrum> for ImageTexture {
-    fn evaluate(&self, si: &SurfaceInteraction) -> RGBSpectrum {
+    fn evaluate(&self, si: &Interaction) -> RGBSpectrum {
         let mut dstdx = Vec2F::default();
         let mut dstdy = Vec2F::default();
         let mut st = self.mapping.map(si, &mut dstdx, &mut dstdy);

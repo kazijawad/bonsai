@@ -11,7 +11,6 @@ use crate::{
     geometries::{
         bounds3::Bounds3, normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3,
     },
-    interactions::base::BaseInteraction,
     spectra::rgb::RGBSpectrum,
 };
 
@@ -54,20 +53,25 @@ impl Light for DirectionalLight {
         self.intensity * PI * self.world_radius * self.world_radius
     }
 
-    fn sample_point(&self, it: &dyn Interaction, _: &Point2F) -> LightPointSample {
-        let p_outside = it.p() + self.direction * (2.0 * self.world_radius);
+    fn sample_point(&self, it: &Interaction, _: &Point2F) -> LightPointSample {
+        let p_outside = it.point + self.direction * (2.0 * self.world_radius);
         LightPointSample {
             radiance: self.intensity,
             wi: self.direction,
             pdf: 1.0,
             visibility: Some(VisibilityTester::new(
-                BaseInteraction::from(it),
-                BaseInteraction {
-                    p: p_outside,
-                    p_error: Vec3::default(),
-                    time: it.time(),
-                    wo: Vec3::default(),
-                    n: Normal::default(),
+                Interaction {
+                    point: it.point,
+                    point_error: it.point_error,
+                    time: it.time,
+                    direction: it.direction,
+                    normal: it.normal,
+                    surface: None,
+                },
+                Interaction {
+                    point: p_outside,
+                    time: it.time,
+                    ..Default::default()
                 },
             )),
         }

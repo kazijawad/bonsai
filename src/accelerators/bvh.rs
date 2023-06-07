@@ -6,12 +6,12 @@ use rayon::prelude::*;
 use crate::{
     base::{
         constants::Float,
+        interaction::Interaction,
         light::AreaLight,
         material::{Material, TransportMode},
         primitive::Primitive,
     },
     geometries::{bounds3::Bounds3, point3::Point3, ray::Ray, vec3::Vec3},
-    interactions::surface::SurfaceInteraction,
 };
 
 const MAX_PRIMITIVES_IN_NODE: usize = 256;
@@ -278,7 +278,7 @@ impl Primitive for BVH {
         }
     }
 
-    fn intersect(&self, ray: &mut Ray, si: &mut SurfaceInteraction) -> bool {
+    fn intersect(&self, ray: &mut Ray, si: &mut Interaction) -> bool {
         if self.nodes.is_empty() {
             return false;
         }
@@ -424,7 +424,7 @@ impl Primitive for BVH {
 
     fn compute_scattering_functions(
         &self,
-        _si: &mut SurfaceInteraction,
+        _si: &mut Interaction,
         _transport_mode: TransportMode,
         _allow_multiple_lobes: bool,
     ) {

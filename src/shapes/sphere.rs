@@ -2,7 +2,7 @@ use crate::{
     base::{
         constants::{Float, PI},
         efloat::EFloat,
-        interaction::Interaction,
+        interaction::{Interaction, SurfaceOptions},
         math::gamma,
         sampling::{uniform_cone_pdf, uniform_sample_sphere},
         shape::Shape,
@@ -11,7 +11,6 @@ use crate::{
     geometries::{
         bounds3::Bounds3, normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3,
     },
-    interactions::{base::BaseInteraction, surface::SurfaceInteraction},
 };
 
 pub struct Sphere {
@@ -78,7 +77,7 @@ impl Shape for Sphere {
         self.object_to_world.transform_bounds(&self.object_bounds())
     }
 
-    fn intersect(&self, ray: &Ray, t_hit: &mut Float, si: &mut SurfaceInteraction) -> bool {
+    fn intersect(&self, ray: &Ray, t_hit: &mut Float, si: &mut Interaction) -> bool {
         // Transform ray to object space.
         let mut o_error = Vec3::default();
         let mut d_error = Vec3::default();
@@ -117,22 +116,22 @@ impl Shape for Sphere {
         }
 
         // Compute sphere hit position and phi.
-        let mut p_hit = ray.at(Float::from(t_shape_hit));
+        let mut point_hit = ray.at(Float::from(t_shape_hit));
 
         // Refine sphere intersection point.
-        p_hit *= self.radius / p_hit.distance(&Point3::default());
-        if p_hit.x == 0.0 && p_hit.y == 0.0 {
-            p_hit.x = 1e-5 * self.radius;
+        point_hit *= self.radius / point_hit.distance(&Point3::default());
+        if point_hit.x == 0.0 && point_hit.y == 0.0 {
+            point_hit.x = 1e-5 * self.radius;
         }
 
-        let mut phi = p_hit.y.atan2(p_hit.x);
+        let mut phi = point_hit.y.atan2(point_hit.x);
         if phi < 0.0 {
             phi += 2.0 * PI;
         }
 
         // Test sphere intersection against clipping parameters.
-        if (self.z_min > -self.radius && p_hit.z < self.z_min)
-            || (self.z_max < self.radius && p_hit.z > self.z_max)
+        if (self.z_min > -self.radius && point_hit.z < self.z_min)
+            || (self.z_max < self.radius && point_hit.z > self.z_max)
             || phi > self.phi_max
         {
             if t_shape_hit == t1 {
@@ -144,19 +143,19 @@ impl Shape for Sphere {
 
             // Recompute sphere hit position and phi.
             t_shape_hit = t1;
-            p_hit = ray.at(Float::from(t_shape_hit));
+            point_hit = ray.at(Float::from(t_shape_hit));
 
             // Refine sphere intersection point.
-            p_hit *= self.radius / p_hit.distance(&Point3::default());
-            if p_hit.x == 0.0 && p_hit.y == 0.0 {
-                p_hit.x = 1e-5 * self.radius;
+            point_hit *= self.radius / point_hit.distance(&Point3::default());
+            if point_hit.x == 0.0 && point_hit.y == 0.0 {
+                point_hit.x = 1e-5 * self.radius;
             }
-            phi = p_hit.y.atan2(p_hit.x);
+            phi = point_hit.y.atan2(point_hit.x);
             if phi < 0.0 {
                 phi += 2.0 * PI;
             }
-            if (self.z_min > -self.radius && p_hit.z < self.z_min)
-                || (self.z_max < self.radius && p_hit.z > self.z_max)
+            if (self.z_min > -self.radius && point_hit.z < self.z_min)
+                || (self.z_max < self.radius && point_hit.z > self.z_max)
                 || phi > self.phi_max
             {
                 return false;
@@ -165,31 +164,31 @@ impl Shape for Sphere {
 
         // Find parametric representation of sphere hit.
         let u = phi / self.phi_max;
-        let theta = (p_hit.z / self.radius).clamp(-1.0, 1.0).acos();
+        let theta = (point_hit.z / self.radius).clamp(-1.0, 1.0).acos();
         let v = (theta - self.theta_min) / (self.theta_max - self.theta_min);
 
         // Compute sphere UV derivatives.
-        let z_radius = (p_hit.x * p_hit.x + p_hit.y * p_hit.y).sqrt();
+        let z_radius = (point_hit.x * point_hit.x + point_hit.y * point_hit.y).sqrt();
         let inv_z_radius = 1.0 / z_radius;
-        let cos_phi = p_hit.x * inv_z_radius;
-        let sin_phi = p_hit.y * inv_z_radius;
-        let dpdu = Vec3::new(-self.phi_max * p_hit.y, self.phi_max * p_hit.x, 0.0);
+        let cos_phi = point_hit.x * inv_z_radius;
+        let sin_phi = point_hit.y * inv_z_radius;
+        let dpdu = Vec3::new(-self.phi_max * point_hit.y, self.phi_max * point_hit.x, 0.0);
         let dpdv = (self.theta_max - self.theta_min)
             * Vec3::new(
-                p_hit.z * cos_phi,
-                p_hit.z * sin_phi,
+                point_hit.z * cos_phi,
+                point_hit.z * sin_phi,
                 -self.radius * theta.sin(),
             );
 
         // Compute sphere normal derivatives.
-        let d2pduu = -self.phi_max * self.phi_max * Vec3::new(p_hit.x, p_hit.y, 0.0);
+        let d2pduu = -self.phi_max * self.phi_max * Vec3::new(point_hit.x, point_hit.y, 0.0);
         let d2pduv = (self.theta_max - self.theta_min)
-            * p_hit.z
+            * point_hit.z
             * self.phi_max
             * Vec3::new(-sin_phi, cos_phi, 0.0);
         let d2pdvv = -(self.theta_max - self.theta_min)
             * (self.theta_max - self.theta_min)
-            * Vec3::from(p_hit);
+            * Vec3::from(point_hit);
 
         // Compute coefficients for fundamental forms.
         let e1 = dpdu.dot(&dpdu);
@@ -210,21 +209,24 @@ impl Shape for Sphere {
         );
 
         // Compute error bounds for sphere intersection.
-        let p_error = gamma(5.0) * Vec3::from(p_hit).abs();
+        let point_error = gamma(5.0) * Vec3::from(point_hit).abs();
 
         // Initialize interaction from parametric information.
-        *si = SurfaceInteraction::new(
-            p_hit,
-            p_error,
-            Point2F::new(u, v),
-            -ray.direction,
-            dpdu,
-            dpdv,
-            dndu,
-            dndv,
+        *si = Interaction::new(
+            point_hit,
+            point_error,
             ray.time,
-            self.reverse_orientation,
-            self.transform_swaps_handedness,
+            -ray.direction,
+            None,
+            Some(SurfaceOptions {
+                uv: Point2F::new(u, v),
+                dpdu,
+                dpdv,
+                dndu,
+                dndv,
+                reverse_orientation: self.reverse_orientation,
+                transform_swaps_handedness: self.transform_swaps_handedness,
+            }),
         );
         si.transform(&self.object_to_world);
 
@@ -323,55 +325,52 @@ impl Shape for Sphere {
         true
     }
 
-    fn sample(&self, u: &Point2F, pdf: &mut Float) -> BaseInteraction {
+    fn sample(&self, u: &Point2F, pdf: &mut Float) -> Interaction {
         let mut object = Point3::default() + self.radius * uniform_sample_sphere(u);
 
-        let mut n = Normal::from(object).transform(&self.object_to_world);
+        let mut normal = Normal::from(object).transform(&self.object_to_world);
         if self.reverse_orientation {
-            n *= -1.0;
+            normal *= -1.0;
         }
 
         // Reproject to sphere surface and compute error.
         object *= self.radius / object.distance(&Point3::default());
         let object_error = gamma(5.0) * Vec3::from(object.abs());
 
-        let mut p_error = Vec3::default();
-        let p =
-            object.transform_with_point_error(&self.object_to_world, &object_error, &mut p_error);
+        let mut point_error = Vec3::default();
+        let point = object.transform_with_point_error(
+            &self.object_to_world,
+            &object_error,
+            &mut point_error,
+        );
 
         *pdf = 1.0 / self.area();
 
-        BaseInteraction {
-            p,
-            p_error,
-            time: 0.0,
-            wo: Vec3::default(),
-            n,
+        Interaction {
+            point,
+            point_error,
+            normal,
+            ..Default::default()
         }
     }
 
-    fn sample_from_ref(
-        &self,
-        _it: &dyn Interaction,
-        _u: &Point2F,
-        _pdf: &mut Float,
-    ) -> BaseInteraction {
+    fn sample_from_ref(&self, _it: &Interaction, _u: &Point2F, _pdf: &mut Float) -> Interaction {
         unimplemented!()
     }
 
-    fn pdf_from_ref(&self, it: &dyn Interaction, wi: &Vec3) -> Float {
+    fn pdf_from_ref(&self, it: &Interaction, wi: &Vec3) -> Float {
         let center = Point3::default().transform(&self.object_to_world);
 
         // Return uniform PDF if point is inside sphere.
         let origin = it
-            .p()
-            .offset_ray_origin(&it.p_error(), &it.n(), &(center - it.p()));
+            .point
+            .offset_ray_origin(&it.point_error, &it.normal, &(center - it.point));
         if origin.distance_squared(&center) <= self.radius * self.radius {
             return Shape::pdf_from_ref(self, it, wi);
         }
 
         // Compute general sphere PDF.
-        let sin_theta_2 = self.radius * self.radius / it.p().distance_squared(&center);
+        let sin_theta_2 = self.radius * self.radius / it.point.distance_squared(&center);
         let cos_theta_max = Float::max(0.0, 1.0 - sin_theta_2).sqrt();
 
         uniform_cone_pdf(cos_theta_max)

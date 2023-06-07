@@ -4,7 +4,6 @@ use crate::{
         material::TransportMode, sampler::Sampler, scene::Scene, spectrum::Spectrum,
     },
     geometries::ray::Ray,
-    interactions::surface::SurfaceInteraction,
     spectra::rgb::RGBSpectrum,
 };
 
@@ -43,39 +42,39 @@ impl SamplerIntegrator for WhittedIntegrator {
         let mut output = RGBSpectrum::default();
 
         // Find closest ray intersection or return background radiance.
-        let mut si = SurfaceInteraction::default();
-        if !scene.intersect(ray, &mut si) {
+        let mut it = Interaction::default();
+        if !scene.intersect(ray, &mut it) {
             for light in scene.lights.iter() {
                 output += light.radiance(ray);
             }
             return output;
         }
 
-        // Initialize common variables for integrator.
-        let n = si.shading.n;
-        let wo = si.wo;
-
         // Compute scattering functions for surface interaction.
-        si.compute_scattering_functions(ray, TransportMode::Radiance, false);
+        it.compute_scattering_functions(ray, TransportMode::Radiance, false);
+
+        let si = it.surface.as_ref().unwrap();
         if si.bsdf.is_none() {
-            return self.radiance(&mut si.spawn_ray(&ray.direction), scene, sampler, depth);
+            return self.radiance(&mut it.spawn_ray(&ray.direction), scene, sampler, depth);
         }
 
         // Compute emitted light if ray hit an area light source.
-        output += si.emitted_radiance(&wo);
+        output += it.emitted_radiance(&it.direction);
 
         // Add contribution of each light source.
         for light in scene.lights.iter() {
-            let sample = light.sample_point(&si, &sampler.get_2d());
+            let sample = light.sample_point(&it, &sampler.get_2d());
             if sample.radiance.is_black() || sample.pdf == 0.0 {
                 continue;
             }
 
             if let Some(bsdf) = si.bsdf.as_ref() {
-                let f = bsdf.f(&wo, &sample.wi, BSDF_ALL);
+                let f = bsdf.f(&it.direction, &sample.wi, BSDF_ALL);
                 if let Some(visibility) = sample.visibility {
                     if !f.is_black() && visibility.is_unoccluded(scene) {
-                        output += f * sample.radiance * sample.wi.abs_dot_normal(&n) / sample.pdf;
+                        output +=
+                            f * sample.radiance * sample.wi.abs_dot_normal(&si.shading.normal)
+                                / sample.pdf;
                     }
                 }
             }
@@ -83,8 +82,8 @@ impl SamplerIntegrator for WhittedIntegrator {
 
         if depth + 1 < self.max_depth {
             // Trace rays for specular reflection and refraction.
-            output += self.specular_reflect(&ray, &si, scene, sampler, depth);
-            output += self.specular_transmit(&ray, &si, scene, sampler, depth);
+            output += self.specular_reflect(&ray, &it, scene, sampler, depth);
+            output += self.specular_transmit(&ray, &it, scene, sampler, depth);
         }
 
         output

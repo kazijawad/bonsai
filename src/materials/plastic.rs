@@ -3,13 +3,13 @@ use crate::{
         bsdf::BSDF,
         constants::Float,
         fresnel::FresnelDielectric,
+        interaction::Interaction,
         material::{Material, TransportMode},
         microfacet::TrowbridgeReitzDistribution,
         spectrum::Spectrum,
         texture::Texture,
     },
     bxdfs::{lambertian::LambertianReflection, microfacet::MicrofacetReflection},
-    interactions::surface::SurfaceInteraction,
     spectra::rgb::RGBSpectrum,
 };
 
@@ -23,22 +23,22 @@ pub struct PlasticMaterial {
 impl Material for PlasticMaterial {
     fn compute_scattering_functions(
         &self,
-        si: &mut SurfaceInteraction,
+        it: &mut Interaction,
         _mode: TransportMode,
         _allow_multiple_lobes: bool,
     ) {
-        let mut bsdf = BSDF::new(&si, 1.0);
+        let mut bsdf = BSDF::new(&it, 1.0);
 
-        let kd = self.kd.evaluate(si).clamp(0.0, Float::INFINITY);
+        let kd = self.kd.evaluate(it).clamp(0.0, Float::INFINITY);
         if !kd.is_black() {
             bsdf.add(Box::new(LambertianReflection::new(kd)))
         }
 
-        let ks = self.ks.evaluate(si).clamp(0.0, Float::INFINITY);
+        let ks = self.ks.evaluate(it).clamp(0.0, Float::INFINITY);
         if !ks.is_black() {
             let fresnel = Box::new(FresnelDielectric::new(1.5, 1.0));
 
-            let mut roughness = self.roughness.evaluate(si);
+            let mut roughness = self.roughness.evaluate(it);
             if self.remap_roughness {
                 roughness = TrowbridgeReitzDistribution::roughness_to_alpha(roughness);
             }
@@ -48,6 +48,7 @@ impl Material for PlasticMaterial {
             bsdf.add(specular);
         }
 
+        let si = it.surface.as_mut().unwrap();
         si.bsdf = Some(bsdf);
     }
 }

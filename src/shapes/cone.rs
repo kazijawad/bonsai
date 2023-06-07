@@ -2,13 +2,13 @@ use crate::{
     base::{
         constants::{Float, PI},
         efloat::EFloat,
+        interaction::{Interaction, SurfaceOptions},
         shape::Shape,
         transform::Transform,
     },
     geometries::{
         bounds3::Bounds3, normal::Normal, point2::Point2F, point3::Point3, ray::Ray, vec3::Vec3,
     },
-    interactions::{base::BaseInteraction, surface::SurfaceInteraction},
 };
 
 pub struct Cone {
@@ -64,7 +64,7 @@ impl Shape for Cone {
         self.object_to_world.transform_bounds(&self.object_bounds())
     }
 
-    fn intersect(&self, ray: &Ray, t_hit: &mut Float, si: &mut SurfaceInteraction) -> bool {
+    fn intersect(&self, ray: &Ray, t_hit: &mut Float, si: &mut Interaction) -> bool {
         // Transform ray to object space.
         let mut origin_error = Vec3::default();
         let mut direction_error = Vec3::default();
@@ -109,14 +109,14 @@ impl Shape for Cone {
         }
 
         // Compute cone inverse mapping.
-        let mut p_hit = ray.at(Float::from(t_shape_hit));
-        let mut phi = p_hit.y.atan2(p_hit.x);
+        let mut point_hit = ray.at(Float::from(t_shape_hit));
+        let mut phi = point_hit.y.atan2(point_hit.x);
         if phi < 0.0 {
             phi += 2.0 * PI;
         }
 
         // Test cone intersection against clipping parameters.
-        if p_hit.z < 0.0 || p_hit.z > self.height || phi > self.phi_max {
+        if point_hit.z < 0.0 || point_hit.z > self.height || phi > self.phi_max {
             if t_shape_hit == t1 {
                 return false;
             }
@@ -126,28 +126,32 @@ impl Shape for Cone {
 
             // Recompute cone inverse mapping.
             t_shape_hit = t1;
-            p_hit = ray.at(Float::from(t_shape_hit));
-            phi = p_hit.y.atan2(p_hit.x);
+            point_hit = ray.at(Float::from(t_shape_hit));
+            phi = point_hit.y.atan2(point_hit.x);
             if phi < 0.0 {
                 phi += 2.0 * PI;
             }
 
-            if p_hit.z < 0.0 || p_hit.z > self.height || phi > self.phi_max {
+            if point_hit.z < 0.0 || point_hit.z > self.height || phi > self.phi_max {
                 return false;
             }
         }
 
         // Find parametric representation of cone hit.
         let u = phi / self.phi_max;
-        let v = p_hit.z / self.height;
+        let v = point_hit.z / self.height;
 
         // Compute cone UV derivatives.
-        let dpdu = Vec3::new(-self.phi_max * p_hit.y, self.phi_max * p_hit.x, 0.0);
-        let dpdv = Vec3::new(-p_hit.x / (1.0 - v), -p_hit.y / (1.0 - v), self.height);
+        let dpdu = Vec3::new(-self.phi_max * point_hit.y, self.phi_max * point_hit.x, 0.0);
+        let dpdv = Vec3::new(
+            -point_hit.x / (1.0 - v),
+            -point_hit.y / (1.0 - v),
+            self.height,
+        );
 
         // Compute cone normal derivatives.
-        let d2pduu = -self.phi_max * self.phi_max * Vec3::new(p_hit.x, p_hit.y, 0.0);
-        let d2pduv = self.phi_max / (1.0 - v) * Vec3::new(p_hit.y, -p_hit.x, 0.0);
+        let d2pduu = -self.phi_max * self.phi_max * Vec3::new(point_hit.x, point_hit.y, 0.0);
+        let d2pduv = self.phi_max / (1.0 - v) * Vec3::new(point_hit.y, -point_hit.x, 0.0);
         let d2pdvv = Vec3::default();
 
         // Compute coefficients for fundamental forms.
@@ -174,25 +178,28 @@ impl Shape for Cone {
         let px = ox + t_shape_hit * dx;
         let py = oy + t_shape_hit * dy;
         let pz = oz + t_shape_hit * dz;
-        let p_error = Vec3::new(
+        let point_error = Vec3::new(
             px.absolute_error(),
             py.absolute_error(),
             pz.absolute_error(),
         );
 
         // Initialize interaction from parametric information.
-        *si = SurfaceInteraction::new(
-            p_hit,
-            p_error,
-            Point2F::new(u, v),
-            -ray.direction,
-            dpdu,
-            dpdv,
-            dndu,
-            dndv,
+        *si = Interaction::new(
+            point_hit,
+            point_error,
             ray.time,
-            self.reverse_orientation,
-            self.transform_swaps_handedness,
+            -ray.direction,
+            None,
+            Some(SurfaceOptions {
+                uv: Point2F::new(u, v),
+                dpdu,
+                dpdv,
+                dndu,
+                dndv,
+                reverse_orientation: self.reverse_orientation,
+                transform_swaps_handedness: self.transform_swaps_handedness,
+            }),
         );
         si.transform(&self.object_to_world);
 
@@ -278,7 +285,7 @@ impl Shape for Cone {
         true
     }
 
-    fn sample(&self, _u: &Point2F, _pdf: &mut Float) -> BaseInteraction {
+    fn sample(&self, _u: &Point2F, _pdf: &mut Float) -> Interaction {
         unimplemented!();
     }
 
