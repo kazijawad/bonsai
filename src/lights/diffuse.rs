@@ -90,20 +90,15 @@ impl Light for DiffuseAreaLight {
         self.shape.pdf_from_ref(it, dir)
     }
 
-    fn sample_ray(
-        &self,
-        origin_sample: &Point2F,
-        direction_sample: &Point2F,
-        _: Float,
-    ) -> LightRaySample {
+    fn sample_ray(&self, u1: &Point2F, u2: &Point2F, _: Float) -> LightRaySample {
         let mut position_pdf = 0.0;
-        let point_it = self.shape.sample(origin_sample, &mut position_pdf);
+        let shape_it = self.shape.sample(u1, &mut position_pdf);
 
         // Sample a cosine-weighted outgoing direction.
         let mut direction: Vec3;
         let direction_pdf: Float;
         if self.double_sided {
-            let mut sample = direction_sample.clone();
+            let mut sample = u2.clone();
             // Choose a side to sample and then remap the sample to [0,1] before
             // applying cosine-weighted hemisphere sampling for the chosen side.
             if sample.x < 0.5 {
@@ -116,40 +111,47 @@ impl Light for DiffuseAreaLight {
             }
             direction_pdf = 0.5 * cosine_hemisphere_pdf(direction.z.abs());
         } else {
-            direction = cosine_sample_hemisphere(direction_sample);
+            direction = cosine_sample_hemisphere(u2);
             direction_pdf = cosine_hemisphere_pdf(direction.z);
         }
 
-        let normal = Vec3::from(point_it.normal);
+        let normal = Vec3::from(shape_it.normal);
         let (v1, v2) = Vec3::coordinate_system(&normal);
         direction = direction.x * v1 + direction.y * v2 + direction.z * normal;
 
         LightRaySample {
-            radiance: self.emission(&point_it, &direction),
-            ray: point_it.spawn_ray(&direction),
-            light_normal: point_it.normal,
+            radiance: self.emission(&shape_it, &direction),
+            ray: shape_it.spawn_ray(&direction),
+            light_normal: shape_it.normal,
             position_pdf,
             direction_pdf,
         }
     }
 
-    fn ray_pdf(&self, ray: &Ray, surface_normal: &Normal) -> (Float, Float) {
-        let interaction = Interaction {
+    fn ray_pdf(
+        &self,
+        ray: &Ray,
+        light_normal: &Normal,
+        position_pdf: &mut Float,
+        direction_pdf: &mut Float,
+    ) {
+        let it = Interaction {
             point: ray.origin,
             point_error: Vec3::default(),
             time: ray.time,
-            direction: Vec3::from(*surface_normal),
-            normal: surface_normal.clone(),
+            direction: Vec3::from(*light_normal),
+            normal: light_normal.clone(),
             surface: None,
         };
-        (
-            self.shape.pdf(&interaction),
-            if self.double_sided {
-                0.5 * cosine_hemisphere_pdf(surface_normal.abs_dot(&Normal::from(ray.direction)))
-            } else {
-                cosine_hemisphere_pdf(surface_normal.dot(&Normal::from(ray.direction)))
-            },
-        )
+
+        *position_pdf = self.shape.pdf(&it);
+
+        let direction_normal = &Normal::from(ray.direction);
+        *direction_pdf = if self.double_sided {
+            0.5 * cosine_hemisphere_pdf(light_normal.abs_dot(direction_normal))
+        } else {
+            cosine_hemisphere_pdf(light_normal.dot(direction_normal))
+        };
     }
 
     fn flag(&self) -> LightFlag {

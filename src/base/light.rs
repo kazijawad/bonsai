@@ -41,7 +41,13 @@ pub trait Light: Send + Sync {
 
     fn sample_ray(&self, u1: &Point2F, u2: &Point2F, time: Float) -> LightRaySample;
 
-    fn ray_pdf(&self, ray: &Ray, n: &Normal) -> (Float, Float);
+    fn ray_pdf(
+        &self,
+        ray: &Ray,
+        light_normal: &Normal,
+        position_pdf: &mut Float,
+        direction_pdf: &mut Float,
+    );
 
     fn num_samples(&self) -> usize {
         1

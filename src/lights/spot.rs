@@ -113,12 +113,14 @@ impl Light for SpotLight {
 
     fn sample_ray(&self, u1: &Point2F, _: &Point2F, time: Float) -> LightRaySample {
         let w = uniform_sample_cone(u1, self.cos_total_width);
+
         let ray = Ray::new(
             &self.position,
             &w.transform(&self.light_to_world),
             Float::INFINITY,
             time,
         );
+
         LightRaySample {
             radiance: self.intensity * self.falloff(&ray.direction),
             ray,
@@ -128,15 +130,20 @@ impl Light for SpotLight {
         }
     }
 
-    fn ray_pdf(&self, ray: &Ray, _: &Normal) -> (Float, Float) {
-        (
-            0.0,
+    fn ray_pdf(
+        &self,
+        ray: &Ray,
+        _light_normal: &Normal,
+        position_pdf: &mut Float,
+        direction_pdf: &mut Float,
+    ) {
+        *position_pdf = 0.0;
+        *direction_pdf =
             if cos_theta(&ray.direction.transform(&self.world_to_light)) >= self.cos_total_width {
                 uniform_cone_pdf(self.cos_total_width)
             } else {
                 0.0
-            },
-        )
+            };
     }
 
     fn flag(&self) -> LightFlag {

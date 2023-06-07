@@ -80,9 +80,9 @@ impl Light for DirectionalLight {
     fn sample_ray(&self, u1: &Point2F, _: &Point2F, time: Float) -> LightRaySample {
         // Choose point on disk oriented toward infinite light direction.
         let (v1, v2) = Vec3::coordinate_system(&self.direction);
-        let concentric_disk = concentric_sample_disk(u1);
-        let disk_point = self.world_center
-            + self.world_radius * (concentric_disk.x * v1 + concentric_disk.y * v2);
+        let sample_point = concentric_sample_disk(u1);
+        let disk_point =
+            self.world_center + self.world_radius * (sample_point.x * v1 + sample_point.y * v2);
 
         // Set ray origin and direction for infinite light ray.
         let ray = Ray::new(
@@ -101,8 +101,15 @@ impl Light for DirectionalLight {
         }
     }
 
-    fn ray_pdf(&self, _ray: &Ray, _surface_normal: &Normal) -> (Float, Float) {
-        (1.0 / (PI * self.world_radius * self.world_radius), 0.0)
+    fn ray_pdf(
+        &self,
+        _ray: &Ray,
+        _light_normal: &Normal,
+        position_pdf: &mut Float,
+        direction_pdf: &mut Float,
+    ) {
+        *position_pdf = 1.0 / (PI * self.world_radius * self.world_radius);
+        *direction_pdf = 0.0;
     }
 
     fn flag(&self) -> LightFlag {

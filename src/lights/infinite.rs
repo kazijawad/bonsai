@@ -202,12 +202,6 @@ impl Light for InfiniteAreaLight {
         let cd = concentric_sample_disk(u2);
         let disk_point = self.world_center + self.world_radius * (cd.x * v1 + cd.y * v2);
 
-        let direction_pdf = if sin_theta == 0.0 {
-            0.0
-        } else {
-            map_pdf / (2.0 * PI * PI * sin_theta)
-        };
-
         LightRaySample {
             radiance: self.mipmap.trilinear_filter(&uv, 0.0),
             ray: Ray::new(
@@ -218,11 +212,21 @@ impl Light for InfiniteAreaLight {
             ),
             light_normal: Normal::from(d),
             position_pdf: 1.0 / (PI * self.world_radius * self.world_radius),
-            direction_pdf,
+            direction_pdf: if sin_theta == 0.0 {
+                0.0
+            } else {
+                map_pdf / (2.0 * PI * PI * sin_theta)
+            },
         }
     }
 
-    fn ray_pdf(&self, ray: &Ray, _: &Normal) -> (Float, Float) {
+    fn ray_pdf(
+        &self,
+        ray: &Ray,
+        _light_normal: &Normal,
+        position_pdf: &mut Float,
+        direction_pdf: &mut Float,
+    ) {
         let d = -ray.direction.transform(&self.world_to_light);
 
         let theta = spherical_theta(&d);
@@ -230,11 +234,8 @@ impl Light for InfiniteAreaLight {
 
         let uv = Point2F::new(phi * INV_TWO_PI, theta * INV_PI);
 
-        let map_pdf = self.distribution.pdf(&uv);
-        (
-            1.0 / (PI * self.world_radius * self.world_radius),
-            map_pdf / (2.0 * PI * PI * theta.sin()),
-        )
+        *position_pdf = 1.0 / (PI * self.world_radius * self.world_radius);
+        *direction_pdf = self.distribution.pdf(&uv) / (2.0 * PI * PI * theta.sin());
     }
 
     fn flag(&self) -> LightFlag {

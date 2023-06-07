@@ -79,8 +79,15 @@ impl Light for PointLight {
         }
     }
 
-    fn ray_pdf(&self, _ray: &Ray, _surface_normal: &Normal) -> (Float, Float) {
-        (0.0, uniform_sphere_pdf())
+    fn ray_pdf(
+        &self,
+        _ray: &Ray,
+        _light_normal: &Normal,
+        position_pdf: &mut Float,
+        direction_pdf: &mut Float,
+    ) {
+        *position_pdf = 0.0;
+        *direction_pdf = uniform_sphere_pdf();
     }
 
     fn flag(&self) -> LightFlag {
