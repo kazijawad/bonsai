@@ -28,21 +28,24 @@ impl Point3 {
         (1.0 - t) * a + t * b
     }
 
-    pub fn offset_ray_origin(&self, p_error: &Vec3, n: &Normal, w: &Vec3) -> Self {
-        let d = Vec3::from(n.abs()).dot(p_error);
-        let mut offset = d * Vec3::from(*n);
-        if w.dot(&Vec3::from(*n)) < 0.0 {
+    pub fn offset_ray_origin(&self, point_error: &Vec3, normal: &Normal, direction: &Vec3) -> Self {
+        let normal = Vec3::from(*normal);
+
+        let mut offset = normal.abs().dot(point_error) * normal;
+        if direction.dot(&normal) < 0.0 {
             offset = -offset;
         }
-        let mut p = self + &offset;
+
+        let mut point = self + &offset;
         for i in 0..3 {
             if offset[i] > 0.0 {
-                p[i] = next_float_up(p[i]);
+                point[i] = next_float_up(point[i]);
             } else if offset[i] < 0.0 {
-                p[i] = next_float_down(p[i]);
+                point[i] = next_float_down(point[i]);
             }
         }
-        p
+
+        point
     }
 
     pub fn transform(&self, t: &Transform) -> Self {
@@ -103,7 +106,7 @@ impl Point3 {
     pub fn transform_with_point_error(
         &self,
         t: &Transform,
-        p_error: &Vec3,
+        point_error: &Vec3,
         abs_error: &mut Vec3,
     ) -> Self {
         let x = self.x;
@@ -117,27 +120,27 @@ impl Point3 {
         let wp = (t.m.m[3][0] * x + t.m.m[3][1] * y) + (t.m.m[3][2] * z + t.m.m[3][3]);
 
         abs_error.x = (gamma(3.0) + 1.0)
-            * (t.m.m[0][0].abs() * p_error.x
-                + t.m.m[0][1].abs() * p_error.y
-                + t.m.m[0][2].abs() * p_error.z)
+            * (t.m.m[0][0].abs() * point_error.x
+                + t.m.m[0][1].abs() * point_error.y
+                + t.m.m[0][2].abs() * point_error.z)
             + gamma(3.0)
                 * ((t.m.m[0][0] * x).abs()
                     + (t.m.m[0][1] * y).abs()
                     + (t.m.m[0][2] * z).abs()
                     + (t.m.m[0][3]).abs());
         abs_error.y = (gamma(3.0) + 1.0)
-            * ((t.m.m[1][0]).abs() * p_error.x
-                + (t.m.m[1][1]).abs() * p_error.y
-                + (t.m.m[1][2]).abs() * p_error.z)
+            * ((t.m.m[1][0]).abs() * point_error.x
+                + (t.m.m[1][1]).abs() * point_error.y
+                + (t.m.m[1][2]).abs() * point_error.z)
             + gamma(3.0)
                 * ((t.m.m[1][0] * x).abs()
                     + (t.m.m[1][1] * y).abs()
                     + (t.m.m[1][2] * z).abs()
                     + (t.m.m[1][3]).abs());
         abs_error.z = (gamma(3.0) + 1.0)
-            * ((t.m.m[2][0]).abs() * p_error.x
-                + (t.m.m[2][1]).abs() * p_error.y
-                + (t.m.m[2][2]).abs() * p_error.z)
+            * ((t.m.m[2][0]).abs() * point_error.x
+                + (t.m.m[2][1]).abs() * point_error.y
+                + (t.m.m[2][2]).abs() * point_error.z)
             + gamma(3.0)
                 * ((t.m.m[2][0] * x).abs()
                     + (t.m.m[2][1] * y).abs()

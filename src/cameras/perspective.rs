@@ -116,11 +116,11 @@ impl PerspectiveCamera {
 impl Camera for PerspectiveCamera {
     fn generate_ray(&self, sample: &CameraRaySample, ray: &mut Ray) -> Float {
         // Compute raster and camera sample positions.
-        let film = Point3::new(sample.film.x, sample.film.y, 0.0);
-        let camera = film.transform(&self.raster_to_camera);
+        let film_point = Point3::new(sample.film.x, sample.film.y, 0.0);
+        let camera_point = Vec3::from(film_point.transform(&self.raster_to_camera));
         *ray = Ray::new(
             &Point3::default(),
-            &Vec3::from(camera).normalize(),
+            &camera_point.normalize(),
             Float::INFINITY,
             0.0,
         );
@@ -143,12 +143,12 @@ impl Camera for PerspectiveCamera {
             // Sample point on lens.
             let lens = self.lens_radius * concentric_sample_disk(&sample.lens);
 
-            let dx = Vec3::from(camera + self.dx_camera).normalize();
+            let dx = (camera_point + self.dx_camera).normalize();
             let focus = Point3::default() + ((self.focal_distance / dx.z) * dx);
             let rx_origin = Point3::new(lens.x, lens.y, 0.0);
             let rx_direction = (focus - rx_origin).normalize();
 
-            let dy = Vec3::from(camera + self.dy_camera).normalize();
+            let dy = (camera_point + self.dy_camera).normalize();
             let focus = Point3::default() + ((self.focal_distance / dy.z) * dy);
             let ry_origin = Point3::new(lens.x, lens.y, 0.0);
             let ry_direction = (focus - ry_origin).normalize();
@@ -163,8 +163,8 @@ impl Camera for PerspectiveCamera {
             ray.differentials = Some(RayDifferentials {
                 rx_origin: ray.origin,
                 ry_origin: ray.origin,
-                rx_direction: (Vec3::from(camera) + self.dx_camera).normalize(),
-                ry_direction: (Vec3::from(camera) + self.dy_camera).normalize(),
+                rx_direction: (camera_point + self.dx_camera).normalize(),
+                ry_direction: (camera_point + self.dy_camera).normalize(),
             });
         }
 
