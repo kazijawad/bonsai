@@ -74,29 +74,6 @@ impl Distribution1D {
 
         (offset as Float + du) / self.count() as Float
     }
-
-    pub fn sample_discrete(
-        &self,
-        u: Float,
-        pdf: &mut Float,
-        u_remapped: Option<&mut Float>,
-    ) -> usize {
-        // Find surrounding CDF segments and offset.
-        let offset = find_interval(self.cdf.len(), |index| self.cdf[index] <= u);
-
-        *pdf = if self.func_int > 0.0 {
-            self.func[offset] / (self.func_int * self.count() as Float)
-        } else {
-            0.0
-        };
-
-        if let Some(ur) = u_remapped {
-            *ur = (u - self.cdf[offset]) / (self.cdf[offset + 1] - self.cdf[offset]);
-            debug_assert!(*ur >= 0.0 && *ur <= 1.0);
-        }
-
-        offset
-    }
 }
 
 impl Distribution2D {
