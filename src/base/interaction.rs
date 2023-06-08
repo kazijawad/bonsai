@@ -62,9 +62,9 @@ impl Interaction {
         normal: Option<Normal>,
         surface: Option<SurfaceOptions>,
     ) -> Self {
-        if let Some(so) = surface {
-            let mut normal = Normal::from(so.dpdu.cross(&so.dpdv).normalize());
-            if so.reverse_orientation ^ so.transform_swaps_handedness {
+        if let Some(si) = surface {
+            let mut normal = Normal::from(si.dpdu.cross(&si.dpdv).normalize());
+            if si.reverse_orientation ^ si.transform_swaps_handedness {
                 normal *= -1.0;
             }
 
@@ -75,18 +75,18 @@ impl Interaction {
                 direction,
                 normal,
                 surface: Some(SurfaceInteraction {
-                    uv: so.uv,
-                    dpdu: so.dpdu,
-                    dpdv: so.dpdv,
-                    dndu: so.dndu,
-                    dndv: so.dndv,
+                    uv: si.uv,
+                    dpdu: si.dpdu,
+                    dpdv: si.dpdv,
+                    dndu: si.dndu,
+                    dndv: si.dndv,
                     // Initialize shading geometry from true geometry.
                     shading: Shading {
                         normal,
-                        dpdu: so.dpdu,
-                        dpdv: so.dpdv,
-                        dndu: so.dndu,
-                        dndv: so.dndv,
+                        dpdu: si.dpdu,
+                        dpdv: si.dpdv,
+                        dndu: si.dndu,
+                        dndv: si.dndv,
                     },
                     bsdf: None,
                     primitive: None,
@@ -150,21 +150,21 @@ impl Interaction {
         dndvs: &Normal,
         orientation_is_authoritative: bool,
     ) {
-        let so = self.surface.as_mut().unwrap();
+        let si = self.surface.as_mut().unwrap();
 
         // Compute shading normal.
-        so.shading.normal = Normal::from(dpdus.cross(dpdvs)).normalize();
+        si.shading.normal = Normal::from(dpdus.cross(dpdvs)).normalize();
         if orientation_is_authoritative {
-            self.normal = self.normal.face_forward(&so.shading.normal);
+            self.normal = self.normal.face_forward(&si.shading.normal);
         } else {
-            so.shading.normal = so.shading.normal.face_forward(&self.normal);
+            si.shading.normal = si.shading.normal.face_forward(&self.normal);
         }
 
         // Initialize shading partial derivatives.
-        so.shading.dpdu.clone_from(dpdus);
-        so.shading.dpdv.clone_from(dpdvs);
-        so.shading.dndu.clone_from(dndus);
-        so.shading.dndv.clone_from(dndvs);
+        si.shading.dpdu.clone_from(dpdus);
+        si.shading.dpdv.clone_from(dpdvs);
+        si.shading.dndu.clone_from(dndus);
+        si.shading.dndv.clone_from(dndvs);
     }
 
     pub fn compute_scattering_functions(
@@ -175,22 +175,22 @@ impl Interaction {
     ) {
         self.compute_differentials(ray);
 
-        let so = self.surface.as_mut().unwrap();
-        if let Some(primitive) = so.primitive.clone().as_mut() {
+        let si = self.surface.as_mut().unwrap();
+        if let Some(primitive) = si.primitive.clone() {
             primitive.compute_scattering_functions(self, mode, allow_multiple_lobes);
         }
     }
 
     pub fn compute_differentials(&mut self, ray: &Ray) {
-        let so = self.surface.as_mut().unwrap();
+        let si = self.surface.as_mut().unwrap();
 
         let mut fail = || {
-            so.dudx = 0.0;
-            so.dvdx = 0.0;
-            so.dudy = 0.0;
-            so.dvdy = 0.0;
-            so.dpdx = Vec3::default();
-            so.dpdy = Vec3::default();
+            si.dudx = 0.0;
+            si.dvdx = 0.0;
+            si.dudy = 0.0;
+            si.dvdy = 0.0;
+            si.dpdx = Vec3::default();
+            si.dpdy = Vec3::default();
         };
 
         if ray.differentials.is_none() {
@@ -216,8 +216,8 @@ impl Interaction {
         }
         let py = diff.ry_origin + ty * diff.ry_direction;
 
-        so.dpdx = px - self.point;
-        so.dpdy = py - self.point;
+        si.dpdx = px - self.point;
+        si.dpdy = py - self.point;
 
         // Choose two dimensions to use for ray offset computation.
         let dim = if self.normal.x.abs() > self.normal.y.abs()
@@ -232,8 +232,8 @@ impl Interaction {
 
         // Initialize matrices for offset computation.
         let a = [
-            [so.dpdu[dim[0]], so.dpdv[dim[0]]],
-            [so.dpdu[dim[1]], so.dpdv[dim[1]]],
+            [si.dpdu[dim[0]], si.dpdv[dim[0]]],
+            [si.dpdu[dim[1]], si.dpdv[dim[1]]],
         ];
         let bx = [
             px[dim[0]] - self.point[dim[0]],
@@ -244,13 +244,13 @@ impl Interaction {
             py[dim[1]] - self.point[dim[1]],
         ];
 
-        if !solve_linear_system_2x2(a, bx, &mut so.dudx, &mut so.dvdx) {
-            so.dudx = 0.0;
-            so.dvdx = 0.0;
+        if !solve_linear_system_2x2(a, bx, &mut si.dudx, &mut si.dvdx) {
+            si.dudx = 0.0;
+            si.dvdx = 0.0;
         }
-        if !solve_linear_system_2x2(a, by, &mut so.dudy, &mut so.dvdy) {
-            so.dudy = 0.0;
-            so.dvdy = 0.0;
+        if !solve_linear_system_2x2(a, by, &mut si.dudy, &mut si.dvdy) {
+            si.dudy = 0.0;
+            si.dvdy = 0.0;
         }
     }
 
