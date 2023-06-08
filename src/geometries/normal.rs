@@ -55,17 +55,8 @@ impl Normal {
         self.x * p.x + self.y * p.y + self.z * p.z
     }
 
-    pub fn dot_vec(&self, v: &Vec3) -> Float {
-        debug_assert!(!self.is_nan() && !v.is_nan());
-        self.x * v.x + self.y * v.y + self.z * v.z
-    }
-
     pub fn abs_dot(&self, v: &Self) -> Float {
         self.dot(v).abs()
-    }
-
-    pub fn abs_dot_vec(&self, v: &Vec3) -> Float {
-        self.dot_vec(v).abs()
     }
 
     pub fn normalize(&self) -> Self {

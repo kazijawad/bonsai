@@ -53,7 +53,7 @@ impl Light for DiffuseAreaLight {
 
     fn sample_point(&self, it: &Interaction, sample: &Point2F) -> LightPointSample {
         let mut pdf = 0.0;
-        let point_it = self.shape.sample_from_ref(it, sample, &mut pdf);
+        let point_it = self.shape.sample_from_it(it, sample, &mut pdf);
         if pdf == 0.0 || (point_it.point - it.point).length_squared() == 0.0 {
             return LightPointSample {
                 radiance: RGBSpectrum::default(),
@@ -87,7 +87,7 @@ impl Light for DiffuseAreaLight {
     }
 
     fn point_pdf(&self, it: &Interaction, dir: &Vec3) -> Float {
-        self.shape.pdf_from_ref(it, dir)
+        self.shape.pdf_from_it(it, dir)
     }
 
     fn sample_ray(&self, u1: &Point2F, u2: &Point2F, _: Float) -> LightRaySample {

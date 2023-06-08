@@ -11,6 +11,7 @@ use crate::{
     },
     geometries::{
         bounds2::Bounds2F,
+        normal::Normal,
         point2::Point2F,
         point3::Point3,
         ray::{Ray, RayDifferentials},
@@ -301,7 +302,7 @@ impl Camera for PerspectiveCamera {
         wi /= dist;
 
         let radiance = self.importance_emission(&lens_it.spawn_ray(&-wi), Some(raster_point));
-        let pdf = (dist * dist) / (lens_it.normal.abs_dot_vec(&wi) * lens_area);
+        let pdf = (dist * dist) / (lens_it.normal.abs_dot(&Normal::from(wi)) * lens_area);
         let visibility = VisibilityTester::new(
             Interaction {
                 point: it.point,

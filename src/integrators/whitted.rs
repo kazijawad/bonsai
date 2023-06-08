@@ -3,7 +3,7 @@ use crate::{
         bxdf::BSDF_ALL, camera::Camera, integrator::SamplerIntegrator, interaction::Interaction,
         material::TransportMode, sampler::Sampler, scene::Scene, spectrum::Spectrum,
     },
-    geometries::ray::Ray,
+    geometries::{ray::Ray, vec3::Vec3},
     spectra::rgb::RGBSpectrum,
 };
 
@@ -62,6 +62,7 @@ impl SamplerIntegrator for WhittedIntegrator {
         output += it.emitted_radiance(&it.direction);
 
         // Add contribution of each light source.
+        let normal = Vec3::from(si.shading.normal);
         for light in scene.lights.iter() {
             let sample = light.sample_point(&it, &sampler.get_2d());
             if sample.radiance.is_black() || sample.pdf == 0.0 {
@@ -72,9 +73,7 @@ impl SamplerIntegrator for WhittedIntegrator {
                 let f = bsdf.f(&it.direction, &sample.wi, BSDF_ALL);
                 if let Some(visibility) = sample.visibility {
                     if !f.is_black() && visibility.is_unoccluded(scene) {
-                        output +=
-                            f * sample.radiance * sample.wi.abs_dot_normal(&si.shading.normal)
-                                / sample.pdf;
+                        output += f * sample.radiance * sample.wi.abs_dot(&normal) / sample.pdf;
                     }
                 }
             }

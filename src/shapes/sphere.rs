@@ -354,11 +354,7 @@ impl Shape for Sphere {
         }
     }
 
-    fn sample_from_ref(&self, _it: &Interaction, _u: &Point2F, _pdf: &mut Float) -> Interaction {
-        unimplemented!()
-    }
-
-    fn pdf_from_ref(&self, it: &Interaction, wi: &Vec3) -> Float {
+    fn pdf_from_it(&self, it: &Interaction, wi: &Vec3) -> Float {
         let center = Point3::default().transform(&self.object_to_world);
 
         // Return uniform PDF if point is inside sphere.
@@ -366,7 +362,7 @@ impl Shape for Sphere {
             .point
             .offset_ray_origin(&it.point_error, &it.normal, &(center - it.point));
         if origin.distance_squared(&center) <= self.radius * self.radius {
-            return Shape::pdf_from_ref(self, it, wi);
+            return Shape::pdf_from_it(self, it, wi);
         }
 
         // Compute general sphere PDF.
@@ -378,17 +374,5 @@ impl Shape for Sphere {
 
     fn area(&self) -> Float {
         self.phi_max * self.radius * (self.z_max - self.z_min)
-    }
-
-    fn solid_angle(&self, p: &Point3, _num_samples: u32) -> Float {
-        let center = Point3::default().transform(&self.object_to_world);
-        if p.distance_squared(&center) <= self.radius * self.radius {
-            return 4.0 * PI;
-        }
-
-        let sin_theta_2 = self.radius * self.radius / p.distance_squared(&center);
-        let cos_theta = Float::max(0.0, 1.0 - sin_theta_2).sqrt();
-
-        2.0 * PI * (1.0 - cos_theta)
     }
 }

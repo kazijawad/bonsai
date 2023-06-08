@@ -159,8 +159,9 @@ pub trait SamplerIntegrator: Send + Sync {
             .sample(&wo, &sampler.get_2d(), BSDF_REFLECTION | BSDF_SPECULAR);
 
         // Return contribution of specular reflection.
-        let ns = &si.shading.normal;
-        if sample.pdf > 0.0 && !sample.f.is_black() && sample.wi.abs_dot_normal(ns) != 0.0 {
+        let normal = Vec3::from(si.shading.normal);
+
+        if sample.pdf > 0.0 && !sample.f.is_black() && sample.wi.abs_dot(&normal) != 0.0 {
             // Compute ray differential for specular reflection.
             let mut ray_diff = it.spawn_ray(&sample.wi);
             if let Some(diff) = ray.differentials.as_ref() {
@@ -168,18 +169,18 @@ pub trait SamplerIntegrator: Send + Sync {
                 let ry_origin = it.point + si.dpdy;
 
                 // Compute differential reflected directions.
-                let dndx = si.shading.dndu * si.dudx + si.shading.dndv * si.dvdx;
-                let dndy = si.shading.dndu * si.dudy + si.shading.dndv * si.dvdy;
+                let dndx = Vec3::from(si.shading.dndu * si.dudx + si.shading.dndv * si.dvdx);
+                let dndy = Vec3::from(si.shading.dndu * si.dudy + si.shading.dndv * si.dvdy);
 
                 let dwodx = -diff.rx_direction - wo;
                 let dwody = -diff.ry_direction - wo;
 
-                let ddndx = dwodx.dot_normal(ns) + wo.dot_normal(&dndx);
-                let ddndy = dwody.dot_normal(ns) + wo.dot_normal(&dndy);
+                let ddndx = dwodx.dot(&normal) + wo.dot(&dndx);
+                let ddndy = dwody.dot(&normal) + wo.dot(&dndy);
                 let rx_direction =
-                    sample.wi - dwodx + 2.0 * Vec3::from(wo.dot_normal(ns) * dndx + ddndx * ns);
+                    sample.wi - dwodx + 2.0 * (wo.dot(&normal) * dndx + ddndx * normal);
                 let ry_direction =
-                    sample.wi - dwody + 2.0 * Vec3::from(wo.dot_normal(ns) * dndy + ddndy * ns);
+                    sample.wi - dwody + 2.0 * (wo.dot(&normal) * dndy + ddndy * normal);
 
                 ray_diff.differentials = Some(RayDifferentials {
                     rx_origin,
@@ -191,7 +192,7 @@ pub trait SamplerIntegrator: Send + Sync {
 
             sample.f
                 * self.radiance(&mut ray_diff, scene, sampler, depth + 1)
-                * sample.wi.abs_dot_normal(ns)
+                * sample.wi.abs_dot(&normal)
                 / sample.pdf
         } else {
             RGBSpectrum::default()
@@ -217,22 +218,22 @@ pub trait SamplerIntegrator: Send + Sync {
 
         let sample = bsdf.sample(&wo, &sampler.get_2d(), BSDF_TRANSMISSION | BSDF_SPECULAR);
 
-        let mut result = RGBSpectrum::default();
-        let mut ns = si.shading.normal;
-        if sample.pdf > 0.0 && !sample.f.is_black() && sample.wi.abs_dot_normal(&ns) != 0.0 {
+        let mut output = RGBSpectrum::default();
+        let mut normal = Vec3::from(si.shading.normal);
+        if sample.pdf > 0.0 && !sample.f.is_black() && sample.wi.abs_dot(&normal) != 0.0 {
             // Compute ray differential for specular reflection.
             let mut ray_diff = it.spawn_ray(&sample.wi);
             if let Some(diff) = ray.differentials.as_ref() {
                 let rx_origin = p + si.dpdx;
                 let ry_origin = p + si.dpdy;
 
-                let mut dndx = si.shading.dndu * si.dudx + si.shading.dndv * si.dvdx;
-                let mut dndy = si.shading.dndu * si.dudy + si.shading.dndv * si.dvdy;
+                let mut dndx = Vec3::from(si.shading.dndu * si.dudx + si.shading.dndv * si.dvdx);
+                let mut dndy = Vec3::from(si.shading.dndu * si.dudy + si.shading.dndv * si.dvdy);
 
                 let mut eta = 1.0 / bsdf.eta;
-                if wo.dot_normal(&ns) < 0.0 {
+                if wo.dot(&normal) < 0.0 {
                     eta = 1.0 / eta;
-                    ns = -ns;
+                    normal = -normal;
                     dndx = -dndx;
                     dndy = -dndy;
                 }
@@ -240,19 +241,17 @@ pub trait SamplerIntegrator: Send + Sync {
                 let dwodx = -diff.rx_direction - wo;
                 let dwody = -diff.ry_direction - wo;
 
-                let ddndx = dwodx.dot_normal(&ns) + wo.dot_normal(&dndx);
-                let ddndy = dwody.dot_normal(&ns) + wo.dot_normal(&dndy);
+                let ddndx = dwodx.dot(&normal) + wo.dot(&dndx);
+                let ddndy = dwody.dot(&normal) + wo.dot(&dndy);
 
-                let mu = eta * wo.dot_normal(&ns) - sample.wi.abs_dot_normal(&ns);
-                let dmudx = (eta
-                    - (eta * eta * wo.dot_normal(&ns)) / sample.wi.abs_dot_normal(&ns))
-                    * ddndx;
-                let dmudy = (eta
-                    - (eta * eta * wo.dot_normal(&ns)) / sample.wi.abs_dot_normal(&ns))
-                    * ddndy;
+                let mu = eta * wo.dot(&normal) - sample.wi.abs_dot(&normal);
+                let dmudx =
+                    (eta - (eta * eta * wo.dot(&normal)) / sample.wi.abs_dot(&normal)) * ddndx;
+                let dmudy =
+                    (eta - (eta * eta * wo.dot(&normal)) / sample.wi.abs_dot(&normal)) * ddndy;
 
-                let rx_direction = sample.wi - eta * dwodx + Vec3::from(mu * dndx + dmudx * ns);
-                let ry_direction = sample.wi - eta * dwody + Vec3::from(mu * dndy + dmudy * ns);
+                let rx_direction = sample.wi - eta * dwodx + (mu * dndx + dmudx * normal);
+                let ry_direction = sample.wi - eta * dwody + (mu * dndy + dmudy * normal);
 
                 ray_diff.differentials = Some(RayDifferentials {
                     rx_origin,
@@ -262,13 +261,13 @@ pub trait SamplerIntegrator: Send + Sync {
                 })
             }
 
-            result = sample.f
+            output = sample.f
                 * self.radiance(&mut ray_diff, scene, sampler, depth + 1)
-                * sample.wi.abs_dot_normal(&ns)
+                * sample.wi.abs_dot(&normal)
                 / sample.pdf;
         }
 
-        result
+        output
     }
 }
 
@@ -351,7 +350,7 @@ fn estimate_direct(
                 .as_ref()
                 .expect("Failed to find BSDF inside SurfaceInteraction");
             f = bsdf.f(&it.direction, &light_sample.wi, bsdf_flags)
-                * light_sample.wi.abs_dot_normal(&si.shading.normal);
+                * light_sample.wi.abs_dot(&Vec3::from(si.shading.normal));
             scattering_pdf = bsdf.pdf(&it.direction, &light_sample.wi, bsdf_flags);
         }
 
@@ -390,7 +389,7 @@ fn estimate_direct(
                 .expect("Failed to find BSDF inside SurfaceInteraction")
                 .sample(&it.direction, u_scattering, bsdf_flags);
 
-            f = bsdf_sample.f * bsdf_sample.wi.abs_dot_normal(&si.shading.normal);
+            f = bsdf_sample.f * bsdf_sample.wi.abs_dot(&Vec3::from(si.shading.normal));
             sampled_specular = (bsdf_sample.sampled_type & BSDF_SPECULAR) != 0;
         }
 

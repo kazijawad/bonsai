@@ -89,6 +89,20 @@ impl Bounds2I {
         }
     }
 
+    pub fn union(&self, b: &Self) -> Self {
+        Self {
+            min: self.min.min(&b.min),
+            max: self.max.max(&b.max),
+        }
+    }
+
+    pub fn union_point(&self, p: &Point2I) -> Self {
+        Self {
+            min: self.min.min(p),
+            max: self.max.max(p),
+        }
+    }
+
     pub fn intersect(&self, b: &Self) -> Self {
         // Important: Assign min/max without new
         // because new applies min/max on each

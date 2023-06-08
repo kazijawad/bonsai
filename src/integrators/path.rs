@@ -12,7 +12,7 @@ use crate::{
         scene::Scene,
         spectrum::Spectrum,
     },
-    geometries::ray::Ray,
+    geometries::{ray::Ray, vec3::Vec3},
     spectra::rgb::RGBSpectrum,
 };
 
@@ -114,14 +114,14 @@ impl SamplerIntegrator for PathIntegrator {
             if bsdf_sample.f.is_black() || bsdf_sample.pdf == 0.0 {
                 break;
             }
-            beta *=
-                bsdf_sample.f * bsdf_sample.wi.abs_dot_normal(&si.shading.normal) / bsdf_sample.pdf;
+            beta *= bsdf_sample.f * bsdf_sample.wi.abs_dot(&Vec3::from(si.shading.normal))
+                / bsdf_sample.pdf;
             specular_bounce = (bsdf_sample.sampled_type & BSDF_SPECULAR) != 0;
             if (bsdf_sample.sampled_type & BSDF_SPECULAR) != 0
                 && (bsdf_sample.sampled_type & BSDF_TRANSMISSION) != 0
             {
                 let eta = bsdf.eta;
-                eta_scale *= if wo.dot_normal(&it.normal) > 0.0 {
+                eta_scale *= if wo.dot(&Vec3::from(it.normal)) > 0.0 {
                     eta * eta
                 } else {
                     1.0 / (eta * eta)

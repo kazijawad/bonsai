@@ -69,7 +69,7 @@ impl BSDF {
         Vec3::new(
             v.dot(&self.s_shading),
             v.dot(&self.t_shading),
-            v.dot_normal(&self.shading_normal),
+            v.dot(&Vec3::from(self.shading_normal)),
         )
     }
 
@@ -88,9 +88,9 @@ impl BSDF {
             return RGBSpectrum::default();
         }
 
-        let reflect = wi_world.dot_normal(&self.geometric_normal)
-            * wo_world.dot_normal(&self.geometric_normal)
-            > 0.0;
+        let normal = Vec3::from(self.geometric_normal);
+        let reflect = wi_world.dot(&normal) * wo_world.dot(&normal) > 0.0;
+
         let mut f = RGBSpectrum::default();
         for bxdf in self.bxdfs.iter() {
             if bxdf.matches_flags(flags)
@@ -209,9 +209,9 @@ impl BSDF {
 
         // Compute value of BSDF for sampled direction.
         if bxdf.bxdf_type() & BSDF_SPECULAR == 0 {
-            let reflect = wi_world.dot_normal(&self.geometric_normal)
-                * wo_world.dot_normal(&self.geometric_normal)
-                > 0.0;
+            let normal = Vec3::from(self.geometric_normal);
+            let reflect = wi_world.dot(&normal) * wo_world.dot(&normal) > 0.0;
+
             sample.f = RGBSpectrum::default();
             for b in self.bxdfs.iter() {
                 if b.matches_flags(bxdf_type)

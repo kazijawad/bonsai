@@ -202,15 +202,15 @@ impl Interaction {
         // Compute auxiliary intersection points with plane.
         let d = self.normal.dot_point(&self.point);
 
-        let tx =
-            -(self.normal.dot_point(&diff.rx_origin) - d) / self.normal.dot_vec(&diff.rx_direction);
+        let tx = -(self.normal.dot_point(&diff.rx_origin) - d)
+            / self.normal.dot(&Normal::from(diff.rx_direction));
         if tx.is_infinite() || tx.is_nan() {
             return fail();
         }
         let px = diff.rx_origin + tx * diff.rx_direction;
 
-        let ty =
-            -(self.normal.dot_point(&diff.ry_origin) - d) / self.normal.dot_vec(&diff.ry_direction);
+        let ty = -(self.normal.dot_point(&diff.ry_origin) - d)
+            / self.normal.dot(&Normal::from(diff.ry_direction));
         if ty.is_infinite() || ty.is_nan() {
             return fail();
         }

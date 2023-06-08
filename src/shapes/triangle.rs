@@ -2,7 +2,7 @@ use std::{mem, sync::Arc};
 
 use crate::{
     base::{
-        constants::{Float, PI},
+        constants::Float,
         interaction::{Interaction, SurfaceOptions},
         math::gamma,
         sampling::uniform_sample_triangle,
@@ -563,32 +563,5 @@ impl Shape for Triangle {
         let p1 = &self.mesh.position[self.offset + 1];
         let p2 = &self.mesh.position[self.offset + 2];
         0.5 * (p1 - p0).cross(&(p2 - p0)).length()
-    }
-
-    fn solid_angle(&self, p: &Point3, _num_samples: u32) -> Float {
-        // Project the vertices into the unit sphere around p.
-        let p1 = &self.mesh.position[self.offset] - p;
-        let p2 = &self.mesh.position[self.offset + 1] - p;
-        let p3 = &self.mesh.position[self.offset + 2] - p;
-
-        let mut p1p2_cross = p1.cross(&p2);
-        let mut p2p3_cross = p2.cross(&p3);
-        let mut p3p1_cross = p3.cross(&p1);
-
-        if p1p2_cross.length_squared() > 0.0 {
-            p1p2_cross = p1p2_cross.normalize();
-        }
-        if p2p3_cross.length_squared() > 0.0 {
-            p2p3_cross = p2p3_cross.normalize();
-        }
-        if p3p1_cross.length_squared() > 0.0 {
-            p3p1_cross = p3p1_cross.normalize();
-        }
-
-        (p1p2_cross.dot(&-p2p3_cross).clamp(-1.0, 1.0).acos()
-            + p2p3_cross.dot(&-p3p1_cross).clamp(-1.0, 1.0).acos()
-            + p3p1_cross.dot(&-p1p2_cross).clamp(-1.0, 1.0).acos()
-            - PI)
-            .abs()
     }
 }
