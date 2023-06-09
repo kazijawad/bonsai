@@ -41,17 +41,17 @@ pub struct Film {
     max_sample_luminance: Float,
 }
 
-pub struct FilmTile {
+pub struct FilmTile<'a> {
     pixel_bounds: Bounds2I,
     filter_radius: Vec2F,
     inv_filter_radius: Vec2F,
-    filter_table: Vec<Float>,
+    filter_table: &'a [Float],
     pixels: Vec<FilmTilePixel>,
     max_sample_luminance: Float,
 }
 
 pub struct FilmOptions<'a> {
-    pub resolution: Point2F,
+    pub full_resolution: Point2F,
     pub crop_window: Bounds2F,
     pub filter: Box<dyn Filter>,
     pub filename: &'a str,
@@ -61,40 +61,48 @@ pub struct FilmOptions<'a> {
 
 impl Film {
     pub fn new(opts: FilmOptions) -> Self {
+        let full_resolution = opts.full_resolution;
+        let crop_window = opts.crop_window;
+
         // Compute film image bounds.
-        let bounds = Bounds2I::new(
+        let cropped_pixel_bounds = Bounds2I::new(
             &Point2I::new(
-                (opts.resolution.x * opts.crop_window.min.x).ceil() as i32,
-                (opts.resolution.y * opts.crop_window.min.y).ceil() as i32,
+                (full_resolution.x * crop_window.min.x).ceil() as i32,
+                (full_resolution.y * crop_window.min.y).ceil() as i32,
             ),
             &Point2I::new(
-                (opts.resolution.x * opts.crop_window.max.x).ceil() as i32,
-                (opts.resolution.y * opts.crop_window.max.y).ceil() as i32,
+                (full_resolution.x * crop_window.max.x).ceil() as i32,
+                (full_resolution.y * crop_window.max.y).ceil() as i32,
             ),
         );
 
         // Allocate film image storage.
-        let pixels = Mutex::new(vec![Pixel::default(); bounds.area() as usize]);
+        let pixels = Mutex::new(vec![Pixel::default(); cropped_pixel_bounds.area() as usize]);
 
         // Precompute filter weight table.
+        let filter = opts.filter;
         let mut filter_table = Vec::with_capacity(FILTER_TABLE_WIDTH * FILTER_TABLE_WIDTH);
         for y in 0..FILTER_TABLE_WIDTH {
             for x in 0..FILTER_TABLE_WIDTH {
-                let px = (x as Float + 0.5) * opts.filter.radius().x / FILTER_TABLE_WIDTH as Float;
-                let py = (y as Float + 0.5) * opts.filter.radius().y / FILTER_TABLE_WIDTH as Float;
-                filter_table.push(opts.filter.evaluate(&Point2F::new(px, py)));
+                let px = (x as Float + 0.5) * filter.radius().x / FILTER_TABLE_WIDTH as Float;
+                let py = (y as Float + 0.5) * filter.radius().y / FILTER_TABLE_WIDTH as Float;
+                filter_table.push(filter.evaluate(&Point2F::new(px, py)));
             }
         }
 
+        let filename = String::from(opts.filename);
+        let scale = opts.scale;
+        let max_sample_luminance = opts.max_sample_luminance;
+
         Self {
-            full_resolution: opts.resolution,
-            cropped_pixel_bounds: bounds,
-            filter: opts.filter,
-            filename: String::from(opts.filename),
+            full_resolution,
+            cropped_pixel_bounds,
+            filter,
+            filename,
             pixels,
             filter_table,
-            scale: opts.scale,
-            max_sample_luminance: opts.max_sample_luminance,
+            scale,
+            max_sample_luminance,
         }
     }
 
@@ -122,7 +130,7 @@ impl Film {
         FilmTile::new(
             tile_bounds,
             self.filter.radius(),
-            self.filter_table.clone(),
+            &self.filter_table,
             self.max_sample_luminance,
         )
     }
@@ -204,11 +212,11 @@ impl Film {
     }
 }
 
-impl FilmTile {
+impl<'a> FilmTile<'a> {
     pub fn new(
         pixel_bounds: Bounds2I,
         filter_radius: Vec2F,
-        filter_table: Vec<Float>,
+        filter_table: &'a [Float],
         max_sample_luminance: Float,
     ) -> Self {
         Self {

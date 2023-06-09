@@ -37,7 +37,7 @@ fn main() {
     let scene = Scene::new(aggregate, vec![infinite_light]);
 
     let film = Film::new(FilmOptions {
-        resolution: Point2F::new(1024.0, 1024.0),
+        full_resolution: Point2F::new(1024.0, 1024.0),
         crop_window: Bounds2F::new(&Point2F::new(0.0, 0.0), &Point2F::new(1.0, 1.0)),
         filter: Box::new(BoxFilter::new(Vec2::new(0.5, 0.5))),
         filename: "dist/result.exr",
